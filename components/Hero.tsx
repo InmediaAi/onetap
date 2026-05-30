@@ -40,7 +40,7 @@ export default function Hero({ onTry }: { onTry: () => void }) {
         className="mt-10"
       >
         <button onClick={onTry} className="btn-line">
-          Try Your First Look
+          TRY ON
         </button>
       </motion.div>
     </section>
