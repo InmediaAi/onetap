@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: #ffffff;
+  --ink: #111111;
+  --muted: #666666;
+  --hairline: #eaeaea;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: var(--canvas);
+  }
+}
+
+@layer components {
+  /* Editorial label — small, tracked-out, uppercase */
+  .eyebrow {
+    @apply text-[11px] uppercase tracking-luxe text-muted;
+  }
+
+  /* Hairline luxury button */
+  .btn-line {
+    @apply inline-flex items-center justify-center border border-ink px-7 py-3
+      text-[12px] uppercase tracking-luxe text-ink transition-colors duration-300
+      hover:bg-ink hover:text-canvas;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center border border-hairline px-6 py-3
+      text-[12px] uppercase tracking-luxe text-ink transition-colors duration-300
+      hover:border-ink;
+  }
+
+  .shimmer {
+    @apply relative overflow-hidden bg-[#f4f4f4];
+  }
+  .shimmer::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full animate-shimmer;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.65),
+      transparent
+    );
+  }
+}
