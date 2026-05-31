@@ -12,8 +12,24 @@ create table if not exists products (
   name        text not null,
   price       text not null,
   image_url   text not null,
+  mono        text,            -- editorial monogram placeholder (derived from brand)
+  source_url  text,            -- retailer URL the listing was imported from
   created_at  timestamptz not null default now()
 );
+
+-- If the table already exists from an earlier deploy, add the new columns.
+alter table products add column if not exists mono text;
+alter table products add column if not exists source_url text;
+
+create index if not exists products_created_idx on products (created_at desc);
+
+-- Public read for the catalog grid; writes go through the service role only
+-- (no insert/update/delete policy → anon key cannot mutate).
+alter table products enable row level security;
+
+create policy "public read products"
+  on products for select
+  using (true);
 
 -- Generated looks (try-on image / 360 spin / social video).
 create table if not exists generated_looks (

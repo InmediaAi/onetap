@@ -24,14 +24,14 @@ Open http://localhost:3000. With no API keys, all three generations use **mock p
 
 ## Going live (optional)
 
-Copy `.env.example` → `.env.local` and add keys:
+Generation is **purely env-driven** — pick a provider and model per modality. Copy `.env.example` → `.env.local`:
 
-| Feature | Provider | Keys |
-| --- | --- | --- |
-| Photo Try-On | xAI / Grok image | `XAI_API_KEY` |
-| 360 Spin + Social Video | Kling image→video | `KLING_ACCESS_KEY`, `KLING_SECRET_KEY` |
+| Modality | `*_PROVIDER` | `*_MODEL` | Keys |
+| --- | --- | --- | --- |
+| Photo Try-On | `TRYON_PROVIDER` (`mock` \| `grok`) | `TRYON_MODEL` | `XAI_API_KEY` |
+| 360 Spin + Social Video | `VIDEO_PROVIDER` (`mock` \| `kling`) | `VIDEO_MODEL` | `KLING_ACCESS_KEY`, `KLING_SECRET_KEY` |
 
-Restart `npm run dev`. The provider registry (`lib/ai/index.ts`) auto-selects a real provider when its keys are present and falls back to mock otherwise — no code changes.
+Default (nothing set) = **mock**, so the app runs with zero config. Selecting a real provider **fails loud** if its keys are missing (no silent mock fallback) — so you always know which model ran. Check what's live at **`GET /api/ai-status`** (dev only). Restart `npm run dev` after changing env.
 
 ## Architecture
 
@@ -44,14 +44,14 @@ components/                Header, Hero, ProductGrid, ProductCard, TryOnModal,
                            UploadZone, GenerationOptions, GeneratedResult, ShareButtons
 lib/ai/                    Swappable provider layer
   types.ts                 TryOnProvider / VideoProvider interfaces
-  index.ts                 env-driven registry + mock fallback
+  index.ts                 env-driven registry (provider + model) + /api/ai-status
   providers/               grok.ts · kling.ts · mock.ts
 lib/data/products.ts       Mock luxury catalog
 lib/store.ts               Zustand (portrait + generated looks, persisted)
 lib/supabase/schema.sql    Delivered schema (not wired in MVP)
 ```
 
-**Swap providers** (OpenAI / Runway / Pika / Luma): implement `TryOnProvider` or `VideoProvider`, then add a case in `lib/ai/index.ts`. UI and API routes never reference a concrete provider.
+**Add a model/provider** (OpenAI / Runway / Pika / Luma): (1) implement `TryOnProvider` or `VideoProvider` in `lib/ai/providers/`; (2) add **one entry** to the registry map in `lib/ai/index.ts` (`requiredEnv` + `create`); (3) select it via env (`TRYON_PROVIDER`/`VIDEO_PROVIDER` + `*_MODEL`). UI and API routes never reference a concrete provider.
 
 ## Tech
 

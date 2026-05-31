@@ -2,10 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import { products, priceValue, type Product } from "@/lib/data/products";
+import { priceValue, type Product } from "@/lib/data/products";
 import ProductCard from "./ProductCard";
-
-const HOUSES = ["All", ...Array.from(new Set(products.map((p) => p.brand)))];
 
 const SORTS: Record<string, (a: Product[]) => Product[]> = {
   Recommended: (a) => a,
@@ -15,17 +13,24 @@ const SORTS: Record<string, (a: Product[]) => Product[]> = {
 };
 
 export default function ProductGrid({
+  products,
   onTry,
 }: {
+  products: Product[];
   onTry: (product: Product) => void;
 }) {
   const [sort, setSort] = useState("Recommended");
   const [house, setHouse] = useState("All");
   const [filterOpen, setFilterOpen] = useState(false);
 
+  const houses = useMemo(
+    () => ["All", ...Array.from(new Set(products.map((p) => p.brand)))],
+    [products],
+  );
+
   const visible = useMemo(
     () => SORTS[sort](products.filter((p) => house === "All" || p.brand === house)),
-    [sort, house],
+    [products, sort, house],
   );
 
   return (
@@ -53,7 +58,7 @@ export default function ProductGrid({
         className="chips"
         style={{ maxHeight: filterOpen ? 120 : 0, opacity: filterOpen ? 1 : 0 }}
       >
-        {HOUSES.map((h) => (
+        {houses.map((h) => (
           <button
             key={h}
             className={"chip" + (h === house ? " on" : "")}

@@ -4,41 +4,101 @@ import { GrokProvider } from "@/lib/ai/providers/grok";
 import { KlingProvider } from "@/lib/ai/providers/kling";
 
 /**
- * Central provider registry. Routes/UI call these — never a concrete provider.
+ * Provider registry — plug-and-play, env-driven.
  *
- * Selection is env-driven with an automatic mock fallback, so `npm run dev`
- * works with zero credentials. Add a provider (OpenAI, Runway, Pika, Luma) by
- * implementing the interface and extending the switch below.
+ * To add a model/provider:
+ *   1. Implement the TryOnProvider or VideoProvider interface (lib/ai/types.ts).
+ *   2. Add ONE entry to the relevant registry below.
+ *   3. Select it from env: TRYON_PROVIDER / VIDEO_PROVIDER (+ TRYON_MODEL / VIDEO_MODEL).
+ *
+ * Selection is purely env-driven. Default is `mock` (so `npm run dev` works with
+ * zero config). If a real provider is selected but its keys are missing, we throw
+ * a clear error rather than silently falling back — you always know what ran.
  */
 
-export function getTryOnProvider(): TryOnProvider {
-  const key = process.env.XAI_API_KEY;
-  switch (process.env.TRYON_PROVIDER || (key ? "grok" : "mock")) {
-    case "grok":
-      if (key) return new GrokProvider(key);
-    // fall through to mock if no key
-    default:
-      return new MockTryOnProvider();
+interface ProviderDescriptor<T> {
+  /** Env keys that MUST be present for this provider to run. */
+  requiredEnv: string[];
+  /** Build the provider — reads its own keys + model from env. */
+  create: () => T;
+}
+
+/** Model resolution — provider + model are both env-selectable. */
+const tryOnModel = () =>
+  process.env.TRYON_MODEL ?? process.env.XAI_IMAGE_MODEL ?? undefined;
+const videoModel = () =>
+  process.env.VIDEO_MODEL ?? process.env.KLING_MODEL ?? undefined;
+
+const TRYON_REGISTRY: Record<string, ProviderDescriptor<TryOnProvider>> = {
+  mock: { requiredEnv: [], create: () => new MockTryOnProvider() },
+  grok: {
+    requiredEnv: ["XAI_API_KEY"],
+    create: () => new GrokProvider(process.env.XAI_API_KEY!, tryOnModel()),
+  },
+};
+
+const VIDEO_REGISTRY: Record<string, ProviderDescriptor<VideoProvider>> = {
+  mock: { requiredEnv: [], create: () => new MockVideoProvider() },
+  kling: {
+    requiredEnv: ["KLING_ACCESS_KEY", "KLING_SECRET_KEY"],
+    create: () =>
+      new KlingProvider(
+        process.env.KLING_ACCESS_KEY!,
+        process.env.KLING_SECRET_KEY!,
+        videoModel(),
+      ),
+  },
+};
+
+/** Pick a provider from env, validating its keys (fail loud). */
+function select<T>(
+  registry: Record<string, ProviderDescriptor<T>>,
+  envVar: string,
+): T {
+  const name = process.env[envVar] || "mock"; // zero-config dev → mock
+  const descriptor = registry[name];
+  if (!descriptor) {
+    throw new Error(
+      `${envVar}="${name}" is not a registered provider. Available: ${Object.keys(registry).join(", ")}`,
+    );
   }
+  const missing = descriptor.requiredEnv.filter((k) => !process.env[k]);
+  if (missing.length) {
+    throw new Error(
+      `${envVar}="${name}" requires env: ${missing.join(", ")}`,
+    );
+  }
+  return descriptor.create();
+}
+
+export function getTryOnProvider(): TryOnProvider {
+  return select(TRYON_REGISTRY, "TRYON_PROVIDER");
 }
 
 export function getVideoProvider(): VideoProvider {
-  const access = process.env.KLING_ACCESS_KEY;
-  const secret = process.env.KLING_SECRET_KEY;
-  const hasKling = Boolean(access && secret);
-  switch (process.env.VIDEO_PROVIDER || (hasKling ? "kling" : "mock")) {
-    case "kling":
-      if (access && secret) return new KlingProvider(access, secret);
-    // fall through to mock if no keys
-    default:
-      return new MockVideoProvider();
-  }
+  return select(VIDEO_REGISTRY, "VIDEO_PROVIDER");
 }
 
-/** True when at least one real provider is configured (for UI hints). */
-export function liveModeStatus() {
+/** Diagnostic view: what's selected and which providers are configured. */
+export function providerStatus() {
+  const configured = <T>(registry: Record<string, ProviderDescriptor<T>>) =>
+    Object.fromEntries(
+      Object.entries(registry).map(([name, d]) => [
+        name,
+        d.requiredEnv.every((k) => Boolean(process.env[k])),
+      ]),
+    );
+
   return {
-    tryOn: Boolean(process.env.XAI_API_KEY),
-    video: Boolean(process.env.KLING_ACCESS_KEY && process.env.KLING_SECRET_KEY),
+    tryOn: {
+      selected: process.env.TRYON_PROVIDER || "mock",
+      model: tryOnModel() ?? null,
+      configured: configured(TRYON_REGISTRY),
+    },
+    video: {
+      selected: process.env.VIDEO_PROVIDER || "mock",
+      model: videoModel() ?? null,
+      configured: configured(VIDEO_REGISTRY),
+    },
   };
 }

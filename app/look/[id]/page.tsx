@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,13 +8,25 @@ import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { getProduct } from "@/lib/data/products";
+import { type Product } from "@/lib/data/products";
 
 export default function LookPage() {
   const params = useParams<{ id: string }>();
   const hydrated = useHydrated();
   const look = useAtelier((s) => s.looks.find((l) => l.id === params.id));
-  const product = look ? getProduct(look.productId) : undefined;
+  const [product, setProduct] = useState<Product | undefined>();
+
+  useEffect(() => {
+    if (!look) return;
+    let active = true;
+    fetch(`/api/products/${encodeURIComponent(look.productId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => active && d?.product && setProduct(d.product))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [look]);
 
   return (
     <main>

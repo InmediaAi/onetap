@@ -44,10 +44,12 @@ export class KlingProvider implements VideoProvider {
   readonly name = "kling";
   private accessKey: string;
   private secretKey: string;
+  private model: string;
 
-  constructor(accessKey: string, secretKey: string) {
+  constructor(accessKey: string, secretKey: string, model = "kling-v1") {
     this.accessKey = accessKey;
     this.secretKey = secretKey;
+    this.model = model;
   }
 
   private get authHeader() {
@@ -62,7 +64,7 @@ export class KlingProvider implements VideoProvider {
         Authorization: this.authHeader,
       },
       body: JSON.stringify({
-        model_name: process.env.KLING_MODEL || "kling-v1",
+        model_name: this.model,
         image,
         prompt,
         mode: "std",

@@ -1,13 +1,9 @@
-"use client";
-
-import { useState } from "react";
 import Header from "@/components/Header";
-import ProductGrid from "@/components/ProductGrid";
-import TryOnModal from "@/components/TryOnModal";
-import { type Product } from "@/lib/data/products";
+import CatalogClient from "@/components/CatalogClient";
+import { fetchProducts } from "@/lib/data/getProducts";
 
-export default function HomePage() {
-  const [active, setActive] = useState<Product | null>(null);
+export default async function HomePage() {
+  const products = await fetchProducts();
 
   return (
     <main>
@@ -22,7 +18,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      <ProductGrid onTry={setActive} />
+      <CatalogClient products={products} />
 
       <footer className="foot">
         <div className="foot-inner">
@@ -33,8 +29,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
-      <TryOnModal product={active} onClose={() => setActive(null)} />
     </main>
   );
 }

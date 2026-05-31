@@ -14,14 +14,15 @@ import type {
  */
 
 const XAI_URL = "https://api.x.ai/v1/images/generations";
-const MODEL = process.env.XAI_IMAGE_MODEL || "grok-2-image";
 
 export class GrokProvider implements TryOnProvider {
   readonly name = "grok";
   private apiKey: string;
+  private model: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model = "grok-2-image") {
     this.apiKey = apiKey;
+    this.model = model;
   }
 
   async generateTryOn(input: TryOnInput): Promise<TryOnResult> {
@@ -39,7 +40,7 @@ export class GrokProvider implements TryOnProvider {
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: this.model,
         prompt,
         n: 1,
         response_format: "url",
