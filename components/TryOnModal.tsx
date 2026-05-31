@@ -1,28 +1,71 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  X,
+  Heart,
+  Download,
+  Share2,
+  MoreHorizontal,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
+  Plus,
+  ArrowUp,
+  User,
+  Shirt,
+  RotateCw,
+  Film,
+  Check,
+  Upload,
+} from "lucide-react";
 import type { Product } from "@/lib/data/products";
 import type { GenerationKind } from "@/lib/ai/types";
-import { useAtelier, type GeneratedLook } from "@/lib/store";
+import { useAtelier } from "@/lib/store";
 import { createId } from "@/lib/utils";
-import GenerationOptions from "./GenerationOptions";
-import GeneratedResult, { GenerationLoading } from "./GeneratedResult";
 
-type Phase =
-  | { step: "options" }
-  | { step: "loading"; kind: GenerationKind }
-  | { step: "result"; look: GeneratedLook }
-  | { step: "error"; message: string };
+type Mode = "fitting" | "turn" | "film";
+
+const MODES: {
+  mode: Mode;
+  kind: GenerationKind;
+  label: string;
+  Icon: typeof Shirt;
+}[] = [
+  { mode: "fitting", kind: "tryon", label: "Try-On", Icon: Shirt },
+  { mode: "turn", kind: "spin", label: "360°", Icon: RotateCw },
+  { mode: "film", kind: "video", label: "Film", Icon: Film },
+];
 
 const ENDPOINTS: Record<GenerationKind, string> = {
   tryon: "/api/generate-image",
   spin: "/api/generate-360",
   video: "/api/generate-video",
 };
+
+const PROC_STEPS = [
+  "Reading the piece",
+  "Studying your likeness",
+  "Composing the fitting",
+  "Resolving",
+];
+
+interface Asset {
+  imageUrl?: string;
+  videoUrl?: string;
+  posterUrl?: string;
+  lookId: string;
+}
+
+function readAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 
 export default function TryOnModal({
   product,
@@ -32,170 +75,581 @@ export default function TryOnModal({
   onClose: () => void;
 }) {
   const portrait = useAtelier((s) => s.portrait);
+  const setPortrait = useAtelier((s) => s.setPortrait);
   const addLook = useAtelier((s) => s.addLook);
-  const [phase, setPhase] = useState<Phase>({ step: "options" });
-  // Most recent try-on image for this session — fed into spin/video.
-  const [tryOnImage, setTryOnImage] = useState<string | null>(null);
+  const wished = useAtelier((s) =>
+    product ? s.wishlist.includes(product.id) : false,
+  );
+  const toggleWish = useAtelier((s) => s.toggleWish);
+  const closet = useAtelier((s) => s.closet);
+  const addCloset = useAtelier((s) => s.addCloset);
+  const removeCloset = useAtelier((s) => s.removeCloset);
+
+  const [mode, setMode] = useState<Mode>("fitting");
+  const [results, setResults] = useState<Partial<Record<GenerationKind, Asset>>>({});
+  const [loadingKind, setLoadingKind] = useState<GenerationKind | null>(null);
+  const [procStep, setProcStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  // Closet items the user has selected to try on (subset of `closet`).
+  const [garments, setGarments] = useState<string[]>([]);
+  const [prompt, setPrompt] = useState("");
+  const [closetOpen, setClosetOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+
+  // film playback (bound to the real <video> element)
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [filmT, setFilmT] = useState(0);
+  const [duration, setDuration] = useState(10);
+
+  const likenessRef = useRef<HTMLInputElement>(null);
+  const closetInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  // Latest selection, read synchronously inside generate()/recompose().
+  const garmentsRef = useRef<string[]>([]);
+  const inflight = useRef<Set<GenerationKind>>(new Set());
 
   const open = Boolean(product);
+  const current = MODES.find((m) => m.mode === mode)!;
+  const asset = results[current.kind];
+  const loading = loadingKind === current.kind;
+  const done = Boolean(asset) && !loading;
 
-  // Reset state whenever a new product opens the modal.
+  // ——— Generation ———
+  const generate = useCallback(
+    async (kind: GenerationKind) => {
+      if (!product || !portrait) return;
+      if (inflight.current.has(kind)) return;
+      inflight.current.add(kind);
+      setError(null);
+      setLoadingKind(kind);
+      try {
+        const garment = garmentsRef.current[0];
+        const body =
+          kind === "tryon"
+            ? {
+                userImage: portrait,
+                productImage: garment ?? product.imageUrl,
+                references: garmentsRef.current,
+                prompt: prompt || undefined,
+              }
+            : { image: results.tryon?.imageUrl ?? portrait, prompt: prompt || undefined };
+
+        const res = await fetch(ENDPOINTS[kind], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Generation failed");
+
+        const lookId = createId();
+        const assetUrl: string = kind === "tryon" ? data.imageUrl : data.videoUrl;
+        const next: Asset =
+          kind === "tryon"
+            ? { imageUrl: data.imageUrl, lookId }
+            : { videoUrl: data.videoUrl, posterUrl: data.posterUrl, lookId };
+
+        setResults((r) => ({ ...r, [kind]: next }));
+        addLook({
+          id: lookId,
+          productId: product.id,
+          kind,
+          inputImage: portrait,
+          assetUrl,
+          posterUrl: data.posterUrl,
+          createdAt: Date.now(),
+        });
+        setLoadingKind((cur) => (cur === kind ? null : cur));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Generation failed");
+        setLoadingKind((cur) => (cur === kind ? null : cur));
+      } finally {
+        inflight.current.delete(kind);
+      }
+    },
+    [product, portrait, results.tryon, prompt, addLook],
+  );
+
+  // Open / product change → reset, then compose the fitting if a likeness exists.
   useEffect(() => {
-    if (product) {
-      setPhase({ step: "options" });
-      setTryOnImage(null);
-    }
-  }, [product]);
+    if (!product) return;
+    setMode("fitting");
+    setResults({});
+    setError(null);
+    setPlaying(false);
+    setFilmT(0);
+    setGarments([]);
+    garmentsRef.current = [];
+    setPrompt("");
+    setClosetOpen(false);
+    if (portrait) generate("tryon");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
 
-  // Lock scroll + escape-to-close.
+  // Switching modes lazily generates that output.
+  useEffect(() => {
+    if (!product || !portrait) return;
+    if (!results[current.kind] && loadingKind !== current.kind) {
+      generate(current.kind);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  // Cycle the processing label while a generation is in flight.
+  useEffect(() => {
+    if (!loadingKind) return;
+    setProcStep(0);
+    const t = setInterval(
+      () => setProcStep((s) => Math.min(s + 1, PROC_STEPS.length - 1)),
+      900,
+    );
+    return () => clearInterval(t);
+  }, [loadingKind]);
+
+  // Scroll lock + escape-to-close.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (closetOpen) setClosetOpen(false);
+      else onClose();
+    };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open, onClose, closetOpen]);
 
-  async function generate(kind: GenerationKind) {
-    if (!product || !portrait) return;
-    setPhase({ step: "loading", kind });
+  // Stop film playback when leaving film mode.
+  useEffect(() => {
+    if (mode !== "film") {
+      setPlaying(false);
+      videoRef.current?.pause();
+    }
+  }, [mode]);
 
-    try {
-      const body =
-        kind === "tryon"
-          ? { userImage: portrait, productImage: product.imageUrl }
-          : { image: tryOnImage ?? portrait };
+  if (!product) return null;
 
-      const res = await fetch(ENDPOINTS[kind], {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Generation failed");
+  // Recompose from scratch whenever the base (likeness or selection) changes.
+  function recompose() {
+    setResults({});
+    setMode("fitting");
+    setError(null);
+    if (portrait) generate("tryon");
+  }
 
-      const assetUrl: string = kind === "tryon" ? data.imageUrl : data.videoUrl;
-      if (kind === "tryon") setTryOnImage(assetUrl);
+  function syncGarments(next: string[]) {
+    garmentsRef.current = next;
+    setGarments(next);
+  }
 
-      const look: GeneratedLook = {
-        id: createId(),
-        productId: product.id,
-        kind,
-        inputImage: portrait,
-        assetUrl,
-        posterUrl: data.posterUrl,
-        createdAt: Date.now(),
-      };
-      addLook(look);
-      setPhase({ step: "result", look });
-    } catch (err) {
-      setPhase({
-        step: "error",
-        message: err instanceof Error ? err.message : "Generation failed",
-      });
+  async function readLikeness(file?: File) {
+    if (!file || !file.type.startsWith("image/")) return;
+    setPortrait(await readAsDataURL(file));
+    recompose();
+  }
+
+  // Selection (closet item → try on)
+  function toggleSelect(url: string) {
+    const next = garmentsRef.current.includes(url)
+      ? garmentsRef.current.filter((u) => u !== url)
+      : [...garmentsRef.current, url];
+    syncGarments(next);
+    recompose();
+  }
+
+  async function uploadToCloset(files?: FileList | null) {
+    if (!files) return;
+    const imgs = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!imgs.length) return;
+    const urls = await Promise.all(imgs.map(readAsDataURL));
+    urls.forEach(addCloset);
+    syncGarments([
+      ...garmentsRef.current,
+      ...urls.filter((u) => !garmentsRef.current.includes(u)),
+    ]);
+    recompose();
+  }
+
+  function deleteFromCloset(url: string) {
+    removeCloset(url);
+    if (garmentsRef.current.includes(url)) {
+      syncGarments(garmentsRef.current.filter((u) => u !== url));
+      recompose();
     }
   }
 
+  function composeCurrent() {
+    setResults((r) => ({ ...r, [current.kind]: undefined }));
+    generate(current.kind);
+  }
+
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      void v.play();
+      setPlaying(true);
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  }
+
+  function download() {
+    const url = asset?.imageUrl ?? asset?.videoUrl;
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `onetap-${product!.id}-${current.mode}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  async function share() {
+    if (!asset) return;
+    const url = `${window.location.origin}/look/${asset.lookId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+
+  const fmt = (t: number) =>
+    `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+
   return (
-    <AnimatePresence>
-      {open && product && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.3 }}
-            onClick={(e) => e.stopPropagation()}
-            className="relative grid max-h-[92vh] w-full max-w-4xl grid-cols-1 overflow-y-auto bg-canvas md:grid-cols-2"
+    <div
+      className="modal-scrim"
+      onMouseDown={(e) => {
+        if ((e.target as HTMLElement).classList.contains("modal-scrim")) onClose();
+      }}
+    >
+      {/* top */}
+      <div className="modal-top">
+        <div className="mt-info">
+          <span className="label h">{product.brand}</span>
+          <span className="n">{product.name}</span>
+        </div>
+        <div className="mt-right">
+          <span className="price">{product.price}</span>
+          <button className="mclose" onClick={onClose} aria-label="Close">
+            <X size={16} strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+
+      {/* stage */}
+      <div className="modal-stage">
+        {/* media */}
+        <div className="media-col">
+          <div className="media">
+            <div className="inset" />
+
+            {/* resolved outputs */}
+            {done && mode === "fitting" && asset?.imageUrl && (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="base"
+                  src={asset.imageUrl}
+                  alt=""
+                  style={{ transform: "scale(1.02)" }}
+                />
+                <div className="media-cap">
+                  <div className="label h">{product.brand}</div>
+                  <div className="n">{product.name}</div>
+                </div>
+              </>
+            )}
+
+            {done && mode === "turn" && asset?.videoUrl && (
+              <>
+                <video
+                  className="base"
+                  src={asset.videoUrl}
+                  poster={asset.posterUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="turn-ctl">
+                  <div className="deg">
+                    <span className="d">360°</span>
+                    <span className="label">The Turn</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {done && mode === "film" && asset?.videoUrl && (
+              <>
+                <video
+                  ref={videoRef}
+                  className="base"
+                  src={asset.videoUrl}
+                  poster={asset.posterUrl}
+                  muted={muted}
+                  playsInline
+                  onLoadedMetadata={(e) =>
+                    setDuration(e.currentTarget.duration || 10)
+                  }
+                  onTimeUpdate={(e) => setFilmT(e.currentTarget.currentTime)}
+                  onEnded={() => setPlaying(false)}
+                />
+                <button className="unmute" onClick={() => setMuted((m) => !m)}>
+                  {muted ? (
+                    <VolumeX size={16} strokeWidth={1.4} />
+                  ) : (
+                    <Volume2 size={16} strokeWidth={1.4} />
+                  )}{" "}
+                  {muted ? "Unmute" : "Mute"}
+                </button>
+                <div className="film-ctl">
+                  <button className="play" onClick={togglePlay}>
+                    {playing ? (
+                      <Pause size={14} strokeWidth={1.6} />
+                    ) : (
+                      <Play size={14} strokeWidth={1.6} />
+                    )}
+                  </button>
+                  <div className="film-bar">
+                    <i style={{ width: `${(filmT / duration) * 100}%` }} />
+                    <span
+                      className="dot"
+                      style={{ left: `${(filmT / duration) * 100}%` }}
+                    />
+                  </div>
+                  <span className="film-time">
+                    {fmt(filmT)} / {fmt(duration)}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* no likeness yet — composed placeholder + invite */}
+            {!loading && !portrait && (
+              <div className="ph">
+                <div className="mono">{product.mono}</div>
+                <div className="pm">
+                  The fitting is composed. Add your likeness below to see{" "}
+                  {product.name} resolved on you.
+                </div>
+              </div>
+            )}
+
+            {/* error */}
+            {!loading && portrait && error && !asset && (
+              <div className="ph">
+                <div className="mono">{product.mono}</div>
+                <div className="pm">{error}</div>
+              </div>
+            )}
+
+            {/* processing — shimmering dot-field */}
+            {loading && (
+              <div className="mproc">
+                <div className="dotfield" />
+                <div className="pl">{PROC_STEPS[procStep]}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* action rail */}
+        <div className="actrail">
+          <button
+            className={"act" + (wished ? " on" : "")}
+            onClick={() => toggleWish(product.id)}
+            title="Save"
           >
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="absolute right-4 top-4 z-10 text-ink transition-opacity hover:opacity-60"
-            >
-              <X size={20} strokeWidth={1.5} />
-            </button>
+            <Heart className="fillable" size={18} strokeWidth={1.4} />
+          </button>
+          <button className="act" onClick={download} disabled={!done} title="Download">
+            <Download size={18} strokeWidth={1.4} />
+          </button>
+          <button className="act" onClick={share} disabled={!done} title="Share">
+            <Share2 size={18} strokeWidth={1.4} />
+          </button>
+          <button className="act" title="More">
+            <MoreHorizontal size={18} strokeWidth={1.4} />
+          </button>
+        </div>
+      </div>
 
-            {/* LEFT — product */}
-            <div className="relative hidden aspect-[3/4] bg-[#f6f6f6] md:block">
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                sizes="50vw"
-                className="object-cover"
-              />
+      {/* ——— bottom: closet gallery + composer ——— */}
+      <div className="modal-foot">
+        {/* closet gallery panel */}
+        {closetOpen && (
+          <div className="closet">
+            <div className="closet-head">
+              <span className="ttl">Your Closet</span>
+              <span className="cnt">
+                {closet.length} {closet.length === 1 ? "item" : "items"}
+                {garments.length > 0 && ` · ${garments.length} selected`}
+              </span>
             </div>
-
-            {/* RIGHT — flow */}
-            <div className="flex flex-col gap-6 p-8 md:p-10">
-              <div>
-                <p className="eyebrow">{product.brand}</p>
-                <h3 className="mt-1 font-display text-2xl">{product.name}</h3>
-                <p className="mt-1 text-sm text-muted">{product.price}</p>
+            <div className="closet-grid">
+              <div
+                className={"closet-drop" + (dragging ? " drag" : "")}
+                onClick={() => closetInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  void uploadToCloset(e.dataTransfer.files);
+                }}
+              >
+                <Upload size={20} strokeWidth={1.4} />
+                <span className="dl">Upload or drop images</span>
               </div>
 
-              {!portrait ? (
-                <div className="flex flex-col gap-4 border border-hairline p-6 text-center">
-                  <p className="font-display text-lg">Add your portrait first</p>
-                  <p className="text-xs text-muted">
-                    OneTap uses the photo from your onboarding to visualize looks.
-                  </p>
-                  <Link href="/onboarding" className="btn-line">
-                    Upload a portrait
-                  </Link>
-                </div>
-              ) : phase.step === "options" ? (
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-14 w-12 overflow-hidden bg-[#f6f6f6]">
-                      <Image
-                        src={portrait}
-                        alt="Your portrait"
-                        fill
-                        sizes="48px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <p className="text-xs text-muted">
-                      Using your saved portrait. One tap to see it on you.
-                    </p>
-                  </div>
-                  <GenerationOptions onSelect={generate} />
-                </div>
-              ) : phase.step === "loading" ? (
-                <GenerationLoading kind={phase.kind} />
-              ) : phase.step === "result" ? (
-                <GeneratedResult
-                  look={phase.look}
-                  onReset={() => setPhase({ step: "options" })}
-                />
-              ) : (
-                <div className="flex flex-col gap-4 border border-hairline p-6 text-center">
-                  <p className="font-display text-lg">Something interrupted us</p>
-                  <p className="text-xs text-muted">{phase.message}</p>
-                  <button
-                    onClick={() => setPhase({ step: "options" })}
-                    className="btn-line"
+              {closet.map((url) => {
+                const on = garments.includes(url);
+                return (
+                  <div
+                    key={url}
+                    className={"citem" + (on ? " on" : "")}
+                    onClick={() => toggleSelect(url)}
                   >
-                    Try again
-                  </button>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" />
+                    {on && (
+                      <span className="check">
+                        <Check size={13} strokeWidth={2.4} />
+                      </span>
+                    )}
+                    <button
+                      className="del"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteFromCloset(url);
+                      }}
+                      aria-label="Delete"
+                    >
+                      <X size={12} strokeWidth={2} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {closet.length === 0 && (
+              <div className="closet-empty">
+                Your closet is empty — upload your clothes to try them on.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* composer */}
+        <div className="composer">
+          {/* references — likeness + selected items */}
+          <div className="composer-refs">
+            <div
+              className={"cref" + (portrait ? " you" : "")}
+              onClick={() => likenessRef.current?.click()}
+              title={portrait ? "Replace your likeness" : "Add your likeness"}
+            >
+              {portrait ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={portrait} alt="" />
+              ) : (
+                <div className="ph">
+                  <User size={18} strokeWidth={1.4} />
                 </div>
               )}
+              <div className="tag">You</div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+
+            {garments.map((g) => (
+              <div className="cref" key={g} title="Selected item">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={g} alt="" />
+                <button
+                  className="rm"
+                  onClick={() => toggleSelect(g)}
+                  aria-label="Remove"
+                >
+                  <X size={11} strokeWidth={2} />
+                </button>
+                <div className="tag">Item</div>
+              </div>
+            ))}
+
+            <button
+              className="cref-add"
+              onClick={() => setClosetOpen((v) => !v)}
+              title="Your closet — add or pick items"
+            >
+              <Plus size={18} strokeWidth={1.5} />
+            </button>
+          </div>
+
+          {/* input + modes + submit */}
+          <div className="composer-input">
+            <input
+              className="field"
+              type="text"
+              placeholder="Describe your edit, @ to reference images"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && portrait && !loading) composeCurrent();
+              }}
+            />
+            <div className="composer-modes">
+              {MODES.map(({ mode: m, label, Icon }) => (
+                <button
+                  key={m}
+                  className={"cmode" + (mode === m ? " on" : "")}
+                  onClick={() => setMode(m)}
+                >
+                  <Icon size={13} strokeWidth={1.5} /> {label}
+                </button>
+              ))}
+            </div>
+            <button
+              className="csubmit"
+              onClick={composeCurrent}
+              disabled={!portrait || loading}
+              title="Compose"
+            >
+              <ArrowUp size={18} strokeWidth={1.8} />
+            </button>
+          </div>
+        </div>
+
+        {/* hidden file inputs */}
+        <input
+          ref={likenessRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={(e) => readLikeness(e.target.files?.[0])}
+        />
+        <input
+          ref={closetInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={(e) => {
+            void uploadToCloset(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+    </div>
   );
 }

@@ -9,14 +9,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        canvas: "#ffffff",
-        ink: "#111111",
-        muted: "#666666",
-        hairline: "#eaeaea",
+        // OneTap Atelier palette — drawn from the brand guidelines.
+        // No pure white/black. Warm Stone is the sole accent.
+        noir: "#1A1814",
+        ivory: "#F5F0E8",
+        stone: "#C8B89A",
+        taupe: "#8C7B6B",
+        rose: "#E8D5C4",
+        ivoryPanel: "#EDE5D8",
+        ivoryDeep: "#E7DECF",
+        noirRaise: "#221F1A",
+        noirLine: "#312C25",
+        // Legacy aliases kept so existing utility classes re-theme automatically.
+        canvas: "#F5F0E8", // → ivory
+        ink: "#1A1814", // → noir
+        muted: "#8C7B6B", // → taupe
+        hairline: "rgba(200, 184, 154, 0.32)", // → stone-soft
       },
       fontFamily: {
-        display: ["var(--font-playfair)", "Georgia", "serif"],
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-cormorant)", "Georgia", "serif"],
+        sans: ["'Helvetica Neue'", "Helvetica", "Arial", "sans-serif"],
       },
       maxWidth: {
         editorial: "1440px",

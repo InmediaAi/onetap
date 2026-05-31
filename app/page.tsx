@@ -1,45 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
-import Hero from "@/components/Hero";
 import ProductGrid from "@/components/ProductGrid";
 import TryOnModal from "@/components/TryOnModal";
-import { products, type Product } from "@/lib/data/products";
-import { useAtelier } from "@/lib/store";
-import { useHydrated } from "@/lib/useHydrated";
+import { type Product } from "@/lib/data/products";
 
 export default function HomePage() {
-  const router = useRouter();
-  const hydrated = useHydrated();
-  const portrait = useAtelier((s) => s.portrait);
   const [active, setActive] = useState<Product | null>(null);
-
-  // Onboarding-first: send to portrait capture before the first try-on.
-  function handleTry(product: Product) {
-    if (hydrated && !portrait) {
-      router.push("/onboarding");
-      return;
-    }
-    setActive(product);
-  }
 
   return (
     <main>
       <Header />
-      <Hero onTry={() => handleTry(products[0])} />
-      <ProductGrid onTry={handleTry} />
-      <TryOnModal product={active} onClose={() => setActive(null)} />
 
-      <footer className="border-t border-hairline py-12 text-center">
-        <p className="font-display text-lg tracking-[0.2em]">
-          ONETAP <span className="italic">Atelier</span>
+      <div className="pagehead">
+        <h1>New In</h1>
+        <p>
+          The newest arrivals, edited for the season. Each piece may be seen on
+          you — a try-on, a turn, a ten-second film — before it is yours. Your
+          likeness is kept <u>private to you</u>.
         </p>
-        <p className="mt-2 text-[11px] uppercase tracking-luxe text-muted">
-          The right answer. Chosen for you.
-        </p>
+      </div>
+
+      <ProductGrid onTry={setActive} />
+
+      <footer className="foot">
+        <div className="foot-inner">
+          <span className="wordmark">OneTap Atelier</span>
+          <div className="fmeta">
+            <span className="label">Confidential — By Invitation</span>
+            <span className="label">&copy; MMXXVI</span>
+          </div>
+        </div>
       </footer>
+
+      <TryOnModal product={active} onClose={() => setActive(null)} />
     </main>
   );
 }

@@ -57,8 +57,8 @@ export default function UploadZone({
           void handleFile(e.dataTransfer.files?.[0]);
         }}
         className={cn(
-          "relative flex w-full items-center justify-center overflow-hidden border border-dashed border-hairline bg-[#fafafa] transition-colors",
-          dragging && "border-ink bg-[#f4f4f4]",
+          "relative flex w-full items-center justify-center overflow-hidden border border-dashed border-hairline bg-ivoryPanel transition-colors",
+          dragging && "border-stone bg-ivoryDeep",
           compact ? "aspect-square" : "aspect-[3/4]",
         )}
       >
@@ -96,7 +96,7 @@ export default function UploadZone({
         {value ? "Replace Image" : "Upload Image"}
       </button>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-taupe">{error}</p>}
     </div>
   );
 }

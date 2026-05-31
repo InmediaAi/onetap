@@ -46,7 +46,7 @@ export default function LookPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="relative mt-10 aspect-[3/4] w-full max-w-sm overflow-hidden bg-[#f6f6f6]"
+              className="relative mt-10 aspect-[3/4] w-full max-w-sm overflow-hidden bg-ivoryPanel"
             >
               {look.kind === "tryon" ? (
                 <Image

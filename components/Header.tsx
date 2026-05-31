@@ -1,46 +1,74 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Search, User } from "lucide-react";
+import { ChevronDown, Search, User, Heart, ShoppingBag } from "lucide-react";
+import { useAtelier } from "@/lib/store";
+import { useHydrated } from "@/lib/useHydrated";
 
-const NAV = ["New In", "The Edit", "Designers", "Atelier"];
+const CATEGORIES = [
+  "New In",
+  "Designers",
+  "Coats",
+  "Knitwear",
+  "Bags",
+  "Shoes",
+  "Jewellery",
+  "Editorial",
+];
 
 export default function Header() {
-  return (
-    <header className="sticky top-0 z-40 border-b border-hairline bg-canvas/90 backdrop-blur">
-      <div className="mx-auto flex max-w-editorial items-center justify-between px-6 py-5 md:px-10">
-        <nav className="hidden flex-1 items-center gap-8 md:flex">
-          {NAV.map((item) => (
-            <Link
-              key={item}
-              href="/"
-              className="text-[12px] uppercase tracking-luxe text-muted transition-colors hover:text-ink"
-            >
-              {item}
-            </Link>
-          ))}
-        </nav>
+  const [cat, setCat] = useState("New In");
+  const hydrated = useHydrated();
+  const count = useAtelier((s) => s.wishlist.length);
 
-        <Link
-          href="/"
-          className="flex-1 text-center font-display text-xl tracking-[0.22em] md:text-2xl"
-        >
-          ONETAP <span className="italic">Atelier</span>
+  return (
+    <header className="topbar">
+      <div className="topbar-row">
+        <div className="tb-left">
+          <span className="util label">
+            <span className="ut-label">Membership</span>
+            <span className="chev">
+              <ChevronDown size={11} strokeWidth={1.6} />
+            </span>
+          </span>
+        </div>
+
+        <Link href="/" className="wordmark brand">
+          OneTap Atelier
         </Link>
 
-        <div className="flex flex-1 items-center justify-end gap-5">
-          <button aria-label="Search" className="text-ink transition-opacity hover:opacity-60">
-            <Search size={18} strokeWidth={1.5} />
-          </button>
-          <Link
-            href="/onboarding"
-            aria-label="Profile"
-            className="text-ink transition-opacity hover:opacity-60"
-          >
-            <User size={18} strokeWidth={1.5} />
+        <div className="tb-right">
+          <span className="ic label" role="button" aria-label="Search">
+            <Search size={16} strokeWidth={1.4} />
+            <span className="label ut-label">Search</span>
+          </span>
+          <Link href="/onboarding" className="ic" aria-label="Profile">
+            <User size={17} strokeWidth={1.4} />
           </Link>
+          <span className="ic" role="button" aria-label="Saved">
+            <Heart size={17} strokeWidth={1.4} />
+          </span>
+          <span className="ic pill-count" role="button" aria-label="Bag">
+            <ShoppingBag size={17} strokeWidth={1.4} />
+            {hydrated && count > 0 && <span className="dot">{count}</span>}
+          </span>
         </div>
       </div>
+
+      <nav className="catnav">
+        <div className="catnav-inner">
+          {CATEGORIES.map((c) => (
+            <a
+              key={c}
+              className={c === cat ? "on" : ""}
+              onClick={() => setCat(c)}
+            >
+              {c}
+            </a>
+          ))}
+        </div>
+      </nav>
     </header>
   );
 }

@@ -1,40 +1,66 @@
 "use client";
 
-import Image from "next/image";
+import { Heart } from "lucide-react";
 import type { Product } from "@/lib/data/products";
+import { useAtelier } from "@/lib/store";
 
 export default function ProductCard({
   product,
+  index = 0,
   onTry,
 }: {
   product: Product;
+  index?: number;
   onTry: (product: Product) => void;
 }) {
+  const wished = useAtelier((s) => s.wishlist.includes(product.id));
+  const toggleWish = useAtelier((s) => s.toggleWish);
+
   return (
-    <div className="group flex flex-col">
-      <button
-        onClick={() => onTry(product)}
-        className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f6f6]"
-        aria-label={`Try on ${product.name}`}
-      >
-        <Image
+    <div className="card" style={{ animationDelay: `${(index % 8) * 0.04}s` }}>
+      <div className="ptile" onClick={() => onTry(product)}>
+        <div className="mono">{product.mono}</div>
+        {/* Real editorial image sits over the monogram placeholder. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="pimg"
           src={product.imageUrl}
           alt={`${product.brand} — ${product.name}`}
-          fill
-          sizes="(max-width: 768px) 100vw, 25vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+          loading="lazy"
         />
-        <span className="absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center bg-ink py-3 text-[11px] uppercase tracking-luxe text-canvas transition-transform duration-300 group-hover:translate-y-0">
-          OneTap Try-On
-        </span>
-      </button>
+        <div className="inset" />
 
-      <div className="mt-4 flex flex-col gap-1">
-        <p className="text-[11px] uppercase tracking-luxe text-muted">
-          {product.brand}
-        </p>
-        <p className="font-display text-base leading-snug">{product.name}</p>
-        <p className="text-sm text-ink">{product.price}</p>
+        <button
+          className={"heart" + (wished ? " on" : "")}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleWish(product.id);
+          }}
+          aria-label="Save"
+        >
+          <Heart size={17} strokeWidth={1.4} />
+        </button>
+
+        <div className="tile-cta">
+          <button
+            className="tryon-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTry(product);
+            }}
+          >
+            <span className="mk" /> OneTap Try-On
+          </button>
+        </div>
+      </div>
+
+      <div className="meta">
+        <span className="house">{product.brand}</span>
+        <span className="name">{product.name}</span>
+        <span className="price">{product.price}</span>
+        <button className="tryon-link" onClick={() => onTry(product)}>
+          <span className="mk" /> OneTap Try-On
+        </button>
       </div>
     </div>
   );

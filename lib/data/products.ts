@@ -1,9 +1,16 @@
 export interface Product {
   id: string;
   brand: string;
+  /** Monogram shown as the editorial placeholder behind the product image. */
+  mono: string;
   name: string;
   price: string;
   imageUrl: string;
+}
+
+/** Numeric value of a formatted price string (e.g. "$4,290" → 4290) for sorting. */
+export function priceValue(price: string) {
+  return Number(price.replace(/[^0-9.]/g, "")) || 0;
 }
 
 /**
@@ -13,6 +20,7 @@ export interface Product {
 export const products: Product[] = [
   {
     id: "the-row-coat",
+    mono: "TR",
     brand: "The Row",
     name: "Oversized Wool Coat",
     price: "$4,290",
@@ -21,6 +29,7 @@ export const products: Product[] = [
   },
   {
     id: "celine-blazer",
+    mono: "C",
     brand: "Celine",
     name: "Tailored Crepe Blazer",
     price: "$2,850",
@@ -29,6 +38,7 @@ export const products: Product[] = [
   },
   {
     id: "khaite-knit",
+    mono: "K",
     brand: "Khaite",
     name: "Cashmere Ribbed Knit",
     price: "$1,180",
@@ -37,6 +47,7 @@ export const products: Product[] = [
   },
   {
     id: "bottega-trouser",
+    mono: "BV",
     brand: "Bottega Veneta",
     name: "Pleated Wide Trouser",
     price: "$1,650",
@@ -45,6 +56,7 @@ export const products: Product[] = [
   },
   {
     id: "toteme-shirt",
+    mono: "T",
     brand: "Totême",
     name: "Silk Column Shirt",
     price: "$690",
@@ -53,6 +65,7 @@ export const products: Product[] = [
   },
   {
     id: "saint-laurent-dress",
+    mono: "SL",
     brand: "Saint Laurent",
     name: "Draped Jersey Dress",
     price: "$3,490",
@@ -61,6 +74,7 @@ export const products: Product[] = [
   },
   {
     id: "the-row-trench",
+    mono: "TR",
     brand: "The Row",
     name: "Belted Cotton Trench",
     price: "$3,950",
@@ -69,6 +83,7 @@ export const products: Product[] = [
   },
   {
     id: "celine-skirt",
+    mono: "C",
     brand: "Celine",
     name: "Wool Midi Skirt",
     price: "$1,250",
