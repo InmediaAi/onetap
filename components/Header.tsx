@@ -1,26 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Search, User, Heart, ShoppingBag } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-
-const CATEGORIES = [
-  "New In",
-  "Designers",
-  "Coats",
-  "Knitwear",
-  "Bags",
-  "Shoes",
-  "Jewellery",
-  "Editorial",
-];
+import PricingModal from "@/components/PricingModal";
 
 export default function Header() {
-  const [cat, setCat] = useState("New In");
   const hydrated = useHydrated();
   const count = useAtelier((s) => s.wishlist.length);
+  const credits = useAtelier((s) => s.credits);
+  const openPricing = useAtelier((s) => s.openPricing);
 
   return (
     <header className="topbar">
@@ -58,17 +48,17 @@ export default function Header() {
 
       <nav className="catnav">
         <div className="catnav-inner">
-          {CATEGORIES.map((c) => (
-            <a
-              key={c}
-              className={c === cat ? "on" : ""}
-              onClick={() => setCat(c)}
-            >
-              {c}
-            </a>
-          ))}
+          <a onClick={openPricing}>
+            Pricing
+            <span className="credits-chip">
+              {hydrated ? credits : "—"} credits
+            </span>
+          </a>
+          <a>My Closet Looks</a>
         </div>
       </nav>
+
+      <PricingModal />
     </header>
   );
 }

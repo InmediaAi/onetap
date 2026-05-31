@@ -9,15 +9,6 @@ export default async function HomePage() {
     <main>
       <Header />
 
-      <div className="pagehead">
-        <h1>New In</h1>
-        <p>
-          The newest arrivals, edited for the season. Each piece may be seen on
-          you — a try-on, a turn, a ten-second film — before it is yours. Your
-          likeness is kept <u>private to you</u>.
-        </p>
-      </div>
-
       <CatalogClient products={products} />
 
       <footer className="foot">

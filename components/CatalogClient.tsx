@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import HeroTryOn from "@/components/HeroTryOn";
 import ProductGrid from "@/components/ProductGrid";
 import TryOnModal from "@/components/TryOnModal";
 import { type Product } from "@/lib/data/products";
@@ -11,6 +12,7 @@ export default function CatalogClient({ products }: { products: Product[] }) {
 
   return (
     <>
+      <HeroTryOn onTry={setActive} />
       <ProductGrid products={products} onTry={setActive} />
       <TryOnModal product={active} onClose={() => setActive(null)} />
     </>

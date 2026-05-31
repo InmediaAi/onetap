@@ -24,6 +24,7 @@ import type { Product } from "@/lib/data/products";
 import type { GenerationKind } from "@/lib/ai/types";
 import { useAtelier } from "@/lib/store";
 import { createId } from "@/lib/utils";
+import { CREDIT_COST } from "@/lib/credits";
 
 type Mode = "fitting" | "turn" | "film";
 
@@ -106,7 +107,7 @@ export default function TryOnModal({
   const likenessRef = useRef<HTMLInputElement>(null);
   const closetInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Latest selection, read synchronously inside generate()/recompose().
+  // Latest selection, read synchronously inside generate().
   const garmentsRef = useRef<string[]>([]);
   const inflight = useRef<Set<GenerationKind>>(new Set());
 
@@ -121,6 +122,15 @@ export default function TryOnModal({
     async (kind: GenerationKind) => {
       if (!product || !portrait) return;
       if (inflight.current.has(kind)) return;
+
+      // Gate on credits BEFORE any paid API call (read live balance).
+      const cost = CREDIT_COST[kind];
+      if (useAtelier.getState().credits < cost) {
+        useAtelier.getState().openPricing();
+        setError(`Need ${cost} credits — top up to compose.`);
+        return;
+      }
+
       inflight.current.add(kind);
       setError(null);
       setLoadingKind(kind);
@@ -161,6 +171,8 @@ export default function TryOnModal({
           posterUrl: data.posterUrl,
           createdAt: Date.now(),
         });
+        // Charge only on success (never for a failed generation).
+        useAtelier.getState().spendCredits(cost);
         setLoadingKind((cur) => (cur === kind ? null : cur));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Generation failed");
@@ -172,7 +184,8 @@ export default function TryOnModal({
     [product, portrait, results.tryon, prompt, addLook],
   );
 
-  // Open / product change → reset, then compose the fitting if a likeness exists.
+  // Open / product change → reset only. Generation never starts automatically;
+  // the user must tap the compose (↑) arrow (image/video APIs are paid).
   useEffect(() => {
     if (!product) return;
     setMode("fitting");
@@ -184,18 +197,8 @@ export default function TryOnModal({
     garmentsRef.current = [];
     setPrompt("");
     setClosetOpen(false);
-    if (portrait) generate("tryon");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
-
-  // Switching modes lazily generates that output.
-  useEffect(() => {
-    if (!product || !portrait) return;
-    if (!results[current.kind] && loadingKind !== current.kind) {
-      generate(current.kind);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
 
   // Cycle the processing label while a generation is in flight.
   useEffect(() => {
@@ -234,12 +237,11 @@ export default function TryOnModal({
 
   if (!product) return null;
 
-  // Recompose from scratch whenever the base (likeness or selection) changes.
-  function recompose() {
+  // Clear now-stale outputs when the base (likeness or selection) changes.
+  // Does NOT regenerate — the user re-composes manually with the ↑ arrow.
+  function resetOutputs() {
     setResults({});
-    setMode("fitting");
     setError(null);
-    if (portrait) generate("tryon");
   }
 
   function syncGarments(next: string[]) {
@@ -250,7 +252,7 @@ export default function TryOnModal({
   async function readLikeness(file?: File) {
     if (!file || !file.type.startsWith("image/")) return;
     setPortrait(await readAsDataURL(file));
-    recompose();
+    resetOutputs();
   }
 
   // Selection (closet item → try on)
@@ -259,7 +261,7 @@ export default function TryOnModal({
       ? garmentsRef.current.filter((u) => u !== url)
       : [...garmentsRef.current, url];
     syncGarments(next);
-    recompose();
+    resetOutputs();
   }
 
   async function uploadToCloset(files?: FileList | null) {
@@ -272,18 +274,19 @@ export default function TryOnModal({
       ...garmentsRef.current,
       ...urls.filter((u) => !garmentsRef.current.includes(u)),
     ]);
-    recompose();
+    resetOutputs();
   }
 
   function deleteFromCloset(url: string) {
     removeCloset(url);
     if (garmentsRef.current.includes(url)) {
       syncGarments(garmentsRef.current.filter((u) => u !== url));
-      recompose();
+      resetOutputs();
     }
   }
 
   function composeCurrent() {
+    setClosetOpen(false); // closet auto-hides once a generation starts
     setResults((r) => ({ ...r, [current.kind]: undefined }));
     generate(current.kind);
   }
@@ -445,6 +448,17 @@ export default function TryOnModal({
               </div>
             )}
 
+            {/* likeness ready, nothing generated yet — invite to compose */}
+            {!loading && portrait && !asset && !error && (
+              <div className="ph">
+                <div className="mono">{product.mono}</div>
+                <div className="pm">
+                  Select Try-On, 360° or Film, then tap the arrow to compose
+                  your {current.label}.
+                </div>
+              </div>
+            )}
+
             {/* error */}
             {!loading && portrait && error && !asset && (
               <div className="ph">
@@ -491,10 +505,19 @@ export default function TryOnModal({
           <div className="closet">
             <div className="closet-head">
               <span className="ttl">Your Closet</span>
-              <span className="cnt">
-                {closet.length} {closet.length === 1 ? "item" : "items"}
-                {garments.length > 0 && ` · ${garments.length} selected`}
-              </span>
+              <div className="closet-head-right">
+                <span className="cnt">
+                  {closet.length} {closet.length === 1 ? "item" : "items"}
+                  {garments.length > 0 && ` · ${garments.length} selected`}
+                </span>
+                <button
+                  className="closet-close"
+                  onClick={() => setClosetOpen(false)}
+                  aria-label="Close closet"
+                >
+                  <X size={14} strokeWidth={1.6} />
+                </button>
+              </div>
             </div>
             <div className="closet-grid">
               <div
@@ -619,11 +642,12 @@ export default function TryOnModal({
                 </button>
               ))}
             </div>
+            <span className="cost-hint">{CREDIT_COST[current.kind]} cr</span>
             <button
               className="csubmit"
               onClick={composeCurrent}
               disabled={!portrait || loading}
-              title="Compose"
+              title={`Compose · ${CREDIT_COST[current.kind]} credits`}
             >
               <ArrowUp size={18} strokeWidth={1.8} />
             </button>
