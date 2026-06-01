@@ -25,6 +25,12 @@ import type { GenerationKind } from "@/lib/ai/types";
 import { useAtelier } from "@/lib/store";
 import { createId } from "@/lib/utils";
 import { CREDIT_COST } from "@/lib/credits";
+import {
+  FILM_FORMATS,
+  getFilmFormat,
+  buildFilmPrompt,
+  type FilmOpts,
+} from "@/lib/film/formats";
 
 type Mode = "fitting" | "turn" | "film";
 
@@ -98,6 +104,11 @@ export default function TryOnModal({
   const [closetOpen, setClosetOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
 
+  // Film (influencer reel) direction.
+  const [filmFormat, setFilmFormat] = useState<string | null>(null);
+  const [filmOpts, setFilmOpts] = useState<FilmOpts>({});
+  const [filmOpen, setFilmOpen] = useState(false);
+
   // film playback (bound to the real <video> element)
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -107,8 +118,10 @@ export default function TryOnModal({
   const likenessRef = useRef<HTMLInputElement>(null);
   const closetInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Latest selection, read synchronously inside generate().
+  // Latest selections, read synchronously inside generate().
   const garmentsRef = useRef<string[]>([]);
+  const filmFormatRef = useRef<string | null>(null);
+  const filmOptsRef = useRef<FilmOpts>({});
   const inflight = useRef<Set<GenerationKind>>(new Set());
 
   const open = Boolean(product);
@@ -144,7 +157,18 @@ export default function TryOnModal({
                 references: garmentsRef.current,
                 prompt: prompt || undefined,
               }
-            : { image: results.tryon?.imageUrl ?? portrait, prompt: prompt || undefined };
+            : {
+                image: results.tryon?.imageUrl ?? portrait,
+                prompt:
+                  kind === "video"
+                    ? buildFilmPrompt(
+                        filmFormatRef.current,
+                        filmOptsRef.current,
+                        product.name,
+                        prompt,
+                      )
+                    : prompt || undefined,
+              };
 
         const res = await fetch(ENDPOINTS[kind], {
           method: "POST",
@@ -197,6 +221,11 @@ export default function TryOnModal({
     garmentsRef.current = [];
     setPrompt("");
     setClosetOpen(false);
+    setFilmFormat(null);
+    setFilmOpts({});
+    filmFormatRef.current = null;
+    filmOptsRef.current = {};
+    setFilmOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
@@ -216,7 +245,8 @@ export default function TryOnModal({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (closetOpen) setClosetOpen(false);
+      if (filmOpen) setFilmOpen(false);
+      else if (closetOpen) setClosetOpen(false);
       else onClose();
     };
     document.addEventListener("keydown", onKey);
@@ -225,7 +255,7 @@ export default function TryOnModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose, closetOpen]);
+  }, [open, onClose, closetOpen, filmOpen]);
 
   // Stop film playback when leaving film mode.
   useEffect(() => {
@@ -285,8 +315,38 @@ export default function TryOnModal({
     }
   }
 
+  // Film direction (only affects the Film output's prompt).
+  function pickFilmFormat(id: string) {
+    filmFormatRef.current = id;
+    setFilmFormat(id);
+    filmOptsRef.current = {};
+    setFilmOpts({});
+    resetOutputs();
+  }
+
+  function toggleFilmOpt(fieldId: string, val: string, multi: boolean) {
+    const cur = filmOptsRef.current[fieldId];
+    let next: string | string[] | null;
+    if (multi) {
+      const arr = Array.isArray(cur) ? cur : [];
+      next = arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
+    } else {
+      next = cur === val ? null : val;
+    }
+    const nextOpts = { ...filmOptsRef.current, [fieldId]: next };
+    filmOptsRef.current = nextOpts;
+    setFilmOpts(nextOpts);
+    resetOutputs();
+  }
+
+  function isFilmOptOn(fieldId: string, val: string) {
+    const cur = filmOpts[fieldId];
+    return Array.isArray(cur) ? cur.includes(val) : cur === val;
+  }
+
   function composeCurrent() {
     setClosetOpen(false); // closet auto-hides once a generation starts
+    setFilmOpen(false);
     setResults((r) => ({ ...r, [current.kind]: undefined }));
     generate(current.kind);
   }
@@ -453,8 +513,9 @@ export default function TryOnModal({
               <div className="ph">
                 <div className="mono">{product.mono}</div>
                 <div className="pm">
-                  Select Try-On, 360° or Film, then tap the arrow to compose
-                  your {current.label}.
+                  {mode === "film" && !filmFormat
+                    ? "Choose a film style below, then tap the arrow to create your reel."
+                    : `Select Try-On, 360° or Film, then tap the arrow to compose your ${current.label}.`}
                 </div>
               </div>
             )}
@@ -575,6 +636,54 @@ export default function TryOnModal({
           </div>
         )}
 
+        {/* film direction panel */}
+        {filmOpen && mode === "film" && (
+          <div className="filmopts">
+            <div className="closet-head">
+              <span className="ttl">Film Style</span>
+              <button
+                className="closet-close"
+                onClick={() => setFilmOpen(false)}
+                aria-label="Close film styles"
+              >
+                <X size={14} strokeWidth={1.6} />
+              </button>
+            </div>
+
+            <div className="film-formats">
+              {FILM_FORMATS.map(({ id, label, sub, Icon }) => (
+                <button
+                  key={id}
+                  className={"film-fmt" + (filmFormat === id ? " on" : "")}
+                  onClick={() => pickFilmFormat(id)}
+                >
+                  <Icon size={17} strokeWidth={1.4} />
+                  <span className="ff-name">{label}</span>
+                  <span className="ff-sub">{sub}</span>
+                </button>
+              ))}
+            </div>
+
+            {filmFormat &&
+              getFilmFormat(filmFormat)!.fields.map((f) => (
+                <div className="film-field" key={f.id}>
+                  <div className="ff-lbl">{f.label}</div>
+                  <div className="chips">
+                    {f.opts.map((o) => (
+                      <span
+                        key={o}
+                        className={"chip" + (isFilmOptOn(f.id, o) ? " on" : "")}
+                        onClick={() => toggleFilmOpt(f.id, o, f.multi)}
+                      >
+                        {o}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
+
         {/* composer */}
         <div className="composer">
           {/* references — likeness + selected items */}
@@ -612,12 +721,32 @@ export default function TryOnModal({
 
             <button
               className="cref-add"
-              onClick={() => setClosetOpen((v) => !v)}
+              onClick={() => {
+                setFilmOpen(false);
+                setClosetOpen((v) => !v);
+              }}
               title="Your closet — add or pick items"
             >
               <Plus size={18} strokeWidth={1.5} />
             </button>
           </div>
+
+          {/* film-style trigger (Film mode only) */}
+          {mode === "film" && (
+            <button
+              className={"film-trigger" + (filmOpen ? " on" : "")}
+              onClick={() => {
+                setClosetOpen(false);
+                setFilmOpen((v) => !v);
+              }}
+            >
+              <Film size={14} strokeWidth={1.5} />
+              <span>
+                Film style ·{" "}
+                <b>{filmFormat ? getFilmFormat(filmFormat)!.label : "Choose a style"}</b>
+              </span>
+            </button>
+          )}
 
           {/* input + modes + submit */}
           <div className="composer-input">
@@ -628,7 +757,9 @@ export default function TryOnModal({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && portrait && !loading) composeCurrent();
+                const filmBlocked = mode === "film" && !filmFormat;
+                if (e.key === "Enter" && portrait && !loading && !filmBlocked)
+                  composeCurrent();
               }}
             />
             <div className="composer-modes">
@@ -646,7 +777,7 @@ export default function TryOnModal({
             <button
               className="csubmit"
               onClick={composeCurrent}
-              disabled={!portrait || loading}
+              disabled={!portrait || loading || (mode === "film" && !filmFormat)}
               title={`Compose · ${CREDIT_COST[current.kind]} credits`}
             >
               <ArrowUp size={18} strokeWidth={1.8} />

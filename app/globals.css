@@ -826,6 +826,7 @@
   justify-content: center;
   gap: 22px;
   padding: 8px 28px 18px;
+  overflow: hidden; /* media is fixed-height; clip rather than overlap top/foot */
 }
 
 /* thumbnail rail */
@@ -1608,6 +1609,123 @@
   padding: 8px 0 2px;
 }
 
+/* ———————————————————————— FILM STYLE PANEL ———————————————————————— */
+.filmopts {
+  width: min(680px, calc(100% - 40px));
+  margin: 0 auto;
+  background: var(--noir-raise);
+  border: 1px solid var(--stone-soft);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 48vh;
+  overflow-y: auto;
+  animation: closetIn 0.3s var(--ease) both;
+}
+
+/* format cards */
+.film-formats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.film-fmt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--stone-soft);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ivory);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+}
+.film-fmt:hover {
+  border-color: var(--stone);
+}
+.film-fmt.on {
+  border-color: var(--stone);
+  background: rgba(200, 184, 154, 0.12);
+}
+.film-fmt svg {
+  color: var(--stone);
+}
+.film-fmt .ff-name {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.film-fmt .ff-sub {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--taupe);
+  line-height: 1.35;
+}
+
+/* option fields (chips reuse .chips/.chip but on a dark panel) */
+.film-field .ff-lbl {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-bottom: 7px;
+}
+.filmopts .chip {
+  color: rgba(245, 240, 232, 0.82);
+  border-color: rgba(200, 184, 154, 0.28);
+}
+.filmopts .chip:hover {
+  color: var(--ivory);
+  border-color: var(--stone);
+}
+.filmopts .chip.on {
+  background: var(--stone);
+  color: var(--noir);
+  border-color: var(--stone);
+}
+
+/* composer trigger for the film panel */
+.film-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--stone-soft);
+  border-radius: 30px;
+  color: rgba(245, 240, 232, 0.78);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  transition: border-color 0.25s var(--ease), color 0.25s var(--ease);
+}
+.film-trigger:hover,
+.film-trigger.on {
+  border-color: var(--stone);
+  color: var(--ivory);
+}
+.film-trigger svg {
+  color: var(--stone);
+  flex: none;
+}
+.film-trigger b {
+  color: var(--ivory);
+  font-weight: 500;
+}
+
 /* ———————————————————————————— PRICING / CREDITS ———————————————————————————— */
 .credits-chip {
   margin-left: 8px;
@@ -1791,6 +1909,120 @@
   }
   .media {
     height: 60vh;
+  }
+}
+
+/* ——— Phones ——— */
+@media (max-width: 640px) {
+  /* header */
+  .wordmark.brand {
+    font-size: 21px;
+    letter-spacing: 0.04em;
+  }
+  .topbar-row {
+    padding: 12px 16px;
+  }
+  .tb-right {
+    gap: 18px;
+  }
+  .catnav-inner {
+    padding: 11px 16px;
+    gap: 18px;
+  }
+  .credits-chip {
+    margin-left: 6px;
+  }
+
+  /* hero */
+  .hero {
+    padding: 30px 18px 28px;
+  }
+
+  /* footer stacks */
+  .foot {
+    padding: 40px 18px 36px;
+  }
+  .foot-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .foot .fmeta {
+    text-align: left;
+  }
+
+  /* ——— try-on modal ——— */
+  .modal-top {
+    padding: 14px 16px;
+  }
+  .modal-top .mt-info .n {
+    font-size: 18px;
+  }
+  .modal-top .mt-right {
+    gap: 14px;
+  }
+  .modal-stage {
+    gap: 0;
+    padding: 6px 12px 12px;
+  }
+  /* smaller frame so the composer (+ an open panel) always fits the viewport */
+  .media {
+    height: 46vh;
+  }
+
+  /* action rail — compact, hugging the edge */
+  .actrail {
+    right: 10px;
+    gap: 9px;
+  }
+  .act {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* composer reflows into rows: input · modes · (cost + send) */
+  .modal-foot {
+    padding: 6px 12px 16px;
+  }
+  .composer {
+    width: calc(100% - 24px);
+    padding: 11px;
+    gap: 9px;
+  }
+  .composer-input {
+    gap: 9px;
+  }
+  .composer-input .field {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+  .composer-modes {
+    flex-basis: 100%;
+    justify-content: space-between;
+  }
+  .cost-hint {
+    margin-left: auto;
+  }
+
+  /* panels shrink + fit on a phone */
+  .closet,
+  .filmopts {
+    width: calc(100% - 24px);
+    max-height: 38vh;
+  }
+  .closet-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+  .film-formats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* pricing modal */
+  .pricing-card {
+    padding: 26px 20px 18px;
+  }
+  .pricing-balance {
+    font-size: 38px;
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   title: "OneTap Atelier — New In",
   description:
     "A private edit of the season's most considered pieces — each seen on you before it is yours.",
+};
+
+// Mobile-first: lock to device width, allow user zoom (accessibility).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#1A1814",
 };
 
 export default function RootLayout({

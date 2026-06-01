@@ -16,6 +16,8 @@ export interface TryOnInput {
 export interface VideoInput {
   /** Source image to animate — typically the generated try-on image. */
   image: string;
+  /** Optional directive prompt (e.g. the built influencer-film brief). */
+  prompt?: string;
 }
 
 export interface TryOnResult {

@@ -110,18 +110,18 @@ export class KlingProvider implements VideoProvider {
   }
 
   generate360(input: VideoInput): Promise<VideoResult> {
-    return this.run(
+    const prompt =
+      input.prompt?.trim() ||
       "The subject performs a slow, controlled 360-degree turn in place, " +
-        "studio lighting, fashion lookbook, smooth rotation, no camera shake.",
-      input.image,
-    );
+        "studio lighting, fashion lookbook, smooth rotation, no camera shake.";
+    return this.run(prompt, input.image);
   }
 
   generateVideo(input: VideoInput): Promise<VideoResult> {
-    return this.run(
+    const prompt =
+      input.prompt?.trim() ||
       "Cinematic 10-second luxury fashion clip, model moving elegantly, " +
-        "editorial styling, soft natural light, premium quiet-luxury mood.",
-      input.image,
-    );
+        "editorial styling, soft natural light, premium quiet-luxury mood.";
+    return this.run(prompt, input.image);
   }
 }
