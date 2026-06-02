@@ -49,6 +49,16 @@
   .shimmer {
     @apply relative overflow-hidden bg-[#f4f4f4];
   }
+
+  /* 360 turn + loading bar (used by the Try-On stage) */
+  @keyframes rotateY360 {
+    from { transform: rotateY(0); }
+    to { transform: rotateY(360deg); }
+  }
+  @keyframes barslide {
+    0% { left: -40%; }
+    100% { left: 100%; }
+  }
   .shimmer::after {
     content: "";
     @apply absolute inset-0 -translate-x-full animate-shimmer;
