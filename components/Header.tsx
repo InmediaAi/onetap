@@ -1,28 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Search, User, Heart, ShoppingBag } from "lucide-react";
-import { useAtelier } from "@/lib/store";
-import { useHydrated } from "@/lib/useHydrated";
+import { usePathname } from "next/navigation";
+import { Search, User } from "lucide-react";
 import PricingModal from "@/components/PricingModal";
 
+const NAV = [
+  { href: "/", label: "OneTap Curator" },
+  { href: "/tryon", label: "OneTap 360° TryOn" },
+  { href: "/creator", label: "OneTap Creator" },
+  { href: "/pricing", label: "Pricing" },
+];
+
 export default function Header() {
-  const hydrated = useHydrated();
-  const count = useAtelier((s) => s.wishlist.length);
-  const credits = useAtelier((s) => s.credits);
-  const openPricing = useAtelier((s) => s.openPricing);
+  const pathname = usePathname();
 
   return (
     <header className="topbar">
       <div className="topbar-row">
-        <div className="tb-left">
-          <span className="util label">
-            <span className="ut-label">Membership</span>
-            <span className="chev">
-              <ChevronDown size={11} strokeWidth={1.6} />
-            </span>
-          </span>
-        </div>
+        <div className="tb-left" />
 
         <Link href="/" className="wordmark brand">
           OneTap Atelier
@@ -36,25 +32,20 @@ export default function Header() {
           <Link href="/onboarding" className="ic" aria-label="Profile">
             <User size={17} strokeWidth={1.4} />
           </Link>
-          <span className="ic" role="button" aria-label="Saved">
-            <Heart size={17} strokeWidth={1.4} />
-          </span>
-          <span className="ic pill-count" role="button" aria-label="Bag">
-            <ShoppingBag size={17} strokeWidth={1.4} />
-            {hydrated && count > 0 && <span className="dot">{count}</span>}
-          </span>
         </div>
       </div>
 
       <nav className="catnav">
         <div className="catnav-inner">
-          <a onClick={openPricing}>
-            Pricing
-            <span className="credits-chip">
-              {hydrated ? credits : "—"} credits
-            </span>
-          </a>
-          <a>My Closet Looks</a>
+          {NAV.map(({ href, label }) => {
+            const active =
+              href === "/" ? pathname === "/" : pathname.startsWith(href);
+            return (
+              <Link key={href} href={href} className={active ? "on" : ""}>
+                {label}
+              </Link>
+            );
+          })}
         </div>
       </nav>
 

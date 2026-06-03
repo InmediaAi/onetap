@@ -6,20 +6,7 @@
       "Bash(curl -s http://localhost:3000/api/ai-status)",
       "Bash(curl -s -w \"  [HTTP %{http_code}]\\\\n\" -X POST http://localhost:3000/api/generate-image -H 'Content-Type: application/json' -d '{\"userImage\":\"data:x\",\"productImage\":\"https://example.com/p.jpg\"}')",
       "Bash(ps -p 97077 -o pid=,comm=)",
-      "Bash(curl -s -o /dev/null -w '%{http_code}\\\\n' -X POST http://localhost:3100/api/admin/auth -H 'Content-Type: application/json' -d '{\"password\":\"nope\"}')",
-      "Bash(curl -s -X POST http://localhost:3100/api/admin/auth -H 'Content-Type: application/json' -d '{\"password\":\"test123\"}')",
-      "Bash(curl -s -X POST http://localhost:3100/api/admin/scrape-product -H 'Content-Type: application/json' -d '{\"password\":\"test123\",\"url\":\"http://localhost:8080/x\"}')",
-      "Bash(curl -s -X POST http://localhost:3100/api/admin/scrape-product -H 'Content-Type: application/json' -d '{\"password\":\"test123\",\"url\":\"http://169.254.169.254/latest/meta-data\"}')",
-      "Bash(curl -s --max-time 25 -X POST http://localhost:3100/api/admin/scrape-product -H 'Content-Type: application/json' -d '{\"password\":\"test123\",\"url\":\"__TRACKED_VAR__\"}')",
-      "Bash(curl -s -X POST http://localhost:3100/api/extract-check -H 'Content-Type: application/json' -d @/tmp/jsonld.json)",
-      "Bash(curl -s -X POST http://localhost:3100/api/extract-check -H 'Content-Type: application/json' -d @/tmp/ogonly.json)",
-      "Bash(pkill -f \"next dev\")",
-      "Bash(pkill -f \"next-server\")",
-      "Bash(git check-ignore *)",
-      "Bash(npm run *)",
-      "Bash(echo \"pid $!\")",
-      "Bash(curl -s -X POST http://localhost:3000/api/admin/auth -H 'Content-Type: application/json' -d '{\"password\":\"admin123\"}')",
-      "Bash(curl -s http://localhost:3000/api/products/test-house-verification-sample-coat)"
+      "Bash(node -e ' *)"
     ]
   }
 }

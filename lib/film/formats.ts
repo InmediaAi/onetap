@@ -32,6 +32,7 @@ export interface FilmFormat {
   sub: string;
   note: string;
   Icon: LucideIcon;
+  trending?: boolean;
   fields: FilmField[];
   build: (o: FilmOpts) => string;
 }
@@ -67,6 +68,7 @@ export const FILM_FORMATS: FilmFormat[] = [
   },
   {
     id: "runway",
+    trending: true,
     label: "Runway model",
     sub: "Catwalk · fashion show energy",
     note: "Model walks a runway in the look",
@@ -82,6 +84,7 @@ export const FILM_FORMATS: FilmFormat[] = [
   },
   {
     id: "reveal",
+    trending: true,
     label: "Outfit reveal",
     sub: "Dramatic reveal · shareable moment",
     note: "One powerful reveal of the look",
@@ -97,6 +100,7 @@ export const FILM_FORMATS: FilmFormat[] = [
   },
   {
     id: "slowliving",
+    trending: true,
     label: "Slow living",
     sub: "Atmospheric B-roll · no script",
     note: "The look lives naturally in a beautiful scene",
@@ -127,6 +131,7 @@ export const FILM_FORMATS: FilmFormat[] = [
   },
   {
     id: "fashionweek",
+    trending: true,
     label: "Fashion week moment",
     sub: "Front row · event · street energy",
     note: "The look in a fashion week context",
@@ -142,6 +147,7 @@ export const FILM_FORMATS: FilmFormat[] = [
   },
   {
     id: "grwm",
+    trending: true,
     label: "GRWM",
     sub: "Get ready · personal & real",
     note: "Styling the look in a getting-ready moment",

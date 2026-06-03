@@ -32,6 +32,8 @@ interface AtelierState {
   credits: number;
   /** Transient UI: whether the Pricing/top-up modal is open (not persisted). */
   pricingOpen: boolean;
+  /** Mock-selected subscription plan. */
+  plan: "essential" | "pro" | null;
   setPortrait: (dataUrl: string) => void;
   clearPortrait: () => void;
   signIn: () => void;
@@ -48,6 +50,7 @@ interface AtelierState {
   spendCredits: (n: number) => boolean;
   openPricing: () => void;
   closePricing: () => void;
+  setPlan: (plan: "essential" | "pro") => void;
 }
 
 export const useAtelier = create<AtelierState>()(
@@ -62,6 +65,7 @@ export const useAtelier = create<AtelierState>()(
       closet: [],
       credits: STARTING_CREDITS,
       pricingOpen: false,
+      plan: null,
       setPortrait: (dataUrl) => set({ portrait: dataUrl }),
       clearPortrait: () => set({ portrait: null }),
       signIn: () => set({ signedIn: true }),
@@ -91,6 +95,7 @@ export const useAtelier = create<AtelierState>()(
       },
       openPricing: () => set({ pricingOpen: true }),
       closePricing: () => set({ pricingOpen: false }),
+      setPlan: (plan) => set({ plan }),
     }),
     {
       name: "onetap-atelier",
@@ -104,6 +109,7 @@ export const useAtelier = create<AtelierState>()(
         wishlist: s.wishlist,
         closet: s.closet,
         credits: s.credits,
+        plan: s.plan,
       }),
     },
   ),
