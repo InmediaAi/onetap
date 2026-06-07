@@ -11,6 +11,8 @@ export interface TryOnInput {
   userImage: string;
   /** Hosted URL of the product image. */
   productImage: string;
+  /** Optional styling/fit directive (predefined try-on prompt). */
+  prompt?: string;
 }
 
 export interface VideoInput {

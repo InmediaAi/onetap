@@ -621,3 +621,36 @@ begin
      set topup_balance = topup_balance + greatest(p_qty, 0), updated_at = now()
    where user_id = p_user;
 end; $$;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION: every user gets a 'free' subscription row at signup.
+-- The free allowance is LIFETIME (no monthly reset): current_period_end stays
+-- NULL, so consume_video() counts free usage on this row but never resets it.
+-- Limit comes from billing_plans.free.video_limit (admin-editable). Upgrading to
+-- a paid plan reuses the same row (webhook upsert on user_id).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Allow 'free' as a plan value.
+alter table subscriptions drop constraint if exists subscriptions_plan_check;
+alter table subscriptions
+  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro'));
+
+-- Seed a free subscription on signup (profile + free sub). Lifetime: end = NULL.
+create or replace function handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into profiles (user_id, email)
+    values (new.id, new.email)
+    on conflict (user_id) do nothing;
+  insert into subscriptions (user_id, plan, status, current_period_start)
+    values (new.id, 'free', 'active', now())
+    on conflict (user_id) do nothing;
+  return new;
+end; $$;
+
+-- Backfill: give existing users (no subscription yet) a free row.
+insert into subscriptions (user_id, plan, status, current_period_start)
+  select p.user_id, 'free', 'active', now()
+  from profiles p
+  where not exists (select 1 from subscriptions s where s.user_id = p.user_id)
+on conflict (user_id) do nothing;

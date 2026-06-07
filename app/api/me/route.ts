@@ -49,11 +49,25 @@ export async function GET() {
       sign(profile?.model_url),
     ]);
 
-  const active = sub?.status === "active";
-  const planId = (active ? (sub?.plan as PlanId) : null) ?? null;
-
   // Limits + top-up config come from the admin-editable DB tables (seed fallback).
   const { plans, config } = await getPlans();
+
+  // Everyone now has a subscriptions row (free | starter | pro). `planId` stays
+  // PAID-only (null for free) so all paid-only UI/topup gating is unchanged.
+  const tier = (sub?.plan as "free" | PlanId | undefined) ?? null;
+  const active = sub?.status === "active";
+  const isPaid = active && (tier === "starter" || tier === "pro");
+  const planId = isPaid ? (tier as PlanId) : null;
+  const videosUsed = sub?.videos_used ?? 0;
+
+  // Free allowance is lifetime: count from the free row when present, else fall
+  // back to the legacy profiles.free_trial_used counter (users without a row).
+  const freeTrialRemaining =
+    tier === "free"
+      ? Math.max(0, videoLimitOf(plans, "free") - videosUsed)
+      : tier === null
+        ? Math.max(0, freeTrialLimit(plans) - (profile?.free_trial_used ?? 0))
+        : 0;
 
   return NextResponse.json({
     authed: true,
@@ -76,17 +90,14 @@ export async function GET() {
       planId,
       planName: planNameOf(plans, planId),
       status: sub?.status ?? null,
-      videosUsed: sub?.videos_used ?? 0,
-      videoLimit: videoLimitOf(plans, planId),
+      videosUsed,
+      videoLimit: isPaid ? videoLimitOf(plans, planId) : 0,
       topupBalance: sub?.topup_balance ?? 0,
       topupUnitPrice: config.topupUnitPrice,
       topupCurrency: config.topupCurrency,
       topupEnabled: config.topupEnabled,
       currentPeriodEnd: sub?.current_period_end ?? null,
-      freeTrialRemaining: Math.max(
-        0,
-        freeTrialLimit(plans) - (profile?.free_trial_used ?? 0),
-      ),
+      freeTrialRemaining,
     },
   });
 }

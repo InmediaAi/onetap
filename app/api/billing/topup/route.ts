@@ -30,13 +30,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Top-ups are not available" }, { status: 403 });
   }
 
-  // Require an active subscription (top-ups sit on top of a plan).
+  // Require an active PAID subscription (free users have an active 'free' row).
   const { data: sub } = await sb
     .from("subscriptions")
-    .select("status")
+    .select("status, plan")
     .eq("user_id", user.id)
     .maybeSingle();
-  if (sub?.status !== "active") {
+  if (sub?.status !== "active" || sub.plan === "free") {
     return NextResponse.json(
       { error: "An active subscription is required to buy top-ups." },
       { status: 403 },

@@ -166,7 +166,6 @@ export default function TryOnModal({
 
   const showingTurn = view === "turn" && Boolean(turn?.videoUrl);
   const shownAsset = showingTurn ? turn : tryon;
-  const bothReady = Boolean(tryon?.imageUrl && turn?.videoUrl);
   const composingFitting = tryonLoading && !tryon;
 
   function download() {
@@ -214,6 +213,44 @@ export default function TryOnModal({
 
       {/* stage */}
       <div className="modal-stage">
+        {/* left thumbnail rail — try-on image (middleware) + the 360° result */}
+        {portrait && (tryon?.imageUrl || turn?.videoUrl || turnLoading) && (
+          <div className="thumbrail">
+            {tryon?.imageUrl && (
+              <div
+                className={"trthumb" + (!showingTurn ? " on" : "")}
+                onClick={() => setView("tryon")}
+                role="button"
+                aria-label="View try-on image"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={tryon.imageUrl} alt="" />
+                <span className="tl">Try-On</span>
+              </div>
+            )}
+            {turn?.videoUrl ? (
+              <div
+                className={"trthumb" + (showingTurn ? " on" : "")}
+                onClick={() => setView("turn")}
+                role="button"
+                aria-label="View 360° video"
+              >
+                {turn.posterUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={turn.posterUrl} alt="" />
+                ) : (
+                  <video src={turn.videoUrl} muted playsInline />
+                )}
+                <span className="tl">360°</span>
+              </div>
+            ) : turnLoading ? (
+              <div className="trthumb" aria-label="360° generating">
+                <span className="ph">360°…</span>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <div className="media-col">
           <div className="media">
             <div className="inset" />
@@ -275,18 +312,6 @@ export default function TryOnModal({
               <div className="ph">
                 <div className="mono">{product.mono}</div>
                 <div className="pm">{error}</div>
-              </div>
-            )}
-
-            {/* image / 360° toggle — only once both exist */}
-            {bothReady && (
-              <div className="result-toggle">
-                <button className={view === "tryon" ? "on" : ""} onClick={() => setView("tryon")}>
-                  Try-On
-                </button>
-                <button className={view === "turn" ? "on" : ""} onClick={() => setView("turn")}>
-                  360°
-                </button>
               </div>
             )}
           </div>

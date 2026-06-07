@@ -18,7 +18,8 @@
       "Bash(node -e \"const p=require\\('./package.json'\\).dependencies; console.log\\('@supabase/ssr', p['@supabase/ssr']\\); console.log\\('razorpay', p['razorpay']\\)\")",
       "Bash(grep -q ^__TRACKED_VAR__= .env.local)",
       "Bash(sed -i '' 's|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|' .env.local)",
-      "Bash(git mv *)"
+      "WebFetch(domain:docs.apiframe.ai)",
+      "WebFetch(domain:tryonlabs.github.io)"
     ]
   }
 }

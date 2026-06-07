@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getVideoProvider } from "@/lib/ai";
 import { logGeneration, imageRefOf } from "@/lib/ai/logGeneration";
 import { reserveVideo, refundVideo } from "@/lib/billing/consume";
+import { SPIN_PROMPT } from "@/lib/ai/prompts";
 import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 
@@ -41,8 +42,11 @@ export async function POST(req: Request) {
     }
     if ("ok" in r && r.ok) reserved = r.source;
 
+    // Always attach the predefined 360° prompt unless the caller sent one.
+    const finalPrompt = prompt?.trim() || SPIN_PROMPT;
+
     const provider = getVideoProvider();
-    const result = await provider.generate360({ image, prompt });
+    const result = await provider.generate360({ image, prompt: finalPrompt });
 
     const userId = await currentUserId();
     const saved = await persistLook({

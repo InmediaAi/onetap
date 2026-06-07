@@ -860,7 +860,8 @@
 .trthumb.on {
   box-shadow: inset 0 0 0 2px var(--stone);
 }
-.trthumb img {
+.trthumb img,
+.trthumb video {
   position: absolute;
   inset: 0;
   width: 100%;

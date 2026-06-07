@@ -6,7 +6,6 @@ import {
   type BillingPlan,
   type BillingConfig,
   type BillingTierId,
-  type PlanId,
 } from "@/lib/pricing/plans";
 
 /**
@@ -74,10 +73,13 @@ export async function getPlans(): Promise<PlansSnapshot> {
   }
 }
 
-/** Monthly video limit for a subscription plan id (0 if unknown). */
-export function videoLimitOf(plans: BillingPlan[], planId: PlanId | null): number {
-  if (!planId) return 0;
-  return plans.find((p) => p.id === planId)?.videoLimit ?? 0;
+/** Video limit for a tier id — free/starter/pro (0 if unknown). */
+export function videoLimitOf(
+  plans: BillingPlan[],
+  id: BillingTierId | null,
+): number {
+  if (!id) return 0;
+  return plans.find((p) => p.id === id)?.videoLimit ?? 0;
 }
 
 /** One-time free-trial allowance (the `free` tier's videoLimit). */

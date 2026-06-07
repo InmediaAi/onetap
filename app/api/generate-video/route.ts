@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getVideoProvider } from "@/lib/ai";
 import { logGeneration, imageRefOf } from "@/lib/ai/logGeneration";
 import { reserveVideo, refundVideo } from "@/lib/billing/consume";
+import { FILM_PROMPT } from "@/lib/ai/prompts";
 import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 
@@ -41,8 +42,11 @@ export async function POST(req: Request) {
     }
     if ("ok" in r && r.ok) reserved = r.source;
 
+    // The film prompt is built per-format on the client; fall back to a default.
+    const finalPrompt = prompt?.trim() || FILM_PROMPT;
+
     const provider = getVideoProvider();
-    const result = await provider.generateVideo({ image, prompt });
+    const result = await provider.generateVideo({ image, prompt: finalPrompt });
 
     const userId = await currentUserId();
     const saved = await persistLook({

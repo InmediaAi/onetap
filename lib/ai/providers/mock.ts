@@ -1,4 +1,5 @@
 import { sleep } from "@/lib/utils";
+import { logApiNote } from "@/lib/ai/debug";
 import type {
   TryOnProvider,
   VideoProvider,
@@ -34,6 +35,10 @@ export class MockTryOnProvider implements TryOnProvider {
   readonly name = "mock";
 
   async generateTryOn(_input: TryOnInput): Promise<TryOnResult> {
+    logApiNote(
+      "mock:tryon",
+      "no API called — returning placeholder. Set TRYON_PROVIDER=kling to use the real try-on.",
+    );
     await sleep(GEN_DELAY_MS);
     return { imageUrl: TRYON_IMAGE, provider: this.name, prompt: "[mock] try-on" };
   }
@@ -43,6 +48,10 @@ export class MockVideoProvider implements VideoProvider {
   readonly name = "mock";
 
   async generate360(input: VideoInput): Promise<VideoResult> {
+    logApiNote(
+      "mock:360",
+      "no API called — returning placeholder. Set VIDEO_PROVIDER=grok to use the real image-to-video.",
+    );
     await sleep(GEN_DELAY_MS);
     return {
       videoUrl: SPIN_VIDEO,
@@ -53,6 +62,10 @@ export class MockVideoProvider implements VideoProvider {
   }
 
   async generateVideo(input: VideoInput): Promise<VideoResult> {
+    logApiNote(
+      "mock:video",
+      "no API called — returning placeholder. Set VIDEO_PROVIDER=grok to use the real image-to-video.",
+    );
     await sleep(GEN_DELAY_MS);
     return {
       videoUrl: SOCIAL_VIDEO,

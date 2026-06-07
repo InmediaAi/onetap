@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Kling Virtual Try-On is pure image-to-image — no prompt.
     const provider = getTryOnProvider();
     const result = await provider.generateTryOn({ userImage, productImage });
 

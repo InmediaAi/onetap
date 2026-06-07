@@ -4,8 +4,12 @@ import {
   MockVideoProvider,
   MockIdentityProvider,
 } from "@/lib/ai/providers/mock";
-import { GrokProvider, GrokIdentityProvider } from "@/lib/ai/providers/grok";
-import { KlingProvider } from "@/lib/ai/providers/kling";
+import {
+  GrokProvider,
+  GrokIdentityProvider,
+  GrokVideoProvider,
+} from "@/lib/ai/providers/grok";
+import { KlingProvider, KlingTryOnProvider } from "@/lib/ai/providers/kling";
 
 /**
  * Provider registry — plug-and-play, env-driven.
@@ -27,16 +31,24 @@ interface ProviderDescriptor<T> {
   create: () => T;
 }
 
-/** Model resolution — provider + model are both env-selectable. */
-const tryOnModel = () =>
-  process.env.TRYON_MODEL ?? process.env.XAI_IMAGE_MODEL ?? undefined;
-const videoModel = () =>
-  process.env.VIDEO_MODEL ?? process.env.KLING_MODEL ?? undefined;
-const identityModel = () =>
-  process.env.IDENTITY_MODEL ?? process.env.TRYON_MODEL ?? undefined;
+/** Model resolution — each is env-selectable; unset → the provider's default. */
+const tryOnModel = () => process.env.TRYON_MODEL ?? undefined;
+const videoModel = () => process.env.VIDEO_MODEL ?? undefined;
+const identityModel = () => process.env.IDENTITY_MODEL ?? undefined;
 
 const TRYON_REGISTRY: Record<string, ProviderDescriptor<TryOnProvider>> = {
   mock: { requiredEnv: [], create: () => new MockTryOnProvider() },
+  // Real garment-on-person try-on (image + image → image). Default.
+  kling: {
+    requiredEnv: ["KLING_ACCESS_KEY", "KLING_SECRET_KEY"],
+    create: () =>
+      new KlingTryOnProvider(
+        process.env.KLING_ACCESS_KEY!,
+        process.env.KLING_SECRET_KEY!,
+        tryOnModel(),
+      ),
+  },
+  // Text-conditioned xAI image gen — kept as a selectable fallback.
   grok: {
     requiredEnv: ["XAI_API_KEY"],
     create: () => new GrokProvider(process.env.XAI_API_KEY!, tryOnModel()),
@@ -45,6 +57,12 @@ const TRYON_REGISTRY: Record<string, ProviderDescriptor<TryOnProvider>> = {
 
 const VIDEO_REGISTRY: Record<string, ProviderDescriptor<VideoProvider>> = {
   mock: { requiredEnv: [], create: () => new MockVideoProvider() },
+  // Animate the try-on image into a 360°/film (image → video). Default.
+  grok: {
+    requiredEnv: ["XAI_API_KEY"],
+    create: () => new GrokVideoProvider(process.env.XAI_API_KEY!, videoModel()),
+  },
+  // Kling image→video — kept as a selectable fallback.
   kling: {
     requiredEnv: ["KLING_ACCESS_KEY", "KLING_SECRET_KEY"],
     create: () =>

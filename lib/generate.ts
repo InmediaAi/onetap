@@ -66,13 +66,14 @@ export async function composeReel({
 
   try {
     // 1) if we have a garment image, compose the on-you image first (free,
-    //    unlimited); otherwise animate the likeness directly.
+    //    unlimited); otherwise animate the likeness directly. The still try-on
+    //    uses its own predefined prompt (server default) — the film/spin prompt
+    //    describes motion and only applies to the video step below.
     let sourceImage = likeness;
     if (pieceImage) {
       const tryon = await post("/api/generate-image", {
         userImage: likeness,
         productImage: pieceImage,
-        prompt: prompt || undefined,
         productId,
       });
       sourceImage = tryon.imageUrl;
