@@ -1,22 +1,20 @@
 import type { GenerationKind } from "@/lib/ai/types";
-import { CREDIT_COST } from "@/lib/credits";
 import { useAtelier } from "@/lib/store";
-import { createId } from "@/lib/utils";
+import { track } from "@/lib/analytics";
+import { EVENTS } from "@/lib/analytics/events";
 
 /**
  * Shared "one tap" reel composer used by the 360° and Creator studios.
  * (The Curator try-on modal keeps its own per-mode flow.)
  *
- * Gates on the OUTPUT cost up front, composes the on-you image internally
- * (likeness + piece → try-on), then animates it (spin / film). Billed ONCE for
- * the output — the intermediate try-on is not separately charged. On success it
- * records a look and returns enough to render + share the result.
+ * Video quota is enforced SERVER-SIDE in the video routes — a 402 surfaces here
+ * as a VideoLimitError, which callers map to opening the pricing modal.
  */
 
-export class InsufficientCreditsError extends Error {
+export class VideoLimitError extends Error {
   constructor() {
-    super("Insufficient credits");
-    this.name = "InsufficientCreditsError";
+    super("Video limit reached");
+    this.name = "VideoLimitError";
   }
 }
 
@@ -30,8 +28,8 @@ export interface ComposeArgs {
   kind: Extract<GenerationKind, "spin" | "video">;
   /** The user's likeness (data/hosted URL). */
   likeness: string;
-  /** The garment/piece image to wear (data/hosted URL). */
-  pieceImage: string;
+  /** The garment/piece image to wear (data/hosted URL). Optional. */
+  pieceImage?: string;
   /** Optional directive prompt (e.g. the built film brief). */
   prompt?: string;
   /** Product id to attach to the saved look (for /look/[id]). */
@@ -50,6 +48,7 @@ async function post(url: string, body: unknown) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (res.status === 402) throw new VideoLimitError();
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Generation failed");
   return data;
@@ -62,36 +61,61 @@ export async function composeReel({
   prompt,
   productId,
 }: ComposeArgs): Promise<ComposeResult> {
-  const cost = CREDIT_COST[kind];
+  const startedAt = Date.now();
+  track(EVENTS.GENERATION_STARTED, { kind, productId });
 
-  // Gate on the output cost BEFORE any paid call.
-  if (useAtelier.getState().credits < cost) {
-    useAtelier.getState().openPricing();
-    throw new InsufficientCreditsError();
+  try {
+    // 1) if we have a garment image, compose the on-you image first (free,
+    //    unlimited); otherwise animate the likeness directly.
+    let sourceImage = likeness;
+    if (pieceImage) {
+      const tryon = await post("/api/generate-image", {
+        userImage: likeness,
+        productImage: pieceImage,
+        prompt: prompt || undefined,
+        productId,
+      });
+      sourceImage = tryon.imageUrl;
+    }
+
+    // 2) animate it into the requested output (this is the metered "video").
+    const out = await post(ENDPOINT[kind], {
+      image: sourceImage,
+      prompt: prompt || undefined,
+      productId,
+    });
+
+    // The route persisted the look and returned its durable id + URL.
+    const lookId: string = out.lookId;
+    useAtelier.getState().addLook({
+      id: lookId,
+      productId,
+      kind,
+      inputImage: likeness,
+      assetUrl: out.videoUrl,
+      posterUrl: out.posterUrl,
+      createdAt: Date.now(),
+    });
+
+    track(EVENTS.GENERATION_COMPLETED, {
+      kind,
+      productId,
+      lookId,
+      durationMs: Date.now() - startedAt,
+    });
+    return { videoUrl: out.videoUrl, posterUrl: out.posterUrl, lookId };
+  } catch (err) {
+    if (err instanceof VideoLimitError) {
+      track(EVENTS.VIDEO_LIMIT_REACHED, { kind, productId });
+      useAtelier.getState().openPricing();
+    } else {
+      track(EVENTS.GENERATION_FAILED, {
+        kind,
+        productId,
+        durationMs: Date.now() - startedAt,
+        error: err instanceof Error ? err.message : "unknown",
+      });
+    }
+    throw err;
   }
-
-  // 1) compose the on-you image (not separately billed)
-  const tryon = await post("/api/generate-image", {
-    userImage: likeness,
-    productImage: pieceImage,
-    prompt: prompt || undefined,
-  });
-
-  // 2) animate it into the requested output
-  const out = await post(ENDPOINT[kind], { image: tryon.imageUrl, prompt: prompt || undefined });
-
-  const lookId = createId();
-  useAtelier.getState().addLook({
-    id: lookId,
-    productId,
-    kind,
-    inputImage: likeness,
-    assetUrl: out.videoUrl,
-    posterUrl: out.posterUrl,
-    createdAt: Date.now(),
-  });
-  // Charge once, only on success.
-  useAtelier.getState().spendCredits(cost);
-
-  return { videoUrl: out.videoUrl, posterUrl: out.posterUrl, lookId };
 }

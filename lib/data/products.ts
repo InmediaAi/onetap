@@ -1,21 +1,78 @@
+export interface Price {
+  amount: number;
+  currency: string; // ISO code — USD | EUR | GBP | INR
+}
+
 export interface Product {
   id: string;
   brand: string;
   /** Monogram shown as the editorial placeholder behind the product image. */
   mono: string;
   name: string;
-  price: string;
+  price: Price;
+  /** Primary image (images[0]). */
   imageUrl: string;
+  /** All image variants (primary first); always includes imageUrl. */
+  images?: string[];
+  // ── Filter metadata (entered at piece upload; powers Curator) ──
+  /** Clothing type (single) — from UPLOADABLE_TYPES. */
+  type?: string;
+  /** Colours (any-overlap match) — from COLOUR_NAMES. */
+  colours?: string[];
+  /** Occasions — from OCCASIONS; Vacation/Work feed the quick chips. */
+  occasions?: string[];
+  /** Drop date (ISO yyyy-mm-dd); "New in" is computed from it. */
+  droppedAt?: string;
+  description?: string;
+  /** The one italic line on the card. */
+  stylistNote?: string;
+  /** Derived from the source URL host (e.g. "net-a-porter.com"). */
+  sourceSite?: string;
+  /** Internal ranking 0–100 — orders the edit; never shown to members. */
+  oneTapScore?: number;
 }
 
-/** Numeric value of a formatted price string (e.g. "$4,290" → 4290) for sorting. */
-export function priceValue(price: string) {
-  return Number(price.replace(/[^0-9.]/g, "")) || 0;
+const CURRENCY_SYMBOL: Record<string, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  INR: "₹",
+};
+
+/** Display a price ("$4,290", "€1,150"). */
+export function formatPrice(price: Price | null | undefined): string {
+  if (!price || !Number.isFinite(price.amount)) return "";
+  const symbol = CURRENCY_SYMBOL[price.currency] ?? `${price.currency} `;
+  const hasCents = Math.round(price.amount * 100) % 100 !== 0;
+  return (
+    symbol +
+    price.amount.toLocaleString("en-US", {
+      minimumFractionDigits: hasCents ? 2 : 0,
+      maximumFractionDigits: 2,
+    })
+  );
 }
+
+/** Numeric value for sorting. */
+export function priceValue(price: Price) {
+  return price?.amount || 0;
+}
+
+/** "New in" — dropped within the last 7 days (computed, never stored). */
+export function isNewIn(droppedAt?: string): boolean {
+  if (!droppedAt) return false;
+  const t = Date.parse(droppedAt);
+  if (Number.isNaN(t)) return false;
+  const now = Date.now();
+  return t <= now + 86_400_000 && now - t <= 7 * 86_400_000;
+}
+
+const daysAgo = (n: number) =>
+  new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 
 /**
- * Mock luxury catalog. Editorial, monochromatic imagery chosen to read as
- * quiet-luxury runway product shots. Swap for Supabase `products` later.
+ * Mock luxury catalog (used when Supabase is unconfigured). Enriched with the
+ * filter metadata so the Curator filters work in local dev.
  */
 export const products: Product[] = [
   {
@@ -23,72 +80,115 @@ export const products: Product[] = [
     mono: "TR",
     brand: "The Row",
     name: "Oversized Wool Coat",
-    price: "$4,290",
+    price: { amount: 4290, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=900&q=80",
+    type: "Coats & Jackets",
+    colours: ["Camel", "Beige"],
+    occasions: ["Daytime", "Work", "Travel"],
+    droppedAt: daysAgo(2),
+    stylistNote: "The coat the season turns around.",
+    oneTapScore: 86,
   },
   {
     id: "celine-blazer",
     mono: "C",
     brand: "Celine",
     name: "Tailored Crepe Blazer",
-    price: "$2,850",
+    price: { amount: 2850, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=80",
+    type: "Blazers",
+    colours: ["Black"],
+    occasions: ["Work", "Evening", "Event"],
+    droppedAt: daysAgo(18),
+    stylistNote: "Sharp enough to carry the room.",
+    oneTapScore: 80,
   },
   {
     id: "khaite-knit",
     mono: "K",
     brand: "Khaite",
     name: "Cashmere Ribbed Knit",
-    price: "$1,180",
+    price: { amount: 1180, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=900&q=80",
+    type: "Knitwear",
+    colours: ["Ivory", "Beige"],
+    occasions: ["Daytime", "Travel"],
+    droppedAt: daysAgo(30),
+    oneTapScore: 70,
   },
   {
     id: "bottega-trouser",
     mono: "BV",
     brand: "Bottega Veneta",
     name: "Pleated Wide Trouser",
-    price: "$1,650",
+    price: { amount: 1650, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=900&q=80",
+    type: "Pants",
+    colours: ["Black"],
+    occasions: ["Work", "Daytime"],
+    droppedAt: daysAgo(40),
+    oneTapScore: 72,
   },
   {
     id: "toteme-shirt",
     mono: "T",
     brand: "Totême",
     name: "Silk Column Shirt",
-    price: "$690",
+    price: { amount: 690, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1485231183945-fffde7cc051e?auto=format&fit=crop&w=900&q=80",
+    type: "Blouses",
+    colours: ["Ivory", "White"],
+    occasions: ["Work", "Daytime", "Vacation"],
+    droppedAt: daysAgo(5),
+    oneTapScore: 66,
   },
   {
     id: "saint-laurent-dress",
     mono: "SL",
     brand: "Saint Laurent",
     name: "Draped Jersey Dress",
-    price: "$3,490",
+    price: { amount: 3490, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=900&q=80",
+    type: "Dresses",
+    colours: ["Black"],
+    occasions: ["Evening", "Event"],
+    droppedAt: daysAgo(1),
+    stylistNote: "For the dinner that becomes the night.",
+    oneTapScore: 90,
   },
   {
     id: "the-row-trench",
     mono: "TR",
     brand: "The Row",
     name: "Belted Cotton Trench",
-    price: "$3,950",
+    price: { amount: 3950, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?auto=format&fit=crop&w=900&q=80",
+    type: "Coats & Jackets",
+    colours: ["Camel"],
+    occasions: ["Daytime", "Travel", "Vacation"],
+    droppedAt: daysAgo(22),
+    oneTapScore: 78,
   },
   {
     id: "celine-skirt",
     mono: "C",
     brand: "Celine",
     name: "Wool Midi Skirt",
-    price: "$1,250",
+    price: { amount: 1250, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=900&q=80",
+    type: "Skirts",
+    colours: ["Grey", "Navy"],
+    occasions: ["Work", "Daytime"],
+    droppedAt: daysAgo(34),
+    oneTapScore: 68,
   },
 ];
 

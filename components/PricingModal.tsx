@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Check } from "lucide-react";
+import { useEffect } from "react";
+import { X } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { PACKAGES } from "@/lib/credits";
+import PlanCards from "@/components/PlanCards";
 
 export default function PricingModal() {
   const hydrated = useHydrated();
   const open = useAtelier((s) => s.pricingOpen);
   const close = useAtelier((s) => s.closePricing);
-  const credits = useAtelier((s) => s.credits);
-  const topUp = useAtelier((s) => s.topUp);
-
-  const [justAdded, setJustAdded] = useState<number | null>(null);
+  const usage = useAtelier((s) => s.usage);
 
   // Escape-to-close + scroll lock while open.
   useEffect(() => {
@@ -29,11 +26,10 @@ export default function PricingModal() {
 
   if (!open) return null;
 
-  function buy(pkg: { usd: number; credits: number }) {
-    topUp(pkg.credits);
-    setJustAdded(pkg.usd);
-    setTimeout(() => setJustAdded(null), 1400);
-  }
+  const active = usage.status === "active" && usage.planId;
+  const remaining = active
+    ? Math.max(0, usage.videoLimit - usage.videosUsed) + usage.topupBalance
+    : usage.freeTrialRemaining;
 
   return (
     <div
@@ -48,36 +44,19 @@ export default function PricingModal() {
         </button>
 
         <div className="pricing-head">
-          <span className="label">Credits</span>
-          <div className="pricing-balance">
-            {hydrated ? credits : "—"} <span>credits</span>
-          </div>
+          <span className="label">{active ? "Your plan" : "Choose a plan"}</span>
           <p className="pricing-note">
-            Credits compose your fittings — a try-on costs 5, a 360° or film 20.
+            {hydrated
+              ? active
+                ? `${remaining} try-on${remaining === 1 ? "" : "s"} left${usage.topupBalance > 0 ? ` (incl. ${usage.topupBalance} top-up)` : ""}. A try-on is a 360° spin or a film.`
+                : `${remaining} free try-on${remaining === 1 ? "" : "s"} left. Subscribe to keep creating — a try-on is a 360° spin or a film.`
+              : "Each plan includes a monthly allowance of try-ons (360° spins or films)."}
           </p>
         </div>
 
-        <div className="pkgs">
-          {PACKAGES.map((pkg) => (
-            <div className="pkg" key={pkg.usd}>
-              <div className="pkg-info">
-                <span className="pkg-credits">{pkg.credits.toLocaleString()} credits</span>
-                <span className="pkg-rate">${(pkg.usd / pkg.credits).toFixed(2)} / credit</span>
-              </div>
-              <button className="pkg-buy" onClick={() => buy(pkg)}>
-                {justAdded === pkg.usd ? (
-                  <>
-                    <Check size={14} strokeWidth={2} /> Added
-                  </>
-                ) : (
-                  <>${pkg.usd}</>
-                )}
-              </button>
-            </div>
-          ))}
-        </div>
+        <PlanCards />
 
-        <p className="pricing-foot">Mock checkout — no real charge.</p>
+        <p className="pricing-foot">Billed monthly in USD · cancel anytime.</p>
       </div>
     </div>
   );

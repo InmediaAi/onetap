@@ -29,7 +29,7 @@ export default function Header() {
             <Search size={16} strokeWidth={1.4} />
             <span className="label ut-label">Search</span>
           </span>
-          <Link href="/onboarding" className="ic" aria-label="Profile">
+          <Link href="/profile" className="ic" aria-label="Profile">
             <User size={17} strokeWidth={1.4} />
           </Link>
         </div>

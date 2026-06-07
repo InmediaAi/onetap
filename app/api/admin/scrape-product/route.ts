@@ -30,12 +30,13 @@ export async function POST(req: Request) {
         blocked: page.blocked,
         partial: true,
         reason: page.reason,
-        product: { brand: "", name: "", price: "", imageUrl: "", sourceUrl: url },
+        product: { brand: "", name: "", price: "", imageUrl: "", images: [], sourceUrl: url },
       });
     }
 
     const extracted = extractProduct(page.html, page.finalUrl);
-    const partial = !extracted.brand || !extracted.name || !extracted.price || !extracted.imageUrl;
+    const partial =
+      !extracted.brand || !extracted.name || !extracted.price || extracted.images.length === 0;
     return NextResponse.json({
       ok: true,
       blocked: false,

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import AnalyticsProvider from "@/components/AnalyticsProvider";
+import SessionLoader from "@/components/SessionLoader";
 
 // Primary editorial typeface. Light/Regular/Medium + italics, per the
 // brand guidelines (no weights above Medium).
@@ -32,7 +34,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={cormorant.variable}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <AnalyticsProvider />
+        <SessionLoader />
+        {children}
+      </body>
     </html>
   );
 }

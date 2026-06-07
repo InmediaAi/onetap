@@ -101,7 +101,7 @@ export class KlingProvider implements VideoProvider {
       if (status === "succeed") {
         const url = pollData.data?.task_result?.videos?.[0]?.url;
         if (!url) throw new Error("Kling succeeded but returned no video URL");
-        return { videoUrl: url, provider: this.name };
+        return { videoUrl: url, provider: this.name, prompt, model: this.model };
       }
       if (status === "failed") throw new Error("Kling task failed");
     }

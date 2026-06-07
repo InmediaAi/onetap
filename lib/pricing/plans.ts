@@ -1,47 +1,108 @@
-export type PlanId = "essential" | "pro";
+/**
+ * Subscription tiers + global billing config.
+ *
+ * The DB tables `billing_plans` / `billing_config` are the runtime source of
+ * truth (admin-editable — see lib/pricing/getPlans.ts). The SEED_* values below
+ * are the schema seed AND the fallback used when Supabase is unconfigured/empty.
+ * Keep them in sync with the seed in lib/supabase/schema.sql.
+ *
+ * A "try-on" = one 360°/film VIDEO; the intermediate image is internal & free.
+ * For the `free` tier, videoLimit is the ONE-TIME trial count (not monthly).
+ */
 
-export interface Plan {
-  id: PlanId;
+/** Paid subscription tiers (Razorpay). The `free` tier is not a subscription. */
+export type PlanId = "starter" | "pro";
+
+/** All billing tiers, including the display-only free tier. */
+export type BillingTierId = "free" | PlanId;
+
+export interface BillingPlan {
+  id: BillingTierId;
   name: string;
   tagline: string;
-  monthly: number; // USD / month
-  yearly: number; // USD / year (~17% off 12×monthly)
-  mostPopular?: boolean;
+  /** USD / month — DISPLAY ONLY; the real charge is set by the Razorpay plan. */
+  monthlyPrice: number;
+  currency: string;
+  /** Monthly videos (free tier: one-time count). */
+  videoLimit: number;
   features: string[];
+  mostPopular: boolean;
+  active: boolean;
+  sortOrder: number;
 }
 
-export const PLANS: Plan[] = [
+export interface BillingConfig {
+  /** Price per extra video (one-time top-up). Enforced by us. */
+  topupUnitPrice: number;
+  topupCurrency: string;
+  topupEnabled: boolean;
+}
+
+export const SEED_PLANS: BillingPlan[] = [
   {
-    id: "essential",
-    name: "Essential",
-    tagline: "For creators getting started with AI reels.",
-    monthly: 25,
-    yearly: 249,
-    features: [
-      "10 video generations / month",
-      "Weekly emailer",
-      "Standard generation queue",
-      "Credit top-ups anytime",
-    ],
+    id: "free",
+    name: "Free",
+    tagline: "A first try-on, on the house.",
+    monthlyPrice: 0,
+    currency: "USD",
+    videoLimit: 1,
+    features: ["1 try-on (360°) — one time", "Photo composition included"],
+    mostPopular: false,
+    active: true,
+    sortOrder: 0,
+  },
+  {
+    id: "starter",
+    name: "Starter",
+    tagline: "For creators getting started with AI video.",
+    monthlyPrice: 20,
+    currency: "USD",
+    videoLimit: 10,
+    features: ["10 try-ons (360° or film) / month", "Standard generation queue"],
+    mostPopular: false,
+    active: true,
+    sortOrder: 1,
   },
   {
     id: "pro",
     name: "Pro",
     tagline: "For creators publishing at a steady pace.",
-    monthly: 59,
-    yearly: 590,
-    mostPopular: true,
+    monthlyPrice: 49,
+    currency: "USD",
+    videoLimit: 30,
     features: [
-      "30 video generations / month",
-      "Weekly emailer",
+      "30 try-ons (360° or film) / month",
       "Priority generation queue",
-      "Credit top-ups anytime",
       "Early access to new formats",
     ],
+    mostPopular: true,
+    active: true,
+    sortOrder: 2,
   },
 ];
 
-/** Yearly saving vs paying monthly for a year, as a rounded percentage. */
-export function yearlySavingPct(plan: Plan) {
-  return Math.round((1 - plan.yearly / (plan.monthly * 12)) * 100);
+export const SEED_CONFIG: BillingConfig = {
+  topupUnitPrice: 2,
+  topupCurrency: "USD",
+  topupEnabled: true,
+};
+
+/** Env var holding each subscription tier's Razorpay plan id. */
+export const RAZORPAY_PLAN_ENV: Record<PlanId, string> = {
+  starter: "RAZORPAY_PLAN_STARTER",
+  pro: "RAZORPAY_PLAN_PRO",
+};
+
+/** Fallbacks derived from the seed (used when DB is unavailable). */
+export const FREE_VIDEO_TRIAL =
+  SEED_PLANS.find((p) => p.id === "free")?.videoLimit ?? 1;
+
+export const VIDEO_LIMIT: Record<PlanId, number> = {
+  starter: SEED_PLANS.find((p) => p.id === "starter")!.videoLimit,
+  pro: SEED_PLANS.find((p) => p.id === "pro")!.videoLimit,
+};
+
+/** Look up a seed tier by id (fallback display when DB plans aren't loaded). */
+export function getPlan(id: BillingTierId | null | undefined): BillingPlan | undefined {
+  return SEED_PLANS.find((p) => p.id === id);
 }

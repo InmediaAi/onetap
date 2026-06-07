@@ -6,7 +6,19 @@
       "Bash(curl -s http://localhost:3000/api/ai-status)",
       "Bash(curl -s -w \"  [HTTP %{http_code}]\\\\n\" -X POST http://localhost:3000/api/generate-image -H 'Content-Type: application/json' -d '{\"userImage\":\"data:x\",\"productImage\":\"https://example.com/p.jpg\"}')",
       "Bash(ps -p 97077 -o pid=,comm=)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(npm i *)",
+      "Bash(node -e \"console.log\\('mixpanel-browser', require\\('./package.json'\\).dependencies['mixpanel-browser']\\)\")",
+      "Bash(sed -n '1,12p' app/page.tsx)",
+      "Bash(sed -n '1,16p' components/ProductGrid.tsx)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(pkill -f \"next-server\")",
+      "Bash(curl -s --max-time 20 -X POST http://localhost:3000/api/generate-image -H 'Content-Type: application/json' -d '{\"userImage\":\"data:image/png;base64,xx\",\"productImage\":\"https://example.com/coat.jpg\",\"productId\":\"the-row-coat\"}')",
+      "Bash(curl -s --max-time 20 -X POST http://localhost:3000/api/generate-360 -H 'Content-Type: application/json' -d '{\"image\":\"data:image/png;base64,xx\",\"prompt\":\"slow elegant turn\",\"productId\":\"celine-blazer\"}')",
+      "Bash(node -e \"const p=require\\('./package.json'\\).dependencies; console.log\\('@supabase/ssr', p['@supabase/ssr']\\); console.log\\('razorpay', p['razorpay']\\)\")",
+      "Bash(grep -q ^__TRACKED_VAR__= .env.local)",
+      "Bash(sed -i '' 's|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|' .env.local)",
+      "Bash(git mv *)"
     ]
   }
 }

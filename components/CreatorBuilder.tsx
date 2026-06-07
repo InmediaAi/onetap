@@ -5,8 +5,7 @@ import Link from "next/link";
 import { Upload, LayoutGrid, Check, Wand2, Copy } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { CREDIT_COST } from "@/lib/credits";
-import { composeReel, InsufficientCreditsError } from "@/lib/generate";
+import { composeReel, VideoLimitError } from "@/lib/generate";
 import {
   FILM_FORMATS,
   getFilmFormat,
@@ -42,9 +41,16 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
   const [film, setFilm] = useState<{ videoUrl: string; posterUrl?: string; lookId: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const pieceImage = tab === "upload" ? upload : curated?.imageUrl ?? null;
-  const pieceName = tab === "curated" && curated ? `${curated.brand} ${curated.name}` : undefined;
-  const ready = Boolean(format && pieceImage && portrait) && !loading;
+  // Both tabs give a real garment image → compose the on-you try-on first.
+  const hasGarment = tab === "upload" ? Boolean(upload) : Boolean(curated);
+  const pieceImage = tab === "upload" ? upload ?? undefined : curated?.imageUrl;
+  const garmentDesc =
+    tab === "upload"
+      ? "the uploaded garment (reference image provided)"
+      : curated
+        ? `${curated.brand} ${curated.name}`
+        : "the selected garment";
+  const ready = Boolean(format) && hasGarment && Boolean(portrait) && !loading;
 
   function toggleOpt(fieldId: string, val: string, multi: boolean) {
     setOpts((cur) => {
@@ -71,7 +77,7 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
   }
 
   async function create() {
-    if (!ready || !pieceImage || !portrait) return;
+    if (!ready || !portrait) return;
     setLoading(true);
     setError(null);
     setFilm(null);
@@ -80,12 +86,12 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
         kind: "video",
         likeness: portrait,
         pieceImage,
-        prompt: buildFilmPrompt(format, opts, pieceName, free),
+        prompt: buildFilmPrompt(format, opts, garmentDesc, free),
         productId: curated?.id ?? "creator-upload",
       });
       setFilm(res);
     } catch (e) {
-      if (!(e instanceof InsufficientCreditsError)) {
+      if (!(e instanceof VideoLimitError)) {
         setError(e instanceof Error ? e.message : "Generation failed");
       }
     } finally {
@@ -173,24 +179,28 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
             )}
           </div>
         ) : (
-          <div className="curated-grid">
+          <div className="cprod-grid">
             {products.map((p) => (
-              <div
+              <button
                 key={p.id}
-                className={"citem" + (curated?.id === p.id ? " on" : "")}
+                className={"cprod" + (curated?.id === p.id ? " on" : "")}
                 onClick={() => {
                   setCurated(p);
                   setFilm(null);
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.imageUrl} alt={p.name} />
-                {curated?.id === p.id && (
-                  <span className="check">
-                    <Check size={13} strokeWidth={2.4} />
-                  </span>
-                )}
-              </div>
+                <span className="cprod-img">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.imageUrl} alt={p.name} loading="lazy" />
+                  {curated?.id === p.id && (
+                    <span className="cgar-check">
+                      <Check size={12} strokeWidth={2.4} />
+                    </span>
+                  )}
+                </span>
+                <span className="cprod-brand">{p.brand}</span>
+                <span className="cprod-name">{p.name}</span>
+              </button>
             ))}
           </div>
         )}
@@ -238,7 +248,7 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
 
         <button className="creator-go" onClick={create} disabled={!ready}>
           <Wand2 size={15} strokeWidth={1.5} /> Create Reel
-          <span className="go-cr">{CREDIT_COST.video} cr</span>
+          <span className="go-cr">1 video</span>
         </button>
         {error && <p className="studio-err">{error}</p>}
 

@@ -3,12 +3,45 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkAdmin } from "@/lib/admin/auth";
 import { createServiceClient } from "@/lib/supabase/server";
-import { slugify, deriveMono, rowToProduct, type ProductRow } from "@/lib/supabase/util";
+import {
+  slugify,
+  deriveMono,
+  rowToProduct,
+  siteFromUrl,
+  type ProductRow,
+} from "@/lib/supabase/util";
+import { formatPrice } from "@/lib/data/products";
+import {
+  CURRENCIES,
+  UPLOADABLE_TYPES,
+  COLOUR_NAMES,
+  OCCASIONS,
+} from "@/lib/data/vocab";
 
 export const runtime = "nodejs";
 
+/** Max image variants stored per piece (scrape pulls up to 3; admin can add more). */
+const MAX_IMAGES = 6;
+
 function clean(v: unknown, max = 300): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
+}
+
+/** Keep valid, unique http(s) image URLs, capped. */
+function cleanImages(value: unknown, fallback?: unknown): string[] {
+  const raw = Array.isArray(value) ? value : [];
+  if (fallback) raw.unshift(fallback); // back-compat: a single imageUrl field
+  const urls = raw
+    .map((u) => clean(u, 2000))
+    .filter((u) => /^https?:\/\//i.test(u));
+  return Array.from(new Set(urls)).slice(0, MAX_IMAGES);
+}
+
+/** Keep only values that are in the allowed vocabulary. */
+function only(values: unknown, allowed: readonly string[]): string[] {
+  if (!Array.isArray(values)) return [];
+  const set = new Set(allowed);
+  return Array.from(new Set(values.filter((v): v is string => typeof v === "string" && set.has(v))));
 }
 
 /** Resolve a unique id from the brand+name slug, suffixing on collision. */
@@ -60,18 +93,34 @@ export async function POST(req: Request) {
 
     const brand = clean(body.brand, 120);
     const name = clean(body.name, 200);
-    const price = clean(body.price, 40);
-    const imageUrl = clean(body.imageUrl, 2000);
+    const images = cleanImages(body.images, body.imageUrl);
+    const imageUrl = images[0] ?? "";
     const sourceUrl = clean(body.sourceUrl, 2000);
+    const description = clean(body.description, 1000);
+    const stylistNote = clean(body.stylistNote, 120);
 
-    if (!brand || !name || !price || !imageUrl) {
+    const amount = Number(body.priceAmount);
+    const currency = CURRENCIES.includes(body.currency) ? body.currency : "USD";
+    const type = UPLOADABLE_TYPES.includes(body.type) ? body.type : "";
+    const colours = only(body.colours, COLOUR_NAMES);
+    const occasions = only(body.occasions, OCCASIONS);
+    const dropDate = clean(body.dropDate, 10) || new Date().toISOString().slice(0, 10);
+    const oneTapScore = Math.max(0, Math.min(100, Math.round(Number(body.oneTapScore) || 70)));
+
+    if (!brand || !name || !imageUrl) {
       return NextResponse.json(
-        { error: "brand, name, price and imageUrl are all required" },
+        { error: "brand, name and at least one image are all required" },
         { status: 400 },
       );
     }
-    if (!/^https?:\/\//i.test(imageUrl)) {
-      return NextResponse.json({ error: "imageUrl must be a public http(s) URL" }, { status: 400 });
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return NextResponse.json({ error: "A price amount greater than 0 is required" }, { status: 400 });
+    }
+    if (!type) {
+      return NextResponse.json({ error: "A clothing type is required" }, { status: 400 });
+    }
+    if (colours.length === 0) {
+      return NextResponse.json({ error: "At least one colour is required" }, { status: 400 });
     }
 
     const id = await uniqueId(db, slugify(brand, name));
@@ -79,10 +128,21 @@ export async function POST(req: Request) {
       id,
       brand,
       name,
-      price,
+      price: formatPrice({ amount, currency }), // legacy display string (back-compat)
+      price_amount: amount,
+      currency,
       image_url: imageUrl,
+      images,
       mono: deriveMono(brand),
       source_url: sourceUrl || null,
+      source_site: siteFromUrl(sourceUrl) ?? null,
+      type,
+      colours,
+      occasions,
+      dropped_at: dropDate,
+      description: description || null,
+      stylist_note: stylistNote || null,
+      one_tap_score: oneTapScore,
     };
     const { data, error } = await db.from("products").insert(row).select("*").single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

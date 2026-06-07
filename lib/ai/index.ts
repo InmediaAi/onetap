@@ -1,6 +1,10 @@
-import type { TryOnProvider, VideoProvider } from "@/lib/ai/types";
-import { MockTryOnProvider, MockVideoProvider } from "@/lib/ai/providers/mock";
-import { GrokProvider } from "@/lib/ai/providers/grok";
+import type { TryOnProvider, VideoProvider, IdentityProvider } from "@/lib/ai/types";
+import {
+  MockTryOnProvider,
+  MockVideoProvider,
+  MockIdentityProvider,
+} from "@/lib/ai/providers/mock";
+import { GrokProvider, GrokIdentityProvider } from "@/lib/ai/providers/grok";
 import { KlingProvider } from "@/lib/ai/providers/kling";
 
 /**
@@ -28,6 +32,8 @@ const tryOnModel = () =>
   process.env.TRYON_MODEL ?? process.env.XAI_IMAGE_MODEL ?? undefined;
 const videoModel = () =>
   process.env.VIDEO_MODEL ?? process.env.KLING_MODEL ?? undefined;
+const identityModel = () =>
+  process.env.IDENTITY_MODEL ?? process.env.TRYON_MODEL ?? undefined;
 
 const TRYON_REGISTRY: Record<string, ProviderDescriptor<TryOnProvider>> = {
   mock: { requiredEnv: [], create: () => new MockTryOnProvider() },
@@ -47,6 +53,14 @@ const VIDEO_REGISTRY: Record<string, ProviderDescriptor<VideoProvider>> = {
         process.env.KLING_SECRET_KEY!,
         videoModel(),
       ),
+  },
+};
+
+const IDENTITY_REGISTRY: Record<string, ProviderDescriptor<IdentityProvider>> = {
+  mock: { requiredEnv: [], create: () => new MockIdentityProvider() },
+  grok: {
+    requiredEnv: ["XAI_API_KEY"],
+    create: () => new GrokIdentityProvider(process.env.XAI_API_KEY!, identityModel()),
   },
 };
 
@@ -79,6 +93,10 @@ export function getVideoProvider(): VideoProvider {
   return select(VIDEO_REGISTRY, "VIDEO_PROVIDER");
 }
 
+export function getIdentityProvider(): IdentityProvider {
+  return select(IDENTITY_REGISTRY, "IDENTITY_PROVIDER");
+}
+
 /** Diagnostic view: what's selected and which providers are configured. */
 export function providerStatus() {
   const configured = <T>(registry: Record<string, ProviderDescriptor<T>>) =>
@@ -99,6 +117,11 @@ export function providerStatus() {
       selected: process.env.VIDEO_PROVIDER || "mock",
       model: videoModel() ?? null,
       configured: configured(VIDEO_REGISTRY),
+    },
+    identity: {
+      selected: process.env.IDENTITY_PROVIDER || "mock",
+      model: identityModel() ?? null,
+      configured: configured(IDENTITY_REGISTRY),
     },
   };
 }

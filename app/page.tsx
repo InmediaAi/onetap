@@ -12,10 +12,9 @@ export default async function CuratorPage() {
 
       <section className="sec-hero">
         <p className="eyebrow">OneTap Curator</p>
-        <h1>Curated, not crowded.</h1>
+        <h1>The pieces, chosen for you.</h1>
         <p className="sec-sub">
-          A standing edit of the most considered pieces in luxury fashion —
-          hand-selected, then visualized on you in seconds.
+          From a hundred houses. Refine, and every piece that answers appears.
         </p>
       </section>
 

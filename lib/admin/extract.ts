@@ -12,9 +12,18 @@ import "server-only";
 export interface ExtractedProduct {
   brand: string;
   name: string;
-  price: string;
+  price: string; // formatted display string (back-compat)
+  /** Raw numeric amount + currency, for the amount+currency admin fields. */
+  priceAmount?: number;
+  currency?: string;
+  /** Primary image (images[0]) — kept for back-compat. */
   imageUrl: string;
+  /** Up to SCRAPE_MAX image variants (primary first). */
+  images: string[];
 }
+
+/** How many image variants to pull from a page (admin can add more manually). */
+export const SCRAPE_MAX_IMAGES = 3;
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$",
@@ -90,14 +99,24 @@ function hasType(obj: Record<string, unknown>, type: string): boolean {
   return false;
 }
 
-function pickImage(image: unknown, base: string): string {
-  if (typeof image === "string") return abs(image, base);
-  if (Array.isArray(image)) return pickImage(image[0], base);
-  if (image && typeof image === "object") {
-    const o = image as Record<string, unknown>;
-    return abs(typeof o.url === "string" ? o.url : undefined, base);
-  }
-  return "";
+/** Flatten a JSON-LD `image` value (string | array | {url|contentUrl}) to URLs. */
+function imageList(image: unknown, base: string): string[] {
+  const out: string[] = [];
+  const walk = (img: unknown) => {
+    if (!img) return;
+    if (typeof img === "string") {
+      const a = abs(img, base);
+      if (a) out.push(a);
+    } else if (Array.isArray(img)) {
+      img.forEach(walk);
+    } else if (typeof img === "object") {
+      const o = img as Record<string, unknown>;
+      if (typeof o.url === "string") walk(o.url);
+      if (typeof o.contentUrl === "string") walk(o.contentUrl);
+    }
+  };
+  walk(image);
+  return out;
 }
 
 function pickBrand(brand: unknown): string {
@@ -145,11 +164,17 @@ function fromJsonLd(html: string, base: string): Partial<ExtractedProduct> {
   const product = out.find((o) => hasType(o, "Product"));
   if (!product) return {};
   const offer = pickOffer(product.offers);
+  const amount =
+    offer.price !== undefined
+      ? Number(String(offer.price).replace(/[^0-9.]/g, ""))
+      : undefined;
   return {
     name: typeof product.name === "string" ? decodeEntities(product.name) : undefined,
     brand: pickBrand(product.brand) || undefined,
-    imageUrl: pickImage(product.image, base) || undefined,
+    images: imageList(product.image, base),
     price: offer.price !== undefined ? formatPrice(offer.price, offer.currency) : undefined,
+    priceAmount: Number.isFinite(amount) ? amount : undefined,
+    currency: offer.currency ? offer.currency.toUpperCase() : undefined,
   };
 }
 
@@ -166,6 +191,18 @@ function meta(html: string, key: string): string | undefined {
   return undefined;
 }
 
+/** All <meta> contents for a property/name (e.g. several og:image tags). */
+function metaAll(html: string, key: string): string[] {
+  const re = new RegExp(
+    `<meta[^>]+(?:property|name)=["']${key}["'][^>]+content=["']([^"']*)["']`,
+    "gi",
+  );
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) if (m[1]) out.push(decodeEntities(m[1]));
+  return out;
+}
+
 function fromOpenGraph(html: string, base: string): Partial<ExtractedProduct> {
   const amount =
     meta(html, "product:price:amount") ||
@@ -174,11 +211,21 @@ function fromOpenGraph(html: string, base: string): Partial<ExtractedProduct> {
   const currency =
     meta(html, "product:price:currency") || meta(html, "og:price:currency");
   const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1];
+  const amountNum = amount ? Number(amount.replace(/[^0-9.]/g, "")) : undefined;
+  const ogImages = [
+    ...metaAll(html, "og:image:secure_url"),
+    ...metaAll(html, "og:image"),
+    ...metaAll(html, "twitter:image"),
+  ]
+    .map((u) => abs(u, base))
+    .filter(Boolean);
   return {
     name: meta(html, "og:title") || (titleTag ? decodeEntities(titleTag) : undefined),
     brand: meta(html, "og:brand") || meta(html, "product:brand") || meta(html, "og:site_name"),
-    imageUrl: abs(meta(html, "og:image") || meta(html, "twitter:image"), base) || undefined,
+    images: ogImages,
     price: amount ? formatPrice(amount, currency) : undefined,
+    priceAmount: Number.isFinite(amountNum) ? amountNum : undefined,
+    currency: currency ? currency.toUpperCase() : undefined,
   };
 }
 
@@ -186,11 +233,18 @@ function fromOpenGraph(html: string, base: string): Partial<ExtractedProduct> {
 export function extractProduct(html: string, finalUrl: string): ExtractedProduct {
   const ld = fromJsonLd(html, finalUrl);
   const og = fromOpenGraph(html, finalUrl);
-  const pick = (k: keyof ExtractedProduct) => (ld[k] || og[k] || "").trim();
+  const pick = (k: "brand" | "name" | "price") => String(ld[k] || og[k] || "").trim();
+  // JSON-LD images first, then OG; de-dupe and cap.
+  const images = Array.from(
+    new Set([...(ld.images ?? []), ...(og.images ?? [])]),
+  ).slice(0, SCRAPE_MAX_IMAGES);
   return {
     brand: pick("brand"),
     name: pick("name"),
     price: pick("price"),
-    imageUrl: pick("imageUrl"),
+    imageUrl: images[0] ?? "",
+    images,
+    priceAmount: ld.priceAmount ?? og.priceAmount,
+    currency: ld.currency || og.currency,
   };
 }

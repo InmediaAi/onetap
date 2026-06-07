@@ -4,21 +4,26 @@ import { useState } from "react";
 import ProductGrid from "@/components/ProductGrid";
 import TryOnModal from "@/components/TryOnModal";
 import { type Product } from "@/lib/data/products";
+import { track } from "@/lib/analytics";
+import { EVENTS } from "@/lib/analytics/events";
 
 /** Client island: holds the active-product / try-on state for the catalog. */
 export default function CatalogClient({ products }: { products: Product[] }) {
   const [active, setActive] = useState<Product | null>(null);
 
+  function openTryOn(product: Product) {
+    track(EVENTS.PRODUCT_TRY_CLICKED, {
+      productId: product.id,
+      brand: product.brand,
+      price: product.price.amount,
+      currency: product.price.currency,
+    });
+    setActive(product);
+  }
+
   return (
     <>
-      <div className="wrap edit-subhead">
-        <div>
-          <p className="eyebrow">The Edit</p>
-          <h2 className="edit-title">Considered, in every detail</h2>
-        </div>
-        <span className="edit-count">{products.length} pieces</span>
-      </div>
-      <ProductGrid products={products} onTry={setActive} />
+      <ProductGrid products={products} onTry={openTryOn} />
       <TryOnModal product={active} onClose={() => setActive(null)} />
     </>
   );

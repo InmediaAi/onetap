@@ -1,0 +1,36 @@
+/**
+ * Preferred-brand options shown in onboarding. Configurable — edit this list
+ * to change what users can pick (and persist as `brands` in the store).
+ */
+export const BRANDS: string[] = [
+  "Saint Laurent",
+  "Gucci",
+  "Prada",
+  "Bottega Veneta",
+  "Loewe",
+  "Miu Miu",
+  "Jacquemus",
+  "The Row",
+  "Alaïa",
+  "Balenciaga",
+  "Valentino",
+  "Off-White",
+  "Golden Goose",
+  "Amina Muaddi",
+  "Charlotte Tilbury",
+  "Ganni",
+  "Totême",
+  "Khaite",
+  "Zimmermann",
+  "La Mer",
+  "Chloé",
+  "Fendi",
+  "Christian Louboutin",
+  "Celine",
+  "Maison Margiela",
+  "Givenchy",
+  "Acne Studios",
+  "Proenza Schouler",
+  "Staud",
+  "Aquazzura",
+];

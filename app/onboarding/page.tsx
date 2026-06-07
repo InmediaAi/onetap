@@ -6,8 +6,12 @@ import Link from "next/link";
 import ReelsWall from "@/components/onboarding/ReelsWall";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
+import { BRANDS } from "@/lib/data/brands";
+import { track } from "@/lib/analytics";
+import { EVENTS } from "@/lib/analytics/events";
+import { signInWithProvider, uploadIdentity } from "@/lib/auth/client";
 
-type Step = "signin" | "upload";
+type Step = "signin" | "upload" | "brands";
 
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -121,33 +125,114 @@ function UploadCard({
 export default function OnboardingPage() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const signedIn = useAtelier((s) => s.signedIn);
-  const signIn = useAtelier((s) => s.signIn);
+  // Auth truth comes from the loaded profile (SessionLoader → /api/me).
+  const email = useAtelier((s) => s.email);
+  const profileLoaded = useAtelier((s) => s.profileLoaded);
   const face = useAtelier((s) => s.face);
   const body = useAtelier((s) => s.body);
   const setIdentity = useAtelier((s) => s.setIdentity);
+  const brands = useAtelier((s) => s.brands);
+  const setBrands = useAtelier((s) => s.setBrands);
+  const signedIn = Boolean(email);
 
   const [step, setStep] = useState<Step>("signin");
   const [f, setF] = useState<string | null>(null);
   const [b, setB] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [authErr, setAuthErr] = useState<string | null>(null);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  // Resume where the user left off once the persisted store has hydrated.
+  // Onboarding funnel start (once per mount).
   useEffect(() => {
-    if (!hydrated) return;
-    if (signedIn) setStep("upload");
-    setF((v) => v ?? face);
-    setB((v) => v ?? body);
-  }, [hydrated, signedIn, face, body]);
+    track(EVENTS.ONBOARDING_STARTED);
+  }, []);
 
-  function doSignIn() {
-    signIn();
-    setStep("upload");
+  function handleFace(v: string | null) {
+    setF(v);
+    if (v) track(EVENTS.FACE_UPLOADED);
+  }
+  function handleBody(v: string | null) {
+    setB(v);
+    if (v) track(EVENTS.BODY_UPLOADED);
   }
 
-  function getIn() {
+  // Advance to upload once we know the user is signed in.
+  useEffect(() => {
+    if (!profileLoaded) return;
+    if (signedIn) setStep((s) => (s === "signin" ? "upload" : s));
+    setF((v) => v ?? face);
+    setB((v) => v ?? body);
+    setPicked((v) => (v.length ? v : brands));
+  }, [profileLoaded, signedIn, face, body, brands]);
+
+  async function oauth(provider: "google" | "apple") {
+    setAuthErr(null);
+    try {
+      await signInWithProvider(provider, "/onboarding");
+    } catch (e) {
+      setAuthErr(e instanceof Error ? e.message : "Sign-in failed");
+    }
+  }
+
+  async function continueToBrands() {
     if (!f || !b) return;
-    setIdentity(f, b);
-    router.push("/");
+    setSaving(true);
+    setSaveErr(null);
+    setIdentity(f, b); // in-memory likeness for immediate generation
+    try {
+      // Upload both to Supabase Storage (private avatars bucket), then persist
+      // the storage paths to the profile. Throws (surfaced below) if either fails.
+      const [selfiePath, bodyPath] = await Promise.all([
+        uploadIdentity("selfie", f),
+        uploadIdentity("body", b),
+      ]);
+      if (selfiePath || bodyPath) {
+        const res = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ selfiePath, bodyPath }),
+        });
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d?.error || "Could not save your photos.");
+        }
+      }
+      setStep("brands");
+    } catch (e) {
+      // Stay on the upload step so the user can retry — don't lose their photos.
+      setSaveErr(e instanceof Error ? e.message : "Could not save your photos.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function toggleBrand(name: string) {
+    setPicked((p) =>
+      p.includes(name) ? p.filter((x) => x !== name) : [...p, name],
+    );
+  }
+
+  async function finish() {
+    setSaving(true);
+    setSaveErr(null);
+    setBrands(picked);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brands: picked }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d?.error || "Could not save your brands.");
+      }
+      track(EVENTS.ONBOARDING_COMPLETED, { brands: picked.length });
+      router.push("/");
+    } catch (e) {
+      setSaveErr(e instanceof Error ? e.message : "Could not save your brands.");
+      setSaving(false);
+    }
   }
 
   return (
@@ -163,17 +248,18 @@ export default function OnboardingPage() {
               <p className="ob-sub">
                 Sign in to begin. Your likeness stays private to you.
               </p>
-              <button className="oauth-btn" onClick={doSignIn}>
+              <button className="oauth-btn" onClick={() => oauth("google")}>
                 <GoogleMark /> Sign in with Google
               </button>
-              <button className="oauth-btn" onClick={doSignIn}>
+              <button className="oauth-btn" onClick={() => oauth("apple")}>
                 <AppleMark /> Sign in with Apple
               </button>
+              {authErr && <p className="studio-err">{authErr}</p>}
               <Link href="/" className="ob-skip">
                 Explore first →
               </Link>
             </div>
-          ) : (
+          ) : step === "upload" ? (
             <div className="ob-step">
               <p className="ob-sub">
                 Two photos — one to recognise your face, one to read your
@@ -182,22 +268,59 @@ export default function OnboardingPage() {
               <div className="ob-uploads">
                 <UploadCard
                   value={f}
-                  onChange={setF}
+                  onChange={handleFace}
                   label="Upload Face selfie"
                   hint="Face recognition"
                   figure={<FaceFigure />}
                 />
                 <UploadCard
                   value={b}
-                  onChange={setB}
+                  onChange={handleBody}
                   label="Upload Full body image"
                   hint="Shape analysis"
                   figure={<BodyFigure />}
                 />
               </div>
-              <button className="getin" onClick={getIn} disabled={!f || !b}>
-                Get In <span aria-hidden="true">→</span>
+              <button
+                className="getin"
+                onClick={continueToBrands}
+                disabled={!f || !b || saving}
+              >
+                {saving ? "Saving…" : "Continue"} <span aria-hidden="true">→</span>
               </button>
+              {saveErr && <p className="studio-err">{saveErr}</p>}
+              <Link href="/" className="ob-skip">
+                Skip for now →
+              </Link>
+            </div>
+          ) : (
+            <div className="ob-step">
+              <p className="ob-sub">
+                Choose the houses you love — your edit will lead with them.
+                {picked.length > 0 && (
+                  <span className="ob-count"> {picked.length} selected</span>
+                )}
+              </p>
+              <div className="brand-grid">
+                {BRANDS.map((name) => (
+                  <button
+                    key={name}
+                    className={"brand-tile" + (picked.includes(name) ? " on" : "")}
+                    onClick={() => toggleBrand(name)}
+                  >
+                    {picked.includes(name) && (
+                      <span className="brand-check" aria-hidden="true">
+                        ✓
+                      </span>
+                    )}
+                    <span className="brand-name">{name}</span>
+                  </button>
+                ))}
+              </div>
+              <button className="getin" onClick={finish} disabled={saving}>
+                {saving ? "Saving…" : "Get In"} <span aria-hidden="true">→</span>
+              </button>
+              {saveErr && <p className="studio-err">{saveErr}</p>}
               <Link href="/" className="ob-skip">
                 Skip for now →
               </Link>

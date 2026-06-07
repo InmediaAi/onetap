@@ -1,7 +1,7 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import type { Product } from "@/lib/data/products";
+import { formatPrice, type Product } from "@/lib/data/products";
 import { useAtelier } from "@/lib/store";
 
 export default function ProductCard({
@@ -15,10 +15,12 @@ export default function ProductCard({
 }) {
   const wished = useAtelier((s) => s.wishlist.includes(product.id));
   const toggleWish = useAtelier((s) => s.toggleWish);
+  // Second variant (if any) reveals on hover.
+  const hoverImage = product.images?.find((u) => u && u !== product.imageUrl);
 
   return (
     <div className="card" style={{ animationDelay: `${(index % 8) * 0.04}s` }}>
-      <div className="ptile" onClick={() => onTry(product)}>
+      <div className={"ptile" + (hoverImage ? " has-alt" : "")} onClick={() => onTry(product)}>
         <div className="mono">{product.mono}</div>
         {/* Real editorial image sits over the monogram placeholder. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -28,6 +30,10 @@ export default function ProductCard({
           alt={`${product.brand} — ${product.name}`}
           loading="lazy"
         />
+        {hoverImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="pimg pimg-alt" src={hoverImage} alt="" loading="lazy" aria-hidden="true" />
+        )}
         <div className="inset" />
 
         <button
@@ -57,7 +63,10 @@ export default function ProductCard({
       <div className="meta">
         <span className="house">{product.brand}</span>
         <span className="name">{product.name}</span>
-        <span className="price">{product.price}</span>
+        {product.stylistNote && (
+          <span className="stylist-note">{product.stylistNote}</span>
+        )}
+        <span className="price">{formatPrice(product.price)}</span>
         <button className="tryon-link" onClick={() => onTry(product)}>
           <span className="mk" /> OneTap Try-On
         </button>
