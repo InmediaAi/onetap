@@ -2,10 +2,13 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, RotateCw, Download, ArrowLeft } from "lucide-react";
+import { Plus, RotateCw } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { composeReel, VideoLimitError } from "@/lib/generate";
+import { composeReel, VideoLimitError, SignInRequiredError } from "@/lib/generate";
+import { ensureCanGenerateVideo } from "@/lib/billing/gate";
+import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
+import ResultModal from "@/components/ResultModal";
 
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -14,6 +17,13 @@ function readAsDataURL(file: File): Promise<string> {
     r.onerror = reject;
     r.readAsDataURL(file);
   });
+}
+
+interface Result {
+  image?: string;
+  videoUrl: string;
+  posterUrl?: string;
+  lookId: string;
 }
 
 export default function Studio360() {
@@ -25,25 +35,32 @@ export default function Studio360() {
   const [drag, setDrag] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [video, setVideo] = useState<{ videoUrl: string; posterUrl?: string } | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState<"create" | "history">("create");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const spins = looks.filter((l) => l.kind === "spin");
-  const canUpload = !loading && !video; // the frame is the dropzone only before a result
 
   async function pick(file?: File) {
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
+    const check = await validateImageFile(file);
+    if (!check.ok) {
+      setError(check.error ?? "That image can’t be used.");
+      return;
+    }
     setPiece(await readAsDataURL(file));
-    setVideo(null);
+    setResult(null);
     setError(null);
   }
 
   async function run() {
     if (!piece || !portrait || loading) return;
+    if (!(await ensureCanGenerateVideo())) return; // sign-in / quota gate
     setLoading(true);
     setError(null);
-    setVideo(null);
+    setResult(null);
+    setModalOpen(true);
     try {
       const res = await composeReel({
         kind: "spin",
@@ -51,24 +68,14 @@ export default function Studio360() {
         pieceImage: piece,
         productId: "tryon-360",
       });
-      setVideo({ videoUrl: res.videoUrl, posterUrl: res.posterUrl });
+      setResult({ image: res.imageUrl, videoUrl: res.videoUrl, posterUrl: res.posterUrl, lookId: res.lookId });
     } catch (e) {
-      if (!(e instanceof VideoLimitError)) {
+      if (!(e instanceof VideoLimitError) && !(e instanceof SignInRequiredError)) {
         setError(e instanceof Error ? e.message : "Generation failed");
       }
     } finally {
       setLoading(false);
     }
-  }
-
-  function download() {
-    if (!video) return;
-    const a = document.createElement("a");
-    a.href = video.videoUrl;
-    a.download = "onetap-360";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
   }
 
   return (
@@ -89,42 +96,21 @@ export default function Studio360() {
             One upload. One tap. A turn of you wearing the piece, from every angle.
           </p>
 
-          {/* the single combined frame: dropzone · piece · composing · result */}
           <div
-            className={
-              "studio-stage" +
-              (canUpload ? " uploadable" : "") +
-              (drag ? " drag" : "") +
-              (piece && canUpload ? " has" : "")
-            }
-            onClick={canUpload ? () => fileRef.current?.click() : undefined}
-            onDragOver={
-              canUpload
-                ? (e) => {
-                    e.preventDefault();
-                    setDrag(true);
-                  }
-                : undefined
-            }
-            onDragLeave={canUpload ? () => setDrag(false) : undefined}
-            onDrop={
-              canUpload
-                ? (e) => {
-                    e.preventDefault();
-                    setDrag(false);
-                    void pick(e.dataTransfer.files?.[0]);
-                  }
-                : undefined
-            }
+            className={"studio-stage uploadable" + (drag ? " drag" : "") + (piece ? " has" : "")}
+            onClick={() => fileRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDrag(true);
+            }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDrag(false);
+              void pick(e.dataTransfer.files?.[0]);
+            }}
           >
-            {loading ? (
-              <div className="mproc">
-                <div className="dotfield" />
-                <div className="pl">Composing your turn…</div>
-              </div>
-            ) : video ? (
-              <video className="base" src={video.videoUrl} poster={video.posterUrl} autoPlay loop muted playsInline />
-            ) : piece ? (
+            {piece ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img className="base" src={piece} alt="Your piece" />
@@ -139,6 +125,7 @@ export default function Studio360() {
                 <span className="stage-sub">
                   Drop an image, or choose a file. A product photo or a screenshot.
                 </span>
+                <span className="stage-guide">{IMAGE_GUIDELINE}</span>
               </div>
             )}
           </div>
@@ -158,26 +145,15 @@ export default function Studio360() {
           </p>
 
           {/* action */}
-          {video ? (
-            <div className="studio-result-actions">
-              <button className="copy-btn" onClick={() => setVideo(null)}>
-                <ArrowLeft size={13} strokeWidth={1.6} /> Compose another
-              </button>
-              <button className="copy-btn" onClick={download}>
-                <Download size={13} strokeWidth={1.5} /> Download
-              </button>
-            </div>
-          ) : (
-            <button
-              className="studio-go"
-              onClick={run}
-              disabled={!piece || !portrait || loading}
-              title="One tap · 1 video"
-            >
-              <RotateCw size={15} strokeWidth={1.5} /> OneTap TryOn
-              <span className="go-cr">1 video</span>
-            </button>
-          )}
+          <button
+            className="studio-go"
+            onClick={run}
+            disabled={!piece || !portrait || loading}
+            title="One tap · 1 video"
+          >
+            <RotateCw size={15} strokeWidth={1.5} /> Try-On
+            <span className="go-cr">1 video</span>
+          </button>
           {error && <p className="studio-err">{error}</p>}
 
           <input
@@ -211,6 +187,23 @@ export default function Studio360() {
           )}
         </div>
       )}
+
+      <ResultModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setResult(null);
+        }}
+        brand="360° Try-On"
+        image={result?.image}
+        video={result?.videoUrl}
+        poster={result?.posterUrl}
+        phase={loading ? "spin" : null}
+        turnLabel="360°"
+        turnSub="The Turn"
+        videoLookId={result?.lookId}
+        productId="tryon-360"
+      />
     </div>
   );
 }

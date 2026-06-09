@@ -23,17 +23,28 @@ async function currentUserId(): Promise<string | null> {
 /** Social Video — generateVideo(). Body: { image, prompt?, productId? }. Metered. */
 export async function POST(req: Request) {
   const startedAt = Date.now();
-  let body: { image?: string; prompt?: string; productId?: string } = {};
+  let body: {
+    image?: string;
+    prompt?: string;
+    productId?: string;
+    campaign?: string;
+  } = {};
   let reserved: string | null = null;
   try {
     body = await req.json();
-    const { image, prompt, productId } = body;
+    const { image, prompt, productId, campaign } = body;
     if (!image) {
       return NextResponse.json({ error: "image is required" }, { status: 400 });
     }
 
     // Reserve one video against the user's quota before the paid call.
     const r = await reserveVideo();
+    if ("needAuth" in r) {
+      return NextResponse.json(
+        { error: "Sign in required", code: "SIGN_IN_REQUIRED" },
+        { status: 401 },
+      );
+    }
     if ("ok" in r && r.ok === false) {
       return NextResponse.json(
         { error: "Video limit reached", code: "LIMIT_REACHED" },
@@ -56,6 +67,7 @@ export async function POST(req: Request) {
       productId,
       inputRef: imageRefOf(image),
       posterSource: result.posterUrl ?? image,
+      campaign,
     });
 
     await logGeneration({

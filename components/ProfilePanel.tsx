@@ -14,6 +14,7 @@ import {
   HEIGHTS,
 } from "@/lib/data/vocab";
 import { startTopup } from "@/lib/billing/checkout";
+import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 import { uploadIdentity, signOut, type IdentityKind } from "@/lib/auth/client";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
@@ -96,7 +97,12 @@ export default function ProfilePanel() {
   }
 
   async function replaceImage(kind: IdentityKind, file?: File) {
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
+    const check = await validateImageFile(file);
+    if (!check.ok) {
+      setStatus(check.error ?? "That image can’t be used.");
+      return;
+    }
     const dataUrl = await readAsDataURL(file);
     setImgs((m) => ({ ...m, [kind]: dataUrl }));
     // Face/body drive the try-on likeness in memory.
@@ -248,6 +254,7 @@ export default function ProfilePanel() {
           Standing, front-facing, good light, fitted pieces. These power try-on
           quality and 360° realism.
         </p>
+        <p className="admin-hint">{IMAGE_GUIDELINE}</p>
         <div className="profile-imgs">
           {PHOTOS.map(({ kind, label, hint }) => (
             <div key={kind} className="profile-img">

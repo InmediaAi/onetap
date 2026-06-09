@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import PackagesAdmin from "@/components/admin/PackagesAdmin";
+import CampaignLinks from "@/components/admin/CampaignLinks";
 import { formatPrice, type Product } from "@/lib/data/products";
 import {
   CURRENCIES,
-  UPLOADABLE_TYPES,
+  PRODUCT_CATEGORIES,
+  PRODUCT_STYLES,
   COLOURS,
   OCCASIONS,
 } from "@/lib/data/vocab";
@@ -20,9 +22,11 @@ interface Draft {
   currency: string;
   images: string[];
   sourceUrl: string;
+  buyUrl: string;
   description: string;
   stylistNote: string;
-  type: string;
+  category: string;
+  style: string[];
   colours: string[];
   occasions: string[];
   dropDate: string;
@@ -38,9 +42,11 @@ const EMPTY: Draft = {
   currency: "USD",
   images: [],
   sourceUrl: "",
+  buyUrl: "",
   description: "",
   stylistNote: "",
-  type: "",
+  category: "",
+  style: [],
   colours: [],
   occasions: [],
   dropDate: today(),
@@ -51,7 +57,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
-  const [tab, setTab] = useState<"pieces" | "packages">("pieces");
+  const [tab, setTab] = useState<"pieces" | "packages" | "campaigns">("pieces");
 
   const [url, setUrl] = useState("");
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -59,6 +65,7 @@ export default function AdminPage() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [recent, setRecent] = useState<Product[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const loadRecent = useCallback(async (pw: string) => {
     try {
@@ -88,7 +95,34 @@ export default function AdminPage() {
   function startBlank() {
     setDraft({ ...EMPTY, dropDate: today() });
     setHasDraft(true);
+    setEditingId(null);
     setStatus("");
+  }
+
+  /** Load an existing piece into the form for editing (id stays stable). */
+  function loadForEdit(p: Product) {
+    setDraft({
+      brand: p.brand,
+      name: p.name,
+      priceAmount: p.price?.amount ? String(p.price.amount) : "",
+      currency: p.price?.currency || "USD",
+      images: p.images?.length ? p.images : p.imageUrl ? [p.imageUrl] : [],
+      sourceUrl: "",
+      buyUrl: p.buyUrl ?? "",
+      description: p.description ?? "",
+      stylistNote: p.stylistNote ?? "",
+      category: p.category ?? "",
+      style: p.style ?? [],
+      colours: p.colours ?? [],
+      occasions: p.occasions ?? [],
+      dropDate: p.droppedAt ?? today(),
+      oneTapScore: p.oneTapScore ?? 70,
+    });
+    setHasDraft(true);
+    setEditingId(p.id);
+    setStatus(`Editing “${p.brand} — ${p.name}”.`);
+    setUrl("");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function fetchFromUrl(e: React.FormEvent) {
@@ -115,10 +149,14 @@ export default function AdminPage() {
         name: p.name ?? "",
         images: p.images?.length ? p.images : p.imageUrl ? [p.imageUrl] : [],
         sourceUrl: p.sourceUrl ?? "",
+        buyUrl: p.sourceUrl ?? "", // the scraped product page is the purchase link
         priceAmount: p.priceAmount != null ? String(p.priceAmount) : "",
         currency: p.currency || "USD",
+        category: p.category ?? "", // best-effort guess; admin confirms
+        colours: Array.isArray(p.colours) ? p.colours : [],
       });
       setHasDraft(true);
+      setEditingId(null);
       if (data.blocked) setStatus("That site blocked automated reading — fill the fields in manually.");
       else if (data.partial) setStatus("Some fields couldn’t be detected — review and complete them.");
       else setStatus("Details extracted — review, then save.");
@@ -137,16 +175,19 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, ...draft }),
+        body: JSON.stringify({ password, editId: editingId ?? undefined, ...draft }),
       });
       const data = await res.json();
       if (!res.ok) {
         setStatus(data?.error || "Save failed.");
         return;
       }
-      setStatus(`Added “${data.product.brand} — ${data.product.name}”.`);
+      setStatus(
+        `${editingId ? "Updated" : "Added"} “${data.product.brand} — ${data.product.name}”.`,
+      );
       setDraft({ ...EMPTY, dropDate: today() });
       setHasDraft(false);
+      setEditingId(null);
       setUrl("");
       loadRecent(password);
     } catch {
@@ -161,7 +202,7 @@ export default function AdminPage() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setDraft((d) => ({ ...d, [k]: e.target.value }));
 
-  const toggle = (k: "colours" | "occasions", v: string) =>
+  const toggle = (k: "colours" | "occasions" | "style", v: string) =>
     setDraft((d) => ({
       ...d,
       [k]: d[k].includes(v) ? d[k].filter((x) => x !== v) : [...d[k], v],
@@ -200,7 +241,15 @@ export default function AdminPage() {
       <div className="admin-head">
         <div>
           <p className="eyebrow">OneTap Atelier — Atelier Desk</p>
-          <h1 className="admin-title">{tab === "pieces" ? "Add a Piece" : "Packages"}</h1>
+          <h1 className="admin-title">
+            {tab === "packages"
+              ? "Packages"
+              : tab === "campaigns"
+                ? "Campaigns"
+                : editingId
+                  ? "Edit a Piece"
+                  : "Add a Piece"}
+          </h1>
         </div>
         <Link href="/" className="admin-link">View catalogue →</Link>
       </div>
@@ -218,10 +267,18 @@ export default function AdminPage() {
         >
           Packages
         </button>
+        <button
+          className={"admin-tab" + (tab === "campaigns" ? " on" : "")}
+          onClick={() => setTab("campaigns")}
+        >
+          Campaigns
+        </button>
       </div>
 
       {tab === "packages" ? (
         <PackagesAdmin password={password} />
+      ) : tab === "campaigns" ? (
+        <CampaignLinks password={password} />
       ) : (
         <>
           <form className="admin-card" onSubmit={fetchFromUrl}>
@@ -280,14 +337,30 @@ export default function AdminPage() {
             </div>
 
             <label className="admin-field">
-              <span className="admin-label">Clothing type</span>
-              <select className="admin-input" value={draft.type} onChange={set("type")}>
-                <option value="">Select a type…</option>
-                {UPLOADABLE_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+              <span className="admin-label">Category</span>
+              <select className="admin-input" value={draft.category} onChange={set("category")}>
+                <option value="">Select a category…</option>
+                {PRODUCT_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </label>
+
+            <div className="admin-field">
+              <span className="admin-label">Style</span>
+              <div className="chips-inline">
+                {PRODUCT_STYLES.map((s) => (
+                  <button
+                    type="button"
+                    key={s}
+                    className={"chip" + (draft.style.includes(s) ? " on" : "")}
+                    onClick={() => toggle("style", s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="admin-field">
               <span className="admin-label">Colours</span>
@@ -351,6 +424,13 @@ export default function AdminPage() {
               placeholder="The one italic line on the card"
             />
 
+            <Field
+              label="Purchase link"
+              value={draft.buyUrl}
+              onChange={set("buyUrl")}
+              placeholder="Where members buy it — the retailer product page"
+            />
+
             <label className="admin-field">
               <span className="admin-label">Description</span>
               <textarea
@@ -404,17 +484,31 @@ export default function AdminPage() {
             )}
           </div>
           <button type="submit" className="btn-line admin-btn admin-save" disabled={busy}>
-            {busy ? "Saving…" : "Save to catalogue"}
+            {busy ? "Saving…" : editingId ? "Update piece" : "Save to catalogue"}
           </button>
+          {editingId && (
+            <button
+              type="button"
+              className="admin-inline-btn admin-cancel-edit"
+              onClick={startBlank}
+            >
+              Cancel edit
+            </button>
+          )}
         </form>
       )}
 
           {recent.length > 0 && (
             <section className="admin-recent">
-              <h2 className="admin-subtitle">Recently added</h2>
+              <h2 className="admin-subtitle">Recently added — tap to edit</h2>
               <ul>
                 {recent.map((p) => (
-                  <li key={p.id}>
+                  <li
+                    key={p.id}
+                    className={"admin-recent-row" + (editingId === p.id ? " on" : "")}
+                    onClick={() => loadForEdit(p)}
+                    role="button"
+                  >
                     <span className="admin-recent-brand">{p.brand}</span>
                     <span className="admin-recent-name">{p.name}</span>
                     <span className="admin-recent-price">{formatPrice(p.price)}</span>

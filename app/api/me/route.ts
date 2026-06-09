@@ -22,7 +22,7 @@ export async function GET() {
   const { data: profile } = await sb
     .from("profiles")
     .select(
-      "username, email, favorite_brands, selfie_url, body_url, left_url, right_url, back_url, model_url, height_inches, style, categories, goals, scene_mood, scene_setting, free_trial_used",
+      "username, email, favorite_brands, selfie_url, body_url, left_url, right_url, back_url, model_url, height_inches, style, categories, goals, scene_mood, scene_setting, free_trial_used, onboarded",
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -71,6 +71,7 @@ export async function GET() {
 
   return NextResponse.json({
     authed: true,
+    onboarded: Boolean(profile?.onboarded),
     username: profile?.username ?? null,
     email: profile?.email ?? user.email ?? null,
     brands: profile?.favorite_brands ?? [],

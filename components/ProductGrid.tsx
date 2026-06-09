@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
-import { isNewIn, type Product } from "@/lib/data/products";
-import { CLOTHING_TYPES, ALL_CLOTHING, COLOURS, OCCASIONS } from "@/lib/data/vocab";
+import { SlidersHorizontal, X, Search } from "lucide-react";
+import { isNewIn, priceBracketId, type Product } from "@/lib/data/products";
+import {
+  PRODUCT_CATEGORIES,
+  PRODUCT_STYLES,
+  OCCASIONS,
+  COLOURS,
+  PRICE_BRACKETS,
+} from "@/lib/data/vocab";
 import ProductCard from "./ProductCard";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
-type Quick = "newin" | "vacation" | "work";
-const QUICK: { id: Quick; label: string }[] = [
-  { id: "newin", label: "New in" },
-  { id: "vacation", label: "Vacation wear" },
-  { id: "work", label: "Work wear" },
-];
+/** Facet keys (the quick "New in" toggle is applied separately, always). */
+type Facet = "brand" | "category" | "style" | "occasion" | "colour" | "price";
 
 export default function ProductGrid({
   products,
@@ -22,10 +24,14 @@ export default function ProductGrid({
   products: Product[];
   onTry: (product: Product) => void;
 }) {
-  const [quick, setQuick] = useState<Quick[]>([]);
-  const [type, setType] = useState<string>(ALL_CLOTHING);
-  const [colours, setColours] = useState<string[]>([]);
+  const [brands, setBrands] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [styles, setStyles] = useState<string[]>([]);
   const [occasions, setOccasions] = useState<string[]>([]);
+  const [colours, setColours] = useState<string[]>([]);
+  const [brackets, setBrackets] = useState<string[]>([]);
+  const [newIn, setNewIn] = useState(false);
+  const [brandQuery, setBrandQuery] = useState("");
   const [refineOpen, setRefineOpen] = useState(false);
 
   // Scroll-lock + escape while the Refine drawer is open.
@@ -40,73 +46,130 @@ export default function ProductGrid({
     };
   }, [refineOpen]);
 
-  const visible = useMemo(() => {
-    const list = products.filter((p) => {
-      if (type !== ALL_CLOTHING && p.type !== type) return false;
-      if (colours.length && !colours.some((c) => p.colours?.includes(c))) return false;
-      if (occasions.length && !occasions.some((o) => p.occasions?.includes(o))) return false;
-      if (quick.includes("newin") && !isNewIn(p.droppedAt)) return false;
-      if (quick.includes("vacation") && !p.occasions?.includes("Vacation")) return false;
-      if (quick.includes("work") && !p.occasions?.includes("Work")) return false;
+  // A product passes every selected facet EXCEPT `exclude` (+ the New-in toggle,
+  // always applied). Used both for the visible list (exclude=null) and for
+  // computing each facet's still-available options (cross-filtered / faceted).
+  const passes = useMemo(() => {
+    return (p: Product, exclude: Facet | null) => {
+      if (exclude !== "brand" && brands.length && !brands.includes(p.brand)) return false;
+      if (
+        exclude !== "category" &&
+        categories.length &&
+        !(p.category && categories.includes(p.category))
+      )
+        return false;
+      if (exclude !== "style" && styles.length && !styles.some((s) => p.style?.includes(s)))
+        return false;
+      if (
+        exclude !== "occasion" &&
+        occasions.length &&
+        !occasions.some((o) => p.occasions?.includes(o))
+      )
+        return false;
+      if (exclude !== "colour" && colours.length && !colours.some((c) => p.colours?.includes(c)))
+        return false;
+      if (
+        exclude !== "price" &&
+        brackets.length &&
+        !brackets.includes(priceBracketId(p.price.amount) ?? "")
+      )
+        return false;
+      if (newIn && !isNewIn(p.droppedAt)) return false;
       return true;
-    });
-    // Recommended order — internal OneTap score (never shown).
+    };
+  }, [brands, categories, styles, occasions, colours, brackets, newIn]);
+
+  const visible = useMemo(() => {
+    const list = products.filter((p) => passes(p, null));
     return [...list].sort((a, b) => (b.oneTapScore ?? 0) - (a.oneTapScore ?? 0));
-  }, [products, type, colours, occasions, quick]);
+  }, [products, passes]);
 
-  const toggleQuick = (id: Quick) => {
-    setQuick((q) => (q.includes(id) ? q.filter((x) => x !== id) : [...q, id]));
-    track(EVENTS.CATALOG_FILTERED, { quick: id });
-  };
-  const pickType = (t: string) => {
-    setType(t);
-    track(EVENTS.CATALOG_FILTERED, { type: t });
-  };
-  const toggleColour = (c: string) => {
-    setColours((arr) => (arr.includes(c) ? arr.filter((x) => x !== c) : [...arr, c]));
-    track(EVENTS.CATALOG_FILTERED, { colour: c });
-  };
-  const toggleOccasion = (o: string) => {
-    setOccasions((arr) => (arr.includes(o) ? arr.filter((x) => x !== o) : [...arr, o]));
-    track(EVENTS.CATALOG_FILTERED, { occasion: o });
-  };
+  // Available option sets per facet (values present once the OTHER facets apply).
+  const opts = useMemo(() => {
+    const present = (exclude: Facet, get: (p: Product) => string | string[] | null | undefined) => {
+      const set = new Set<string>();
+      for (const p of products) {
+        if (!passes(p, exclude)) continue;
+        const v = get(p);
+        if (Array.isArray(v)) v.forEach((x) => x && set.add(x));
+        else if (v) set.add(v);
+      }
+      return set;
+    };
+    // Keep already-selected values visible (so they stay deselectable).
+    const withSel = (set: Set<string>, sel: string[]) => {
+      sel.forEach((s) => set.add(s));
+      return set;
+    };
+    const brandSet = withSel(present("brand", (p) => p.brand), brands);
+    return {
+      brands: [...brandSet].sort((a, b) => a.localeCompare(b)),
+      categories: PRODUCT_CATEGORIES.filter((c) =>
+        withSel(present("category", (p) => p.category), categories).has(c),
+      ),
+      styles: PRODUCT_STYLES.filter((s) =>
+        withSel(present("style", (p) => p.style), styles).has(s),
+      ),
+      occasions: OCCASIONS.filter((o) =>
+        withSel(present("occasion", (p) => p.occasions), occasions).has(o),
+      ),
+      colours: COLOURS.filter((c) =>
+        withSel(present("colour", (p) => p.colours), colours).has(c.name),
+      ),
+      brackets: PRICE_BRACKETS.filter((b) =>
+        withSel(present("price", (p) => priceBracketId(p.price.amount)), brackets).has(b.id),
+      ),
+    };
+  }, [products, passes, brands, categories, styles, occasions, colours, brackets]);
 
-  // Active filters → a sequence of removable tiles.
-  const active: { label: string; clear: () => void }[] = [
-    ...QUICK.filter((q) => quick.includes(q.id)).map((q) => ({
-      label: q.label,
-      clear: () => setQuick((s) => s.filter((x) => x !== q.id)),
-    })),
-    ...(type !== ALL_CLOTHING ? [{ label: type, clear: () => setType(ALL_CLOTHING) }] : []),
-    ...colours.map((c) => ({ label: c, clear: () => setColours((s) => s.filter((x) => x !== c)) })),
-    ...occasions.map((o) => ({ label: o, clear: () => setOccasions((s) => s.filter((x) => x !== o)) })),
+  const toggle =
+    (setter: React.Dispatch<React.SetStateAction<string[]>>, key: string) => (v: string) => {
+      setter((arr) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]));
+      track(EVENTS.CATALOG_FILTERED, { [key]: v });
+    };
+  const toggleBrand = toggle(setBrands, "brand");
+  const toggleCategory = toggle(setCategories, "category");
+  const toggleStyle = toggle(setStyles, "style");
+  const toggleOccasion = toggle(setOccasions, "occasion");
+  const toggleColour = toggle(setColours, "colour");
+  const toggleBracket = toggle(setBrackets, "price");
+
+  // Active filters → removable tiles (price shows its label, not its id).
+  const bracketLabel = (id: string) => PRICE_BRACKETS.find((b) => b.id === id)?.label ?? id;
+  const active: { key: string; label: string; clear: () => void }[] = [
+    ...(newIn ? [{ key: "newin", label: "New in", clear: () => setNewIn(false) }] : []),
+    ...brands.map((v) => ({ key: `b-${v}`, label: v, clear: () => toggleBrand(v) })),
+    ...categories.map((v) => ({ key: `c-${v}`, label: v, clear: () => toggleCategory(v) })),
+    ...styles.map((v) => ({ key: `s-${v}`, label: v, clear: () => toggleStyle(v) })),
+    ...occasions.map((v) => ({ key: `o-${v}`, label: v, clear: () => toggleOccasion(v) })),
+    ...brackets.map((v) => ({ key: `p-${v}`, label: bracketLabel(v), clear: () => toggleBracket(v) })),
+    ...colours.map((v) => ({ key: `col-${v}`, label: v, clear: () => toggleColour(v) })),
   ];
   const clearAll = () => {
-    setQuick([]);
-    setType(ALL_CLOTHING);
-    setColours([]);
+    setBrands([]);
+    setCategories([]);
+    setStyles([]);
     setOccasions([]);
-  };
-  const clearRefine = () => {
-    setType(ALL_CLOTHING);
     setColours([]);
-    setOccasions([]);
+    setBrackets([]);
+    setNewIn(false);
   };
+
+  const visibleBrands = opts.brands.filter((b) =>
+    b.toLowerCase().includes(brandQuery.trim().toLowerCase()),
+  );
 
   return (
     <div className="wrap">
       {/* quick filters + refine */}
       <div className="curator-filterbar">
         <div className="quickbar">
-          {QUICK.map((q) => (
-            <button
-              key={q.id}
-              className={"f-chip" + (quick.includes(q.id) ? " on" : "")}
-              onClick={() => toggleQuick(q.id)}
-            >
-              {q.label}
-            </button>
-          ))}
+          <button
+            className={"f-chip" + (newIn ? " on" : "")}
+            onClick={() => setNewIn((v) => !v)}
+          >
+            New in
+          </button>
         </div>
         <button className="refine-btn" onClick={() => setRefineOpen(true)}>
           <SlidersHorizontal size={15} strokeWidth={1.4} /> Refine
@@ -117,7 +180,7 @@ export default function ProductGrid({
       {active.length > 0 && (
         <div className="active-filters">
           {active.map((a) => (
-            <button key={a.label} className="afilter" onClick={a.clear}>
+            <button key={a.key} className="afilter" onClick={a.clear}>
               {a.label} <X size={11} strokeWidth={2} />
             </button>
           ))}
@@ -158,68 +221,120 @@ export default function ProductGrid({
             </div>
 
             <div className="refine-body">
-              <section className="refine-sec">
-                <div className="refine-sec-head">
-                  <span className="rsh-lbl">Clothing</span>
-                  {type !== ALL_CLOTHING && <span className="rsh-sum">{type}</span>}
-                </div>
-                <div className="type-list">
-                  {CLOTHING_TYPES.map((t) => (
-                    <button
-                      key={t}
-                      className={"type-row" + (type === t ? " on" : "")}
-                      onClick={() => pickType(t)}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </section>
+              {/* Brand — searchable */}
+              {opts.brands.length > 0 && (
+                <section className="refine-sec">
+                  <div className="refine-sec-head">
+                    <span className="rsh-lbl">Brand</span>
+                    {brands.length > 0 && <span className="rsh-sum">{brands.join(", ")}</span>}
+                  </div>
+                  <div className="brand-search">
+                    <Search size={13} strokeWidth={1.6} />
+                    <input
+                      value={brandQuery}
+                      onChange={(e) => setBrandQuery(e.target.value)}
+                      placeholder="Search brands"
+                    />
+                  </div>
+                  <div className="type-list brand-list">
+                    {visibleBrands.map((b) => (
+                      <button
+                        key={b}
+                        className={"type-row" + (brands.includes(b) ? " on" : "")}
+                        onClick={() => toggleBrand(b)}
+                      >
+                        {b}
+                      </button>
+                    ))}
+                    {visibleBrands.length === 0 && (
+                      <p className="refine-none">No brands match.</p>
+                    )}
+                  </div>
+                </section>
+              )}
 
-              <section className="refine-sec">
-                <div className="refine-sec-head">
-                  <span className="rsh-lbl">Colour</span>
-                  {colours.length > 0 && <span className="rsh-sum">{colours.join(", ")}</span>}
-                </div>
-                <div className="rswatch-grid">
-                  {COLOURS.map((c) => (
-                    <button
-                      key={c.name}
-                      className={"rswatch" + (colours.includes(c.name) ? " on" : "")}
-                      onClick={() => toggleColour(c.name)}
-                    >
-                      <span
-                        className="rswatch-dot"
-                        data-print={c.hex === null ? "" : undefined}
-                        style={c.hex ? { background: c.hex } : undefined}
-                      />
-                      <span className="rswatch-name">{c.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
+              {/* Occasion */}
+              {opts.occasions.length > 0 && (
+                <Facets
+                  label="Occasion"
+                  options={opts.occasions as readonly string[]}
+                  selected={occasions}
+                  onToggle={toggleOccasion}
+                />
+              )}
 
-              <section className="refine-sec">
-                <div className="refine-sec-head">
-                  <span className="rsh-lbl">Occasion</span>
-                  {occasions.length > 0 && <span className="rsh-sum">{occasions.join(", ")}</span>}
-                </div>
-                <div className="chips-inline">
-                  {OCCASIONS.map((o) => (
-                    <button
-                      key={o}
-                      className={"f-chip" + (occasions.includes(o) ? " on" : "")}
-                      onClick={() => toggleOccasion(o)}
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
-              </section>
+              {/* Category */}
+              {opts.categories.length > 0 && (
+                <Facets
+                  label="Category"
+                  options={opts.categories as readonly string[]}
+                  selected={categories}
+                  onToggle={toggleCategory}
+                />
+              )}
+
+              {/* Style */}
+              {opts.styles.length > 0 && (
+                <Facets
+                  label="Style"
+                  options={opts.styles as readonly string[]}
+                  selected={styles}
+                  onToggle={toggleStyle}
+                />
+              )}
+
+              {/* Price */}
+              {opts.brackets.length > 0 && (
+                <section className="refine-sec">
+                  <div className="refine-sec-head">
+                    <span className="rsh-lbl">Price</span>
+                    {brackets.length > 0 && (
+                      <span className="rsh-sum">{brackets.map(bracketLabel).join(", ")}</span>
+                    )}
+                  </div>
+                  <div className="chips-inline">
+                    {opts.brackets.map((b) => (
+                      <button
+                        key={b.id}
+                        className={"f-chip" + (brackets.includes(b.id) ? " on" : "")}
+                        onClick={() => toggleBracket(b.id)}
+                      >
+                        {b.label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Colour */}
+              {opts.colours.length > 0 && (
+                <section className="refine-sec">
+                  <div className="refine-sec-head">
+                    <span className="rsh-lbl">Colour</span>
+                    {colours.length > 0 && <span className="rsh-sum">{colours.join(", ")}</span>}
+                  </div>
+                  <div className="rswatch-grid">
+                    {opts.colours.map((c) => (
+                      <button
+                        key={c.name}
+                        className={"rswatch" + (colours.includes(c.name) ? " on" : "")}
+                        onClick={() => toggleColour(c.name)}
+                      >
+                        <span
+                          className="rswatch-dot"
+                          data-print={c.hex === null ? "" : undefined}
+                          style={c.hex ? { background: c.hex } : undefined}
+                        />
+                        <span className="rswatch-name">{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             <div className="refine-foot">
-              <button className="refine-clear" onClick={clearRefine}>
+              <button className="refine-clear" onClick={clearAll}>
                 Clear
               </button>
               <button className="refine-apply" onClick={() => setRefineOpen(false)}>
@@ -230,5 +345,38 @@ export default function ProductGrid({
         </div>
       )}
     </div>
+  );
+}
+
+/** A chip-based multi-select facet section. */
+function Facets({
+  label,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string;
+  options: readonly string[];
+  selected: string[];
+  onToggle: (v: string) => void;
+}) {
+  return (
+    <section className="refine-sec">
+      <div className="refine-sec-head">
+        <span className="rsh-lbl">{label}</span>
+        {selected.length > 0 && <span className="rsh-sum">{selected.join(", ")}</span>}
+      </div>
+      <div className="chips-inline">
+        {options.map((o) => (
+          <button
+            key={o}
+            className={"f-chip" + (selected.includes(o) ? " on" : "")}
+            onClick={() => onToggle(o)}
+          >
+            {o}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

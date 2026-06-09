@@ -22,10 +22,15 @@ async function currentUserId(): Promise<string | null> {
 /** Photo Try-On — generateTryOn(). Body: { userImage, productImage, productId? }. */
 export async function POST(req: Request) {
   const startedAt = Date.now();
-  let body: { userImage?: string; productImage?: string; productId?: string } = {};
+  let body: {
+    userImage?: string;
+    productImage?: string;
+    productId?: string;
+    campaign?: string;
+  } = {};
   try {
     body = await req.json();
-    const { userImage, productImage, productId } = body;
+    const { userImage, productImage, productId, campaign } = body;
     if (!userImage || !productImage) {
       return NextResponse.json(
         { error: "userImage and productImage are required" },
@@ -45,6 +50,7 @@ export async function POST(req: Request) {
       userId,
       productId,
       inputRef: imageRefOf(productImage),
+      campaign,
     });
 
     await logGeneration({

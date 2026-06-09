@@ -37,6 +37,16 @@ export function track(event: EventName, props?: Record<string, unknown>): void {
   }
 }
 
+/** Register session super-properties (e.g. UTM) attached to every event. */
+export function register(props: Record<string, unknown>): void {
+  if (!ready) return;
+  try {
+    mixpanel.register(props);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function identify(id: string, traits?: Record<string, unknown>): void {
   if (!ready) return;
   try {

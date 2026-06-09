@@ -19,7 +19,12 @@
       "Bash(grep -q ^__TRACKED_VAR__= .env.local)",
       "Bash(sed -i '' 's|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|' .env.local)",
       "WebFetch(domain:docs.apiframe.ai)",
-      "WebFetch(domain:tryonlabs.github.io)"
+      "WebFetch(domain:tryonlabs.github.io)",
+      "Bash(sed -n '60,90p' components/CreatorBuilder.tsx)",
+      "Bash(sed -n '30,55p' components/Studio360.tsx)",
+      "Bash(echo \"=== exit: $? ===\")",
+      "Bash(npx next *)",
+      "Bash(npx eslint *)"
     ]
   }
 }

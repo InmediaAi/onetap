@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, User } from "lucide-react";
 import PricingModal from "@/components/PricingModal";
+import SignInModal from "@/components/SignInModal";
 
 const NAV = [
-  { href: "/", label: "OneTap Curator" },
+  { href: "/curator", label: "OneTap Curator" },
   { href: "/tryon", label: "OneTap 360° TryOn" },
   { href: "/creator", label: "OneTap Creator" },
   { href: "/pricing", label: "Pricing" },
@@ -50,6 +51,7 @@ export default function Header() {
       </nav>
 
       <PricingModal />
+      <SignInModal />
     </header>
   );
 }

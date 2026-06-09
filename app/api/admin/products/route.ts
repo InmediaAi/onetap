@@ -13,7 +13,8 @@ import {
 import { formatPrice } from "@/lib/data/products";
 import {
   CURRENCIES,
-  UPLOADABLE_TYPES,
+  PRODUCT_CATEGORIES,
+  PRODUCT_STYLES,
   COLOUR_NAMES,
   OCCASIONS,
 } from "@/lib/data/vocab";
@@ -96,12 +97,16 @@ export async function POST(req: Request) {
     const images = cleanImages(body.images, body.imageUrl);
     const imageUrl = images[0] ?? "";
     const sourceUrl = clean(body.sourceUrl, 2000);
+    // Outbound purchase link (falls back to the scraped source URL).
+    const buyRaw = clean(body.buyUrl, 2000) || sourceUrl;
+    const buyUrl = /^https?:\/\//i.test(buyRaw) ? buyRaw : "";
     const description = clean(body.description, 1000);
     const stylistNote = clean(body.stylistNote, 120);
 
     const amount = Number(body.priceAmount);
     const currency = CURRENCIES.includes(body.currency) ? body.currency : "USD";
-    const type = UPLOADABLE_TYPES.includes(body.type) ? body.type : "";
+    const category = PRODUCT_CATEGORIES.includes(body.category) ? body.category : "";
+    const style = only(body.style, PRODUCT_STYLES);
     const colours = only(body.colours, COLOUR_NAMES);
     const occasions = only(body.occasions, OCCASIONS);
     const dropDate = clean(body.dropDate, 10) || new Date().toISOString().slice(0, 10);
@@ -116,16 +121,15 @@ export async function POST(req: Request) {
     if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json({ error: "A price amount greater than 0 is required" }, { status: 400 });
     }
-    if (!type) {
-      return NextResponse.json({ error: "A clothing type is required" }, { status: 400 });
+    if (!category) {
+      return NextResponse.json({ error: "A category is required" }, { status: 400 });
     }
     if (colours.length === 0) {
       return NextResponse.json({ error: "At least one colour is required" }, { status: 400 });
     }
 
-    const id = await uniqueId(db, slugify(brand, name));
-    const row = {
-      id,
+    // Shared column values for insert/update.
+    const fields = {
       brand,
       name,
       price: formatPrice({ amount, currency }), // legacy display string (back-compat)
@@ -135,8 +139,11 @@ export async function POST(req: Request) {
       images,
       mono: deriveMono(brand),
       source_url: sourceUrl || null,
-      source_site: siteFromUrl(sourceUrl) ?? null,
-      type,
+      source_site: siteFromUrl(buyUrl || sourceUrl) ?? null,
+      buy_url: buyUrl || null,
+      category,
+      style,
+      type: category, // keep legacy column populated for back-compat
       colours,
       occasions,
       dropped_at: dropDate,
@@ -144,11 +151,32 @@ export async function POST(req: Request) {
       stylist_note: stylistNote || null,
       one_tap_score: oneTapScore,
     };
-    const { data, error } = await db.from("products").insert(row).select("*").single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Update an existing piece (id stays stable) or create a new one.
+    const editId = clean(body.editId, 200);
+    let saved;
+    if (editId) {
+      const { data, error } = await db
+        .from("products")
+        .update(fields)
+        .eq("id", editId)
+        .select("*")
+        .single();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      saved = data;
+    } else {
+      const id = await uniqueId(db, slugify(brand, name));
+      const { data, error } = await db
+        .from("products")
+        .insert({ id, ...fields })
+        .select("*")
+        .single();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      saved = data;
+    }
 
     revalidatePath("/");
-    return NextResponse.json({ ok: true, product: rowToProduct(data as ProductRow) });
+    return NextResponse.json({ ok: true, product: rowToProduct(saved as ProductRow) });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Save failed";
     return NextResponse.json({ error: message }, { status: 500 });

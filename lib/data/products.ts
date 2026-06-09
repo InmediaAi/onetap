@@ -15,11 +15,15 @@ export interface Product {
   /** All image variants (primary first); always includes imageUrl. */
   images?: string[];
   // ── Filter metadata (entered at piece upload; powers Curator) ──
-  /** Clothing type (single) — from UPLOADABLE_TYPES. */
+  /** Category (single) — from PRODUCT_CATEGORIES. */
+  category?: string;
+  /** Style (any-overlap match) — from PRODUCT_STYLES. */
+  style?: string[];
+  /** @deprecated legacy clothing type — superseded by `category`. */
   type?: string;
   /** Colours (any-overlap match) — from COLOUR_NAMES. */
   colours?: string[];
-  /** Occasions — from OCCASIONS; Vacation/Work feed the quick chips. */
+  /** Occasions (any-overlap match) — from OCCASIONS. */
   occasions?: string[];
   /** Drop date (ISO yyyy-mm-dd); "New in" is computed from it. */
   droppedAt?: string;
@@ -28,6 +32,8 @@ export interface Product {
   stylistNote?: string;
   /** Derived from the source URL host (e.g. "net-a-porter.com"). */
   sourceSite?: string;
+  /** Outbound purchase link — where to buy the piece (retailer product page). */
+  buyUrl?: string;
   /** Internal ranking 0–100 — orders the edit; never shown to members. */
   oneTapScore?: number;
 }
@@ -83,9 +89,10 @@ export const products: Product[] = [
     price: { amount: 4290, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=900&q=80",
-    type: "Coats & Jackets",
+    category: "Outerwear",
+    style: ["Quiet Luxury", "Tailored"],
     colours: ["Camel", "Beige"],
-    occasions: ["Daytime", "Work", "Travel"],
+    occasions: ["Everyday", "Work"],
     droppedAt: daysAgo(2),
     stylistNote: "The coat the season turns around.",
     oneTapScore: 86,
@@ -98,9 +105,10 @@ export const products: Product[] = [
     price: { amount: 2850, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=80",
-    type: "Blazers",
+    category: "Blazers",
+    style: ["Classic", "Tailored"],
     colours: ["Black"],
-    occasions: ["Work", "Evening", "Event"],
+    occasions: ["Work", "Cocktail"],
     droppedAt: daysAgo(18),
     stylistNote: "Sharp enough to carry the room.",
     oneTapScore: 80,
@@ -113,9 +121,10 @@ export const products: Product[] = [
     price: { amount: 1180, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=900&q=80",
-    type: "Knitwear",
+    category: "Knitwear",
+    style: ["Minimal", "Relaxed"],
     colours: ["Ivory", "Beige"],
-    occasions: ["Daytime", "Travel"],
+    occasions: ["Everyday", "Weekend"],
     droppedAt: daysAgo(30),
     oneTapScore: 70,
   },
@@ -127,9 +136,10 @@ export const products: Product[] = [
     price: { amount: 1650, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=900&q=80",
-    type: "Pants",
+    category: "Trousers",
+    style: ["Modern", "Tailored"],
     colours: ["Black"],
-    occasions: ["Work", "Daytime"],
+    occasions: ["Work", "Everyday"],
     droppedAt: daysAgo(40),
     oneTapScore: 72,
   },
@@ -141,9 +151,10 @@ export const products: Product[] = [
     price: { amount: 690, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1485231183945-fffde7cc051e?auto=format&fit=crop&w=900&q=80",
-    type: "Blouses",
+    category: "Shirts",
+    style: ["Minimal", "Classic"],
     colours: ["Ivory", "White"],
-    occasions: ["Work", "Daytime", "Vacation"],
+    occasions: ["Work", "Resort"],
     droppedAt: daysAgo(5),
     oneTapScore: 66,
   },
@@ -155,9 +166,10 @@ export const products: Product[] = [
     price: { amount: 3490, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=900&q=80",
-    type: "Dresses",
+    category: "Dresses",
+    style: ["Statement", "Feminine"],
     colours: ["Black"],
-    occasions: ["Evening", "Event"],
+    occasions: ["Date Night", "Gala Dinner"],
     droppedAt: daysAgo(1),
     stylistNote: "For the dinner that becomes the night.",
     oneTapScore: 90,
@@ -170,9 +182,10 @@ export const products: Product[] = [
     price: { amount: 3950, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?auto=format&fit=crop&w=900&q=80",
-    type: "Coats & Jackets",
+    category: "Outerwear",
+    style: ["Quiet Luxury", "Classic"],
     colours: ["Camel"],
-    occasions: ["Daytime", "Travel", "Vacation"],
+    occasions: ["Everyday", "Vacation"],
     droppedAt: daysAgo(22),
     oneTapScore: 78,
   },
@@ -184,9 +197,10 @@ export const products: Product[] = [
     price: { amount: 1250, currency: "USD" },
     imageUrl:
       "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=900&q=80",
-    type: "Skirts",
+    category: "Skirts",
+    style: ["Classic", "Feminine"],
     colours: ["Grey", "Navy"],
-    occasions: ["Work", "Daytime"],
+    occasions: ["Work", "Everyday"],
     droppedAt: daysAgo(34),
     oneTapScore: 68,
   },
@@ -195,3 +209,5 @@ export const products: Product[] = [
 export function getProduct(id: string) {
   return products.find((p) => p.id === id);
 }
+
+export { priceBracketId, PRICE_BRACKETS } from "@/lib/data/vocab";

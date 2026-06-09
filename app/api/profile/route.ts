@@ -54,6 +54,7 @@ export async function PATCH(req: Request) {
     const h = Number(body.heightInches);
     patch.height_inches = Number.isFinite(h) && h >= 56 && h <= 76 ? Math.round(h) : null;
   }
+  if (body.onboarded === true) patch.onboarded = true;
 
   // Persist the editable fields. RLS allows a user to UPDATE (not INSERT) their
   // own row — the signup trigger seeds it. Update + check the error (the old

@@ -10,6 +10,7 @@ import { BRANDS } from "@/lib/data/brands";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 import { signInWithProvider, uploadIdentity } from "@/lib/auth/client";
+import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 
 type Step = "signin" | "upload" | "brands";
 
@@ -65,9 +66,16 @@ function UploadCard({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   async function pick(file?: File) {
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
+    const check = await validateImageFile(file);
+    if (!check.ok) {
+      setErr(check.error ?? "That image can’t be used.");
+      return;
+    }
+    setErr(null);
     onChange(await readAsDataURL(file));
   }
 
@@ -105,9 +113,10 @@ function UploadCard({
         <>
           {figure}
           <span className="uc-label">+ {label}</span>
-          <span className="uc-hint">{hint}</span>
+          <span className="uc-hint">{err ?? hint}</span>
         </>
       )}
+      {err && value && <span className="uc-warn">{err}</span>}
       <input
         ref={inputRef}
         type="file"
@@ -128,11 +137,13 @@ export default function OnboardingPage() {
   // Auth truth comes from the loaded profile (SessionLoader → /api/me).
   const email = useAtelier((s) => s.email);
   const profileLoaded = useAtelier((s) => s.profileLoaded);
+  const onboarded = useAtelier((s) => s.onboarded);
   const face = useAtelier((s) => s.face);
   const body = useAtelier((s) => s.body);
   const setIdentity = useAtelier((s) => s.setIdentity);
   const brands = useAtelier((s) => s.brands);
   const setBrands = useAtelier((s) => s.setBrands);
+  const refreshProfile = useAtelier((s) => s.refreshProfile);
   const signedIn = Boolean(email);
 
   const [step, setStep] = useState<Step>("signin");
@@ -142,10 +153,15 @@ export default function OnboardingPage() {
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Where to resume after onboarding (e.g. a campaign deeplink). Read from the
+  // URL directly to avoid a useSearchParams Suspense boundary.
+  const [nextDest, setNextDest] = useState("/");
 
-  // Onboarding funnel start (once per mount).
+  // Onboarding funnel start (once per mount); capture resume target.
   useEffect(() => {
     track(EVENTS.ONBOARDING_STARTED);
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n && n.startsWith("/")) setNextDest(n);
   }, []);
 
   function handleFace(v: string | null) {
@@ -157,14 +173,19 @@ export default function OnboardingPage() {
     if (v) track(EVENTS.BODY_UPLOADED);
   }
 
-  // Advance to upload once we know the user is signed in.
+  // Returning (already onboarded) users shouldn't see onboarding again.
+  useEffect(() => {
+    if (profileLoaded && signedIn && onboarded) router.replace(nextDest);
+  }, [profileLoaded, signedIn, onboarded, router, nextDest]);
+
+  // Advance to upload once we know the user is signed in (and not onboarded).
   useEffect(() => {
     if (!profileLoaded) return;
-    if (signedIn) setStep((s) => (s === "signin" ? "upload" : s));
+    if (signedIn && !onboarded) setStep((s) => (s === "signin" ? "upload" : s));
     setF((v) => v ?? face);
     setB((v) => v ?? body);
     setPicked((v) => (v.length ? v : brands));
-  }, [profileLoaded, signedIn, face, body, brands]);
+  }, [profileLoaded, signedIn, onboarded, face, body, brands]);
 
   async function oauth(provider: "google" | "apple") {
     setAuthErr(null);
@@ -221,14 +242,15 @@ export default function OnboardingPage() {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brands: picked }),
+        body: JSON.stringify({ brands: picked, onboarded: true }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d?.error || "Could not save your brands.");
       }
+      await refreshProfile(); // pick up onboarded=true so /profile reflects it
       track(EVENTS.ONBOARDING_COMPLETED, { brands: picked.length });
-      router.push("/");
+      router.push(nextDest); // resume to the campaign deeplink (or home)
     } catch (e) {
       setSaveErr(e instanceof Error ? e.message : "Could not save your brands.");
       setSaving(false);
@@ -265,6 +287,7 @@ export default function OnboardingPage() {
                 Two photos — one to recognise your face, one to read your
                 full-body shape.
               </p>
+              <p className="ob-guide">{IMAGE_GUIDELINE}</p>
               <div className="ob-uploads">
                 <UploadCard
                   value={f}

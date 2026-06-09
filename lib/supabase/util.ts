@@ -57,7 +57,10 @@ export interface ProductRow {
   mono: string | null;
   source_url: string | null;
   source_site: string | null;
-  type: string | null;
+  buy_url: string | null;
+  category: string | null;
+  style: string[] | null;
+  type: string | null; // legacy — superseded by category
   colours: string[] | null;
   occasions: string[] | null;
   dropped_at: string | null;
@@ -80,13 +83,16 @@ export function rowToProduct(row: ProductRow): Product {
     imageUrl: row.image_url,
     images: row.images?.length ? row.images : [row.image_url],
     mono: row.mono || deriveMono(row.brand),
+    category: row.category ?? row.type ?? undefined,
+    style: row.style ?? undefined,
     type: row.type ?? undefined,
     colours: row.colours ?? undefined,
     occasions: row.occasions ?? undefined,
     droppedAt: row.dropped_at ?? row.created_at?.slice(0, 10) ?? undefined,
     description: row.description ?? undefined,
     stylistNote: row.stylist_note ?? undefined,
-    sourceSite: row.source_site ?? siteFromUrl(row.source_url),
+    sourceSite: row.source_site ?? siteFromUrl(row.buy_url ?? row.source_url),
+    buyUrl: row.buy_url ?? row.source_url ?? undefined,
     oneTapScore: row.one_tap_score ?? undefined,
   };
 }

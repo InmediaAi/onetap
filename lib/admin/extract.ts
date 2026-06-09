@@ -1,4 +1,5 @@
 import "server-only";
+import { COLOUR_NAMES } from "@/lib/data/vocab";
 
 /**
  * Best-effort product extraction from a retailer page's HTML.
@@ -7,6 +8,7 @@ import "server-only";
  *   1. schema.org/Product JSON-LD  — present on most retailers for SEO.
  *   2. Open Graph / meta tags      — fallback for anything still missing.
  * Whatever can't be found is left empty for the admin to fill in manually.
+ * Category + colours are GUESSED from the title (admin reviews/adjusts).
  */
 
 export interface ExtractedProduct {
@@ -20,10 +22,57 @@ export interface ExtractedProduct {
   imageUrl: string;
   /** Up to SCRAPE_MAX image variants (primary first). */
   images: string[];
+  /** Best-effort guesses from the title (admin confirms). */
+  category?: string;
+  colours?: string[];
 }
 
 /** How many image variants to pull from a page (admin can add more manually). */
 export const SCRAPE_MAX_IMAGES = 3;
+
+/** Keyword → PRODUCT_CATEGORIES, checked in order (first match wins). */
+const CATEGORY_KEYWORDS: [RegExp, string][] = [
+  [/co-?ord|matching set|two-?piece/i, "Co-Ord Sets"],
+  [/jumpsuit|playsuit|catsuit/i, "Jumpsuits"],
+  [/dress|gown|kaftan|caftan/i, "Dresses"],
+  [/blazer/i, "Blazers"],
+  [/suit|tailored set|tailoring/i, "Tailoring"],
+  [/coat|jacket|trench|parka|anorak|outerwear|puffer|cape/i, "Outerwear"],
+  [/jean|denim/i, "Denim"],
+  [/trouser|pant|chino|legging/i, "Trousers"],
+  [/skirt/i, "Skirts"],
+  [/short(s|\b)/i, "Shorts"],
+  [/knit|sweater|cardigan|jumper|cashmere|pullover/i, "Knitwear"],
+  [/shirt/i, "Shirts"],
+  [/top|blouse|camisole|cami|tank|tee|t-shirt|bodysuit/i, "Tops & Blouses"],
+];
+
+/** Colour-word synonyms → a COLOUR_NAMES value. */
+const COLOUR_SYNONYMS: Record<string, string> = {
+  gray: "Grey",
+  wine: "Burgundy",
+  gold: "Metallic",
+  silver: "Metallic",
+  tan: "Camel",
+  ecru: "Cream",
+};
+
+function guessCategory(name: string): string | undefined {
+  return CATEGORY_KEYWORDS.find(([re]) => re.test(name))?.[1];
+}
+
+function guessColours(name: string): string[] {
+  const lower = ` ${name.toLowerCase()} `;
+  const hits = new Set<string>();
+  for (const c of COLOUR_NAMES) {
+    if (c === "Multi-Color") continue;
+    if (lower.includes(` ${c.toLowerCase()} `) || lower.includes(`${c.toLowerCase()},`)) hits.add(c);
+  }
+  for (const [word, name2] of Object.entries(COLOUR_SYNONYMS)) {
+    if (lower.includes(` ${word} `)) hits.add(name2);
+  }
+  return [...hits];
+}
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$",
@@ -238,13 +287,16 @@ export function extractProduct(html: string, finalUrl: string): ExtractedProduct
   const images = Array.from(
     new Set([...(ld.images ?? []), ...(og.images ?? [])]),
   ).slice(0, SCRAPE_MAX_IMAGES);
+  const name = pick("name");
   return {
     brand: pick("brand"),
-    name: pick("name"),
+    name,
     price: pick("price"),
     imageUrl: images[0] ?? "",
     images,
     priceAmount: ld.priceAmount ?? og.priceAmount,
     currency: ld.currency || og.currency,
+    category: guessCategory(name),
+    colours: guessColours(name),
   };
 }

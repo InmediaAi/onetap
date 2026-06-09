@@ -26,6 +26,8 @@ export interface PersistArgs {
   inputRef?: string | null;
   /** Optional still to re-host as the video poster. */
   posterSource?: string | null;
+  /** Campaign that produced this look (utm_campaign), for attribution. */
+  campaign?: string | null;
 }
 
 export interface PersistResult {
@@ -120,6 +122,7 @@ export async function persistLook(args: PersistArgs): Promise<PersistResult> {
       generated_image: isImage ? url : null,
       video_url: isImage ? null : url,
       poster_url: posterUrl ?? null,
+      utm_campaign: args.campaign ?? null,
     });
 
     return { id, url, posterUrl, persisted: true };

@@ -64,36 +64,48 @@ export const SETTINGS = [
 ] as const;
 
 /**
- * G — Clothing types. "All Clothing" is filter-only (clears the facet); the
- * other 18 are the uploadable types for a piece.
+ * G — Product Category (single per piece; Curator facet). Replaces the legacy
+ * `type`/CLOTHING_TYPES facet.
  */
-export const CLOTHING_TYPES = [
-  "All Clothing",
+export const PRODUCT_CATEGORIES = [
   "Dresses",
-  "Swimwear",
-  "Tops",
-  "Blouses",
-  "Tanks & Camis",
-  "Matching Sets",
+  "Tops & Blouses",
+  "Shirts",
   "Knitwear",
-  "Jeans",
+  "Tailoring",
+  "Blazers",
+  "Trousers",
+  "Denim",
   "Skirts",
   "Shorts",
-  "Pants",
-  "Coats & Jackets",
-  "Blazers",
-  "Suits",
-  "Sport",
-  "Loungewear",
-  "Sleepwear",
-  "Lingerie",
+  "Jumpsuits",
+  "Outerwear",
+  "Co-Ord Sets",
 ] as const;
 
+/**
+ * Legacy clothing types — DEPRECATED, superseded by PRODUCT_CATEGORIES. Kept
+ * exported only for back-compat; no longer used by admin or the Curator.
+ */
+export const CLOTHING_TYPES = ["All Clothing", ...PRODUCT_CATEGORIES] as const;
 export const ALL_CLOTHING = "All Clothing";
-/** The 18 types an admin can tag a piece with (G minus "All Clothing"). */
-export const UPLOADABLE_TYPES = CLOTHING_TYPES.filter((t) => t !== ALL_CLOTHING);
+export const UPLOADABLE_TYPES = PRODUCT_CATEGORIES;
 
-/** H — Colours, with swatch hex ("Print" has no single hex). */
+/** Product Style (multi per piece; Curator facet). */
+export const PRODUCT_STYLES = [
+  "Quiet Luxury",
+  "Minimal",
+  "Classic",
+  "Tailored",
+  "Relaxed",
+  "Romantic",
+  "Feminine",
+  "Modern",
+  "Sculptural",
+  "Statement",
+] as const;
+
+/** H — Colours, with swatch hex (Multi-Color has no single hex). */
 export interface Colour {
   name: string;
   hex: string | null;
@@ -102,27 +114,62 @@ export const COLOURS: Colour[] = [
   { name: "Black", hex: "#000000" },
   { name: "White", hex: "#FFFFFF" },
   { name: "Ivory", hex: "#F4EFE6" },
-  { name: "Camel", hex: "#C19A6B" },
+  { name: "Cream", hex: "#F3EAD8" },
   { name: "Beige", hex: "#D9CBB3" },
+  { name: "Camel", hex: "#C19A6B" },
+  { name: "Brown", hex: "#6B4F3A" },
   { name: "Grey", hex: "#9A9A9A" },
   { name: "Navy", hex: "#1F2A44" },
-  { name: "Blue", hex: "#4F6D9A" },
   { name: "Burgundy", hex: "#5E1F2A" },
-  { name: "Pink", hex: "#E8B4C0" },
+  { name: "Olive", hex: "#6B6A3A" },
   { name: "Green", hex: "#5A6B4F" },
-  { name: "Print", hex: null },
+  { name: "Blue", hex: "#4F6D9A" },
+  { name: "Red", hex: "#9B2D2D" },
+  { name: "Pink", hex: "#E8B4C0" },
+  { name: "Yellow", hex: "#D9C26A" },
+  { name: "Metallic", hex: "#BFC1C2" },
+  { name: "Multi-Color", hex: null },
 ];
 export const COLOUR_NAMES = COLOURS.map((c) => c.name);
 
-/** I — Occasions (piece tag + Curator facet). Vacation/Work feed quick chips. */
+/** I — Occasions (piece tag + Curator facet). */
 export const OCCASIONS = [
-  "Evening",
-  "Daytime",
+  "Everyday",
   "Work",
-  "Travel",
+  "Weekend",
+  "Date Night",
+  "Cocktail",
+  "Party Wear",
+  "Wedding Guest",
+  "Gala Dinner",
+  "Black Tie",
   "Vacation",
-  "Event",
+  "Resort",
+  "Fashion Week",
+  "Special Occasion",
 ] as const;
+
+/** Price brackets (USD-comparable amounts). Ranges are [min, max); last open. */
+export interface PriceBracket {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+}
+export const PRICE_BRACKETS: PriceBracket[] = [
+  { id: "u500", label: "Under $500", min: 0, max: 500 },
+  { id: "500-1000", label: "$500–$1,000", min: 500, max: 1000 },
+  { id: "1000-2500", label: "$1,000–$2,500", min: 1000, max: 2500 },
+  { id: "2500-5000", label: "$2,500–$5,000", min: 2500, max: 5000 },
+  { id: "5000-10000", label: "$5,000–$10,000", min: 5000, max: 10000 },
+  { id: "10000+", label: "$10,000+", min: 10000, max: Infinity },
+];
+
+/** The bracket id an amount falls into (or null if non-positive). */
+export function priceBracketId(amount: number | null | undefined): string | null {
+  if (!amount || amount <= 0) return null;
+  return PRICE_BRACKETS.find((b) => amount >= b.min && amount < b.max)?.id ?? null;
+}
 
 /** Currencies accepted for a piece's price. */
 export const CURRENCIES = ["USD", "EUR", "GBP", "INR"] as const;

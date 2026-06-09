@@ -8,6 +8,7 @@ export const EVENTS = {
   // Session / navigation
   PAGE_VIEWED: "page_viewed",
   SIGNED_IN: "signed_in",
+  CAMPAIGN_LANDED: "campaign_landed",
 
   // Onboarding
   ONBOARDING_STARTED: "onboarding_started",
@@ -32,9 +33,11 @@ export const EVENTS = {
   // Output / sharing
   RESULT_SHARED: "result_shared",
   RESULT_DOWNLOADED: "result_downloaded",
+  PURCHASE_CLICKED: "purchase_clicked",
 
   // Subscription / limit funnel
   PRICING_OPENED: "pricing_opened",
+  SIGN_IN_REQUIRED: "sign_in_required",
   VIDEO_LIMIT_REACHED: "video_limit_reached",
   FREE_TRIAL_VIDEO_USED: "free_trial_video_used",
   SUBSCRIBE_CLICKED: "subscribe_clicked",

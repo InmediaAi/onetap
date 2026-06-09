@@ -36,6 +36,7 @@ export interface UsageSnapshot {
 
 /** Shape pushed by SessionLoader from GET /api/me. */
 export interface ProfileSnapshot {
+  onboarded: boolean;
   username: string | null;
   email: string | null;
   brands: string[];
@@ -101,6 +102,8 @@ interface AtelierState {
   goals: string[];
   sceneMood: string[];
   sceneSetting: string[];
+  /** Whether the user has completed onboarding (returning vs first-time). */
+  onboarded: boolean;
   /** Subscription + usage snapshot for display. */
   usage: UsageSnapshot;
   /** Whether SessionLoader has resolved the auth state at least once. */
@@ -113,6 +116,7 @@ interface AtelierState {
 
   // ── Transient UI ──
   pricingOpen: boolean;
+  signInOpen: boolean;
 
   // ── Setters ──
   setPortrait: (url: string) => void;
@@ -125,6 +129,8 @@ interface AtelierState {
   applyProfile: (p: Partial<ProfileFields>) => void;
   /** Hydrate identity + usage from the authenticated profile (GET /api/me). */
   hydrateProfile: (p: ProfileSnapshot) => void;
+  /** Fetch GET /api/me and hydrate (or reset) the session. */
+  refreshProfile: () => Promise<void>;
   /** Clear in-memory identity on sign-out. */
   resetSession: () => void;
   addLook: (look: GeneratedLook) => void;
@@ -134,6 +140,8 @@ interface AtelierState {
   removeCloset: (dataUrl: string) => void;
   openPricing: () => void;
   closePricing: () => void;
+  openSignIn: () => void;
+  closeSignIn: () => void;
 }
 
 export const useAtelier = create<AtelierState>()(
@@ -155,12 +163,14 @@ export const useAtelier = create<AtelierState>()(
       goals: [],
       sceneMood: [],
       sceneSetting: [],
+      onboarded: false,
       usage: EMPTY_USAGE,
       profileLoaded: false,
       looks: [],
       wishlist: [],
       closet: [],
       pricingOpen: false,
+      signInOpen: false,
 
       setPortrait: (url) => set({ portrait: url }),
       clearPortrait: () => set({ portrait: null }),
@@ -195,9 +205,42 @@ export const useAtelier = create<AtelierState>()(
           goals: p.goals,
           sceneMood: p.sceneMood,
           sceneSetting: p.sceneSetting,
+          onboarded: p.onboarded,
           usage: p.usage,
           profileLoaded: true,
         }),
+      refreshProfile: async () => {
+        try {
+          const r = await fetch("/api/me");
+          const d = r.ok ? await r.json() : null;
+          if (!d) return;
+          if (d.authed) {
+            get().hydrateProfile({
+              username: d.username,
+              email: d.email,
+              brands: d.brands ?? [],
+              selfieUrl: d.selfieUrl ?? null,
+              bodyUrl: d.bodyUrl ?? null,
+              leftUrl: d.leftUrl ?? null,
+              rightUrl: d.rightUrl ?? null,
+              backUrl: d.backUrl ?? null,
+              modelUrl: d.modelUrl ?? null,
+              heightInches: d.heightInches ?? null,
+              style: d.style ?? [],
+              categories: d.categories ?? [],
+              goals: d.goals ?? [],
+              sceneMood: d.sceneMood ?? [],
+              sceneSetting: d.sceneSetting ?? [],
+              onboarded: Boolean(d.onboarded),
+              usage: d.usage,
+            });
+          } else {
+            get().resetSession();
+          }
+        } catch {
+          /* offline / unconfigured — leave state as-is */
+        }
+      },
       resetSession: () =>
         set({
           portrait: null,
@@ -216,6 +259,7 @@ export const useAtelier = create<AtelierState>()(
           goals: [],
           sceneMood: [],
           sceneSetting: [],
+          onboarded: false,
           usage: EMPTY_USAGE,
           profileLoaded: true,
         }),
@@ -252,6 +296,11 @@ export const useAtelier = create<AtelierState>()(
         track(EVENTS.PRICING_OPENED);
       },
       closePricing: () => set({ pricingOpen: false }),
+      openSignIn: () => {
+        set({ signInOpen: true });
+        track(EVENTS.SIGN_IN_REQUIRED);
+      },
+      closeSignIn: () => set({ signInOpen: false }),
     }),
     {
       name: "onetap-atelier",

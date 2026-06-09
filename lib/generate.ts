@@ -2,6 +2,7 @@ import type { GenerationKind } from "@/lib/ai/types";
 import { useAtelier } from "@/lib/store";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
+import { getAttribution } from "@/lib/analytics/utm";
 
 /**
  * Shared "one tap" reel composer used by the 360° and Creator studios.
@@ -15,6 +16,13 @@ export class VideoLimitError extends Error {
   constructor() {
     super("Video limit reached");
     this.name = "VideoLimitError";
+  }
+}
+
+export class SignInRequiredError extends Error {
+  constructor() {
+    super("Sign in required");
+    this.name = "SignInRequiredError";
   }
 }
 
@@ -40,6 +48,8 @@ export interface ComposeResult {
   videoUrl: string;
   posterUrl?: string;
   lookId: string;
+  /** The intermediate on-you try-on still (the "middleware" image), if composed. */
+  imageUrl?: string;
 }
 
 async function post(url: string, body: unknown) {
@@ -48,6 +58,7 @@ async function post(url: string, body: unknown) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (res.status === 401) throw new SignInRequiredError();
   if (res.status === 402) throw new VideoLimitError();
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Generation failed");
@@ -62,6 +73,7 @@ export async function composeReel({
   productId,
 }: ComposeArgs): Promise<ComposeResult> {
   const startedAt = Date.now();
+  const campaign = getAttribution()?.utm_campaign;
   track(EVENTS.GENERATION_STARTED, { kind, productId });
 
   try {
@@ -75,6 +87,7 @@ export async function composeReel({
         userImage: likeness,
         productImage: pieceImage,
         productId,
+        campaign,
       });
       sourceImage = tryon.imageUrl;
     }
@@ -84,6 +97,7 @@ export async function composeReel({
       image: sourceImage,
       prompt: prompt || undefined,
       productId,
+      campaign,
     });
 
     // The route persisted the look and returned its durable id + URL.
@@ -104,9 +118,17 @@ export async function composeReel({
       lookId,
       durationMs: Date.now() - startedAt,
     });
-    return { videoUrl: out.videoUrl, posterUrl: out.posterUrl, lookId };
+    return {
+      videoUrl: out.videoUrl,
+      posterUrl: out.posterUrl,
+      lookId,
+      imageUrl: pieceImage ? sourceImage : undefined,
+    };
   } catch (err) {
-    if (err instanceof VideoLimitError) {
+    if (err instanceof SignInRequiredError) {
+      track(EVENTS.SIGN_IN_REQUIRED, { kind, productId });
+      useAtelier.getState().openSignIn();
+    } else if (err instanceof VideoLimitError) {
       track(EVENTS.VIDEO_LIMIT_REACHED, { kind, productId });
       useAtelier.getState().openPricing();
     } else {

@@ -417,6 +417,9 @@ alter table products add column if not exists stylist_note  text;
 alter table products add column if not exists source_site   text;        -- derived from source_url host
 alter table products add column if not exists one_tap_score integer;     -- 0–100, internal only
 alter table products add column if not exists images        text[];      -- image variants (image_url = images[0])
+alter table products add column if not exists category      text;        -- PRODUCT_CATEGORIES (supersedes legacy `type`)
+alter table products add column if not exists style         text[];      -- PRODUCT_STYLES
+alter table products add column if not exists buy_url       text;        -- outbound purchase link (retailer product page)
 -- legacy `price` text becomes optional once price_amount is populated.
 alter table products alter column price drop not null;
 
@@ -434,6 +437,18 @@ alter table profiles add column if not exists categories    text[] not null defa
 alter table profiles add column if not exists goals         text[] not null default '{}';
 alter table profiles add column if not exists scene_mood    text[] not null default '{}';
 alter table profiles add column if not exists scene_setting text[] not null default '{}';
+-- First-run signup vs returning sign-in: set true when onboarding completes.
+alter table profiles add column if not exists onboarded     boolean not null default false;
+
+-- Campaign attribution (FIRST-TOUCH): set once at signup, never overwritten.
+alter table profiles add column if not exists utm_campaign     text;
+alter table profiles add column if not exists utm_source       text;
+alter table profiles add column if not exists utm_medium       text;
+alter table profiles add column if not exists campaign_product text;   -- product id the deeplink targeted
+alter table profiles add column if not exists attributed_at    timestamptz;
+
+-- Per-look campaign tag (which campaign produced this try-on/360/film).
+alter table generated_looks add column if not exists utm_campaign text;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- MIGRATION: persist generated looks (images/360/film) in a public bucket.

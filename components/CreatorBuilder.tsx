@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Upload, LayoutGrid, Check, Wand2, Copy } from "lucide-react";
+import { Upload, LayoutGrid, Check, Wand2 } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { composeReel, VideoLimitError } from "@/lib/generate";
+import { composeReel, VideoLimitError, SignInRequiredError } from "@/lib/generate";
+import { ensureCanGenerateVideo } from "@/lib/billing/gate";
 import {
   FILM_FORMATS,
   getFilmFormat,
@@ -13,6 +14,8 @@ import {
   type FilmOpts,
 } from "@/lib/film/formats";
 import { type Product } from "@/lib/data/products";
+import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
+import ResultModal from "@/components/ResultModal";
 
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -38,7 +41,13 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
   const [drag, setDrag] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [film, setFilm] = useState<{ videoUrl: string; posterUrl?: string; lookId: string } | null>(null);
+  const [film, setFilm] = useState<{
+    image?: string;
+    videoUrl: string;
+    posterUrl?: string;
+    lookId: string;
+  } | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Both tabs give a real garment image → compose the on-you try-on first.
@@ -71,16 +80,24 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
   };
 
   async function pick(file?: File) {
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
+    const check = await validateImageFile(file);
+    if (!check.ok) {
+      setError(check.error ?? "That image can’t be used.");
+      return;
+    }
+    setError(null);
     setUpload(await readAsDataURL(file));
     setFilm(null);
   }
 
   async function create() {
     if (!ready || !portrait) return;
+    if (!(await ensureCanGenerateVideo())) return; // sign-in / quota gate
     setLoading(true);
     setError(null);
     setFilm(null);
+    setModalOpen(true);
     try {
       const res = await composeReel({
         kind: "video",
@@ -89,9 +106,14 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
         prompt: buildFilmPrompt(format, opts, garmentDesc, free),
         productId: curated?.id ?? "creator-upload",
       });
-      setFilm(res);
+      setFilm({
+        image: res.imageUrl,
+        videoUrl: res.videoUrl,
+        posterUrl: res.posterUrl,
+        lookId: res.lookId,
+      });
     } catch (e) {
-      if (!(e instanceof VideoLimitError)) {
+      if (!(e instanceof VideoLimitError) && !(e instanceof SignInRequiredError)) {
         setError(e instanceof Error ? e.message : "Generation failed");
       }
     } finally {
@@ -175,6 +197,7 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
                 <Upload size={22} strokeWidth={1.3} />
                 <span className="sd-title">Upload the piece</span>
                 <span className="sd-sub">A product image or a screenshot.</span>
+                <span className="sd-guide">{IMAGE_GUIDELINE}</span>
               </>
             )}
           </div>
@@ -247,34 +270,10 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
         )}
 
         <button className="creator-go" onClick={create} disabled={!ready}>
-          <Wand2 size={15} strokeWidth={1.5} /> Create Reel
+          <Wand2 size={15} strokeWidth={1.5} /> Try-On
           <span className="go-cr">1 video</span>
         </button>
         {error && <p className="studio-err">{error}</p>}
-
-        {/* result */}
-        {(loading || film) && (
-          <div className="creator-result">
-            <div className="studio-frame">
-              {loading ? (
-                <div className="mproc">
-                  <div className="dotfield" />
-                  <div className="pl">Creating your reel…</div>
-                </div>
-              ) : film ? (
-                <video className="base" src={film.videoUrl} poster={film.posterUrl} autoPlay loop controls playsInline />
-              ) : null}
-            </div>
-            {film && (
-              <button
-                className="copy-btn"
-                onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/look/${film.lookId}`)}
-              >
-                <Copy size={13} strokeWidth={1.5} /> Copy share link
-              </button>
-            )}
-          </div>
-        )}
 
         <input
           ref={fileRef}
@@ -287,6 +286,26 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
           }}
         />
       </div>
+
+      <ResultModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setFilm(null);
+        }}
+        brand={tab === "curated" && curated ? curated.brand : "Your Film"}
+        name={tab === "curated" && curated ? curated.name : undefined}
+        image={film?.image}
+        video={film?.videoUrl}
+        poster={film?.posterUrl}
+        phase={loading ? "video" : null}
+        turnLabel="Film"
+        turnSub="The Reel"
+        caption={tab === "curated" && curated ? { brand: curated.brand, name: curated.name } : null}
+        buyUrl={tab === "curated" ? curated?.buyUrl : undefined}
+        videoLookId={film?.lookId}
+        productId={curated?.id ?? "creator-upload"}
+      />
     </div>
   );
 }
