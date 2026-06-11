@@ -29,7 +29,9 @@ export async function POST(req: Request) {
 
   const { planId } = (await req.json()) as { planId?: PlanId };
   const { plans } = await getPlans();
-  const validPaid = plans.some((p) => p.id !== "free" && p.active && p.id === planId);
+  // Any non-free tier that exists is subscribable (hidden tiers like `fan` are
+  // reachable by direct link / campaign even though they're off the pricing page).
+  const validPaid = plans.some((p) => p.id !== "free" && p.id === planId);
   if (!planId || !validPaid) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }

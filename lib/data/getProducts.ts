@@ -12,9 +12,11 @@ export async function fetchProducts(): Promise<Product[]> {
   const db = createReadClient();
   if (!db) return mockProducts;
   try {
+    // Exclude campaign-only pieces (e.g. FIFA jerseys) from the luxury grid.
     const { data, error } = await db
       .from("products")
       .select("*")
+      .or("campaign_only.is.null,campaign_only.eq.false")
       .order("created_at", { ascending: false });
     if (error) return mockProducts;
     return (data as ProductRow[]).map(rowToProduct);

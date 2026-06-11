@@ -14,7 +14,7 @@ export async function GET(
 
   const { data } = await db
     .from("generated_looks")
-    .select("kind, generated_image, video_url, poster_url, product_id")
+    .select("kind, generated_image, video_url, poster_url, product_id, utm_campaign")
     .eq("id", id)
     .maybeSingle();
 
@@ -27,6 +27,7 @@ export async function GET(
       assetUrl: data.generated_image ?? data.video_url,
       posterUrl: data.poster_url ?? undefined,
       productId: data.product_id ?? undefined,
+      campaign: data.utm_campaign ?? undefined,
     },
   });
 }

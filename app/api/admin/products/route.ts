@@ -112,28 +112,34 @@ export async function POST(req: Request) {
     const dropDate = clean(body.dropDate, 10) || new Date().toISOString().slice(0, 10);
     const oneTapScore = Math.max(0, Math.min(100, Math.round(Number(body.oneTapScore) || 70)));
 
+    // Campaign-only pieces (e.g. FIFA jerseys) aren't shown in the Curator, so
+    // they don't need the luxury filter metadata (category / colour / price).
+    const campaignOnly = Boolean(body.campaignOnly);
+
     if (!brand || !name || !imageUrl) {
       return NextResponse.json(
         { error: "brand, name and at least one image are all required" },
         { status: 400 },
       );
     }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json({ error: "A price amount greater than 0 is required" }, { status: 400 });
-    }
-    if (!category) {
-      return NextResponse.json({ error: "A category is required" }, { status: 400 });
-    }
-    if (colours.length === 0) {
-      return NextResponse.json({ error: "At least one colour is required" }, { status: 400 });
+    if (!campaignOnly) {
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return NextResponse.json({ error: "A price amount greater than 0 is required" }, { status: 400 });
+      }
+      if (!category) {
+        return NextResponse.json({ error: "A category is required" }, { status: 400 });
+      }
+      if (colours.length === 0) {
+        return NextResponse.json({ error: "At least one colour is required" }, { status: 400 });
+      }
     }
 
     // Shared column values for insert/update.
     const fields = {
       brand,
       name,
-      price: formatPrice({ amount, currency }), // legacy display string (back-compat)
-      price_amount: amount,
+      price: Number.isFinite(amount) && amount > 0 ? formatPrice({ amount, currency }) : null,
+      price_amount: Number.isFinite(amount) ? amount : null,
       currency,
       image_url: imageUrl,
       images,
@@ -150,6 +156,7 @@ export async function POST(req: Request) {
       description: description || null,
       stylist_note: stylistNote || null,
       one_tap_score: oneTapScore,
+      campaign_only: Boolean(body.campaignOnly),
     };
 
     // Update an existing piece (id stays stable) or create a new one.

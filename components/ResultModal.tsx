@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, ShoppingBag } from "lucide-react";
 import ResultStage, { type ResultStageProps } from "@/components/ResultStage";
 import { track } from "@/lib/analytics";
@@ -28,6 +29,9 @@ export default function ResultModal({
   price,
   ...stage
 }: ResultModalProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -39,7 +43,7 @@ export default function ResultModal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const hasResult = Boolean(stage.image || stage.video);
 
@@ -52,7 +56,7 @@ export default function ResultModal({
     window.open(stage.buyUrl, "_blank", "noopener,noreferrer");
   }
 
-  return (
+  return createPortal(
     <div
       className="modal-scrim"
       onMouseDown={(e) => {
@@ -78,6 +82,7 @@ export default function ResultModal({
       </div>
 
       <ResultStage {...stage} />
-    </div>
+    </div>,
+    document.body,
   );
 }

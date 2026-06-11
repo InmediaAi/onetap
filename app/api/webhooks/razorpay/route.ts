@@ -92,9 +92,21 @@ export async function POST(req: Request) {
       };
       if (plan) patch.plan = plan;
       if (userId) {
+        // If the Razorpay plan id can't be mapped (e.g. RAZORPAY_PLAN_FAN
+        // misconfigured), DON'T clobber to "starter" — preserve the plan the
+        // subscribe route already recorded (e.g. "fan").
+        let resolvedPlan = plan;
+        if (!resolvedPlan) {
+          const { data: existing } = await svc
+            .from("subscriptions")
+            .select("plan")
+            .eq("user_id", userId)
+            .maybeSingle();
+          resolvedPlan = (existing?.plan as typeof plan) ?? "starter";
+        }
         await svc
           .from("subscriptions")
-          .upsert({ user_id: userId, plan: plan ?? "starter", ...patch }, { onConflict: "user_id" });
+          .upsert({ user_id: userId, plan: resolvedPlan, ...patch }, { onConflict: "user_id" });
       } else {
         await svc.from("subscriptions").update(patch).match(match);
       }

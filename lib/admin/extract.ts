@@ -30,6 +30,37 @@ export interface ExtractedProduct {
 /** How many image variants to pull from a page (admin can add more manually). */
 export const SCRAPE_MAX_IMAGES = 3;
 
+/**
+ * Canonical key for de-duping images: same picture served at different sizes or
+ * with different `?v=`/`width=` query strings collapses to one (so the front
+ * isn't pulled twice). Drops the query and any Shopify size suffix.
+ */
+function canonicalKey(u: string): string {
+  try {
+    const url = new URL(u);
+    const path = url.pathname
+      .toLowerCase()
+      .replace(/_(\d+)x(\d+)?(_[a-z_]+)?(\.[a-z0-9]+)$/, "$4"); // image_500x500.jpg → image.jpg
+    return url.host.toLowerCase() + path;
+  } catch {
+    return u.toLowerCase();
+  }
+}
+
+function dedupeImages(urls: (string | undefined | null)[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const u of urls) {
+    if (!u) continue;
+    const key = canonicalKey(u);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(u);
+  }
+  return out;
+}
+
+
 /** Keyword → PRODUCT_CATEGORIES, checked in order (first match wins). */
 const CATEGORY_KEYWORDS: [RegExp, string][] = [
   [/co-?ord|matching set|two-?piece/i, "Co-Ord Sets"],
@@ -283,10 +314,14 @@ export function extractProduct(html: string, finalUrl: string): ExtractedProduct
   const ld = fromJsonLd(html, finalUrl);
   const og = fromOpenGraph(html, finalUrl);
   const pick = (k: "brand" | "name" | "price") => String(ld[k] || og[k] || "").trim();
-  // JSON-LD images first, then OG; de-dupe and cap.
-  const images = Array.from(
-    new Set([...(ld.images ?? []), ...(og.images ?? [])]),
-  ).slice(0, SCRAPE_MAX_IMAGES);
+  // JSON-LD + OG product images only (the front/featured shot). Canonical
+  // de-dup collapses size/`?v=` variants so the front isn't pulled twice.
+  // (A page-wide CDN scan was tried but pulled logos/related products — the
+  // back/model live in client-rendered JS; paste those URLs manually.)
+  const images = dedupeImages([...(ld.images ?? []), ...(og.images ?? [])]).slice(
+    0,
+    SCRAPE_MAX_IMAGES,
+  );
   const name = pick("name");
   return {
     brand: pick("brand"),

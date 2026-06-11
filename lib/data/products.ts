@@ -34,6 +34,8 @@ export interface Product {
   sourceSite?: string;
   /** Outbound purchase link — where to buy the piece (retailer product page). */
   buyUrl?: string;
+  /** Campaign-only piece (e.g. FIFA jerseys) — hidden from the main Curator grid. */
+  campaignOnly?: boolean;
   /** Internal ranking 0–100 — orders the edit; never shown to members. */
   oneTapScore?: number;
 }

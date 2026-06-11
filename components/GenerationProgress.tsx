@@ -56,12 +56,15 @@ const RANGE: Record<Phase, [number, number]> = {
 export default function GenerationProgress({
   phase,
   compact = false,
+  copy,
 }: {
   phase: Phase;
   compact?: boolean;
+  /** Override the per-phase copy (e.g. campaign wording); defaults to atelier copy. */
+  copy?: Partial<Record<Phase, { sub: string; lines: string[] }>>;
 }) {
   const [floor, ceil] = RANGE[phase];
-  const { sub, lines } = COPY[phase];
+  const { sub, lines } = { ...COPY[phase], ...copy?.[phase] };
   const [pct, setPct] = useState(floor);
   const [line, setLine] = useState(0);
 

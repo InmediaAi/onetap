@@ -47,7 +47,10 @@ export async function GET(req: Request) {
         .eq("user_id", data.user.id)
         .maybeSingle();
       if (!pErr) onboarded = Boolean(profile?.onboarded);
-      if (!onboarded) {
+      // Campaign microsites (e.g. /fifa) capture the photo in-funnel — skip the
+      // app onboarding and return the visitor straight to the campaign.
+      const isCampaign = nextParam.startsWith("/fifa");
+      if (!onboarded && !isCampaign) {
         // Send new users through onboarding, but PRESERVE their intended
         // destination (e.g. a campaign deeplink) so they resume after finishing.
         dest =

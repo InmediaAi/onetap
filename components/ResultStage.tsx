@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { Heart, Download, Share2, ShoppingBag } from "lucide-react";
-import GenerationProgress from "@/components/GenerationProgress";
+import ResultMedia from "@/components/result/ResultMedia";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
@@ -36,6 +36,12 @@ export interface ResultStageProps {
   mono?: string;
   /** Shown in the frame when there's nothing yet (e.g. a sign-in invite). */
   emptyState?: ReactNode;
+  /** Replaces the default turn label over the video (e.g. campaign watermark). */
+  videoOverlay?: ReactNode;
+  /** When explicitly false, Download/Share are blocked and call onLocked
+      instead (e.g. behind a campaign membership). Defaults to allowed. */
+  canKeep?: boolean;
+  onLocked?: () => void;
 }
 
 export default function ResultStage({
@@ -55,6 +61,9 @@ export default function ResultStage({
   error,
   mono,
   emptyState,
+  videoOverlay,
+  canKeep,
+  onLocked,
 }: ResultStageProps) {
   const [view, setView] = useState<"tryon" | "turn">("turn");
   useEffect(() => {
@@ -64,11 +73,11 @@ export default function ResultStage({
   const kind = turnLabel === "Film" ? "video" : "spin";
   const showingTurn = view === "turn" && Boolean(video);
   const videoPhase = phase === "spin" || phase === "video";
-  const composing = phase === "tryon" && !image; // try-on still being composed
   const hasResult = Boolean(image || video);
   const shownLookId = showingTurn ? videoLookId : imageLookId;
 
   function download() {
+    if (canKeep === false) { onLocked?.(); return; }
     const url = showingTurn ? video : image;
     if (!url) return;
     const a = document.createElement("a");
@@ -80,6 +89,7 @@ export default function ResultStage({
     track(EVENTS.RESULT_DOWNLOADED, { kind: showingTurn ? kind : "tryon", productId, lookId: shownLookId });
   }
   async function share() {
+    if (canKeep === false) { onLocked?.(); return; }
     if (!shownLookId) return;
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/look/${shownLookId}`);
@@ -135,55 +145,36 @@ export default function ResultStage({
       )}
 
       <div className="media-col">
-        <div className="media">
-          <div className="inset" />
-
-          {/* the moving result (final) */}
-          {showingTurn && (
-            <>
-              <video className="base" src={video!} poster={poster ?? undefined} autoPlay loop muted playsInline />
+        <ResultMedia
+          className="media"
+          video={video}
+          poster={poster}
+          image={image}
+          showVideo={showingTurn}
+          phase={phase}
+          showInset
+          videoOverlay={
+            videoOverlay ?? (
               <div className="turn-ctl">
                 <div className="deg">
                   <span className="d">{turnLabel}</span>
                   <span className="label">{turnSub}</span>
                 </div>
               </div>
-            </>
-          )}
-
-          {/* the try-on still — shown while the result composes, or when toggled */}
-          {!showingTurn && image && (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="base" src={image} alt="" style={{ transform: "scale(1.02)" }} />
-              {videoPhase ? (
-                <GenerationProgress phase={kind} compact />
-              ) : caption ? (
-                <div className="media-cap">
-                  <div className="label h">{caption.brand}</div>
-                  <div className="n">{caption.name}</div>
-                </div>
-              ) : null}
-            </>
-          )}
-
-          {/* composing the try-on still (no image yet) */}
-          {composing && <GenerationProgress phase="tryon" />}
-
-          {/* generating the moving result with no still to show (Studio/Creator) */}
-          {!hasResult && !composing && videoPhase && <GenerationProgress phase={kind} />}
-
-          {/* error with nothing to show */}
-          {!hasResult && !phase && error && (
-            <div className="ph">
-              {mono && <div className="mono">{mono}</div>}
-              <div className="pm">{error}</div>
-            </div>
-          )}
-
-          {/* empty / invite state */}
-          {!hasResult && !phase && !error && emptyState}
-        </div>
+            )
+          }
+          caption={
+            caption ? (
+              <div className="media-cap">
+                <div className="label h">{caption.brand}</div>
+                <div className="n">{caption.name}</div>
+              </div>
+            ) : null
+          }
+          error={error}
+          mono={mono}
+          emptyState={emptyState}
+        />
       </div>
 
       {/* action rail */}

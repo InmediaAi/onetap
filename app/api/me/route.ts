@@ -56,7 +56,7 @@ export async function GET() {
   // PAID-only (null for free) so all paid-only UI/topup gating is unchanged.
   const tier = (sub?.plan as "free" | PlanId | undefined) ?? null;
   const active = sub?.status === "active";
-  const isPaid = active && (tier === "starter" || tier === "pro");
+  const isPaid = active && tier !== null && tier !== "free";
   const planId = isPaid ? (tier as PlanId) : null;
   const videosUsed = sub?.videos_used ?? 0;
 

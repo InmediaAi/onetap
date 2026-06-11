@@ -13,7 +13,9 @@ import { startSubscription, startTopup } from "@/lib/billing/checkout";
 /** Subscription tiers (from the admin-editable DB, seed fallback) + top-ups. */
 export default function PlanCards() {
   const usage = useAtelier((s) => s.usage);
-  const [plans, setPlans] = useState<BillingPlan[]>(SEED_PLANS);
+  // Only public (active) tiers — hidden ones like the campaign `fan` membership
+  // are reachable by direct link, never shown on the pricing page.
+  const [plans, setPlans] = useState<BillingPlan[]>(SEED_PLANS.filter((p) => p.active));
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 

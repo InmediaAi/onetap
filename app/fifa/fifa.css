@@ -1,0 +1,369 @@
+/* "Viral Fan" FIFA microsite — ported from the approved mockup, fully scoped
+   under .viralfan so it never collides with the main app's global styles. */
+
+.viralfan {
+  --paper: #ffffff;
+  --ink: #000000;
+  --slate: #6b6b6b;
+  --hairline: #e6e4e0;
+  --soft: #faf9f7;
+  --orange: #f37021;
+  --orange-soft: #fdf1e9;
+  --vf-maxw: 1180px;
+  --vf-serif: var(--font-newsreader), "Miller Text", Georgia, serif;
+  --vf-sans: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--vf-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden; /* the offset card shadow must never cause a sideways scroll */
+  -webkit-font-smoothing: antialiased;
+}
+.viralfan * { box-sizing: border-box; }
+.viralfan img,
+.viralfan video { display: block; max-width: 100%; }
+.viralfan a { color: inherit; text-decoration: none; }
+.viralfan button,
+.viralfan input { font: inherit; color: inherit; }
+
+.viralfan .wrap { width: 100%; max-width: var(--vf-maxw); margin: 0 auto; padding: 0 24px; }
+.viralfan .serif { font-family: var(--vf-serif); font-weight: 400; line-height: 1.08; }
+.viralfan .label {
+  font-size: 12px; font-weight: 500; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--slate);
+}
+.viralfan .label .dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--orange); margin-right: 10px; vertical-align: 1px;
+}
+
+.viralfan .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-weight: 500; font-size: 15px; letter-spacing: 0.4px;
+  padding: 15px 32px; border: 1px solid var(--ink);
+  background: var(--ink); color: var(--paper); cursor: pointer;
+  transition: background .18s, color .18s, opacity .18s; white-space: nowrap;
+}
+.viralfan .btn:hover { background: var(--paper); color: var(--ink); }
+.viralfan .btn:disabled { opacity: .3; cursor: not-allowed; }
+.viralfan .btn:disabled:hover { background: var(--ink); color: var(--paper); }
+.viralfan .btn-quiet { background: var(--paper); color: var(--ink); border-color: var(--hairline); }
+.viralfan .btn-quiet:hover { border-color: var(--ink); }
+
+.viralfan .nav {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hairline);
+}
+.viralfan .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+.viralfan .logo { display: flex; align-items: baseline; gap: 10px; }
+.viralfan .logo .mark { font-family: var(--vf-serif); font-size: 23px; letter-spacing: 0.03em; }
+.viralfan .logo .tag { font-size: 10px; color: var(--slate); letter-spacing: 2px; text-transform: uppercase; }
+.viralfan .nav-links { display: flex; align-items: center; gap: 28px; }
+.viralfan .nav-links a.link { font-size: 14px; color: var(--slate); }
+.viralfan .nav-links a.link:hover { color: var(--ink); }
+.viralfan .nav-links .btn { padding: 10px 22px; font-size: 14px; }
+.viralfan .nav-links .vf-signin {
+  background: none; border: 0; cursor: pointer; font: inherit; font-size: 14px; color: var(--slate);
+  padding: 0; letter-spacing: 0.2px;
+}
+.viralfan .nav-links .vf-signin:hover { color: var(--ink); }
+.viralfan .nav-links .vf-account { font-size: 13px; color: var(--slate); }
+
+.viralfan .hero { padding: 64px 0 56px; }
+.viralfan .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: start; }
+.viralfan .hero h1 { font-size: clamp(40px, 5.4vw, 70px); max-width: 13ch; margin: 20px 0 0; }
+.viralfan .hero h1 em { font-style: italic; font-weight: 300; }
+.viralfan .hero p.lede { color: var(--slate); font-size: clamp(16px, 2vw, 18px); max-width: 460px; margin: 20px 0 0; }
+.viralfan .hero p.lede strong { color: var(--ink); font-weight: 500; }
+.viralfan .proofline { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--slate); margin-top: 24px; }
+.viralfan .proofline span { display: inline-flex; align-items: center; gap: 8px; }
+.viralfan .proofline b { width: 5px; height: 5px; border-radius: 50%; background: var(--ink); flex: 0 0 auto; }
+
+.viralfan .creator {
+  border: 1px solid var(--ink); background: var(--paper);
+  box-shadow: 14px 14px 0 var(--soft), 14px 14px 0 1px var(--hairline);
+}
+.viralfan .c-head {
+  padding: 18px 26px; border-bottom: 1px solid var(--ink); background: var(--soft);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.viralfan .c-head .t { font-family: var(--vf-serif); font-size: 21px; }
+.viralfan .steps-ind { display: flex; gap: 6px; }
+.viralfan .steps-ind i { width: 22px; height: 3px; background: var(--hairline); transition: background .2s; }
+.viralfan .steps-ind i.on { background: var(--orange); }
+.viralfan .c-body { padding: 26px; display: grid; gap: 28px; }
+/* Let grid/flex cells shrink below their content so nothing overflows on
+   narrow screens (the default min-width:auto causes horizontal clipping). */
+.viralfan .creator,
+.viralfan .c-body,
+.viralfan .field,
+.viralfan .hero-grid > *,
+.viralfan .uploads > *,
+.viralfan .result-grid > * { min-width: 0; }
+.viralfan .uploads,
+.viralfan .moments-row,
+.viralfan .jersey-opts { max-width: 100%; }
+
+.viralfan .field .f-label {
+  font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--ink); margin-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+}
+.viralfan .field .f-label .stepno {
+  font-family: var(--vf-serif); font-style: italic; text-transform: none;
+  letter-spacing: 0; color: var(--slate); margin-right: 8px;
+}
+.viralfan .field .f-label .ok { color: var(--orange); letter-spacing: 0; text-transform: none; font-size: 12px; font-weight: 500; }
+
+.viralfan .csearch { position: relative; min-width: 0; }
+.viralfan .cs-box {
+  display: flex; align-items: center; gap: 12px; border: 1px solid var(--hairline);
+  padding: 14px 16px; background: var(--paper);
+}
+.viralfan .cs-box:focus-within { border-color: var(--ink); }
+.viralfan .cs-box .sw { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12); flex: 0 0 auto; }
+.viralfan .cs-box input { border: none; outline: none; width: 100%; min-width: 0; font-size: 16px; background: transparent; }
+.viralfan .cs-caret { color: var(--slate); font-size: 12px; flex: 0 0 auto; }
+.viralfan .cs-list {
+  position: absolute; left: 0; right: 0; top: calc(100% - 1px); z-index: 20; background: var(--paper);
+  border: 1px solid var(--ink); max-height: 240px; overflow-y: auto;
+}
+.viralfan .cs-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer;
+  font-size: 15px; border-bottom: 1px solid var(--hairline);
+}
+.viralfan .cs-item:last-child { border-bottom: none; }
+.viralfan .cs-item:hover { background: var(--soft); }
+.viralfan .cs-item .sw { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12); }
+
+/* jersey kit options — selectable thumbnails (Home / Away / Authentic) */
+.viralfan .jersey-opts { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.viralfan .jersey-opt {
+  width: 96px; border: 1px solid var(--hairline); background: var(--paper);
+  cursor: pointer; padding: 6px; text-align: center; transition: border-color .15s;
+}
+.viralfan .jersey-opt:hover { border-color: var(--ink); }
+.viralfan .jersey-opt.sel { border-color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
+.viralfan .jersey-opt .jo-img { display: block; aspect-ratio: 3 / 4; background: var(--soft); overflow: hidden; }
+.viralfan .jersey-opt .jo-img img { width: 100%; height: 100%; object-fit: cover; }
+.viralfan .jersey-opt .k {
+  display: block; font-size: 11px; font-weight: 500; letter-spacing: 0.3px;
+  margin-top: 6px; color: var(--slate); line-height: 1.3;
+}
+.viralfan .jersey-opt.sel .k { color: var(--ink); }
+
+.viralfan .uploads { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.viralfan .up {
+  position: relative; border: 1px dashed #cfcbc4; background: var(--soft); aspect-ratio: 5 / 4;
+  cursor: pointer; overflow: hidden; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 6px; text-align: center; padding: 12px;
+}
+.viralfan .up:hover { border-color: var(--ink); background: var(--paper); }
+.viralfan .up.filled { border-style: solid; border-color: var(--ink); background: var(--paper); }
+.viralfan .up input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.viralfan .up .u-icon {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hairline);
+  background: var(--paper); display: flex; align-items: center; justify-content: center;
+}
+.viralfan .up .u-t { font-size: 14px; font-weight: 500; }
+.viralfan .up .u-s { font-size: 11.5px; color: var(--slate); line-height: 1.4; }
+.viralfan .up img.preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.viralfan .up.filled .u-icon, .viralfan .up.filled .u-t, .viralfan .up.filled .u-s { display: none; }
+.viralfan .up-err { font-size: 11.5px; color: var(--orange); margin-top: 8px; }
+
+.viralfan .moments-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+.viralfan .moments-row::-webkit-scrollbar { display: none; }
+.viralfan .mp {
+  flex: 0 0 auto; font-size: 13.5px; font-weight: 500; padding: 11px 18px;
+  border: 1px solid var(--hairline); background: var(--paper); cursor: pointer; white-space: nowrap;
+}
+.viralfan .mp:hover { border-color: var(--ink); }
+.viralfan .mp.sel { border-color: var(--orange); background: var(--orange-soft); }
+.viralfan .mp .star { color: var(--orange); margin-left: 6px; font-size: 11px; }
+
+.viralfan .c-foot { padding: 22px 26px 26px; border-top: 1px solid var(--hairline); background: var(--paper); }
+.viralfan .c-foot .btn { width: 100%; font-size: 16px; padding: 17px 32px; }
+.viralfan .c-foot .hint { font-size: 12.5px; color: var(--slate); text-align: center; margin-top: 12px; }
+
+/* sign-in inline */
+.viralfan .signin { display: grid; gap: 10px; }
+.viralfan .signin .oauth {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  padding: 14px; border: 1px solid var(--ink); background: var(--paper); cursor: pointer; font-weight: 500;
+}
+.viralfan .signin .oauth:hover { background: var(--soft); }
+.viralfan .signin .note { font-size: 12px; color: var(--slate); text-align: center; }
+
+.viralfan .gen { padding: 64px 26px; text-align: center; }
+.viralfan .gen .g-line { font-family: var(--vf-serif); font-size: 23px; min-height: 34px; }
+.viralfan .gen .bar { height: 2px; background: var(--hairline); margin: 30px auto 0; max-width: 320px; position: relative; overflow: hidden; }
+.viralfan .gen .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--orange); transition: width .6s ease; }
+.viralfan .gen .g-sub { font-size: 13px; color: var(--slate); margin-top: 18px; }
+
+.viralfan .result { padding: 26px; }
+.viralfan .result-grid { display: grid; grid-template-columns: minmax(0,210px) 1fr; gap: 26px; align-items: start; }
+.viralfan .filmframe { border: 1px solid var(--ink); padding: 7px; aspect-ratio: 9/16; position: relative; background: var(--paper); }
+/* The film preview renders through the shared <ResultMedia> core; flip its
+   --rs-* frame palette to the light theme (the core's dark defaults live in
+   globals.css). Only matters if a still/progress ever shows inside the frame. */
+.viralfan .filmframe {
+  --rs-surface: var(--hairline);
+  --rs-ink: var(--ink);
+  --rs-muted: var(--slate);
+  --rs-accent: var(--orange);
+  --rs-line: var(--hairline);
+  --rs-scrim: rgba(0, 0, 0, 0.55);
+  --rs-scrim-strong: rgba(0, 0, 0, 0.55);
+}
+.viralfan .ff-panel { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--hairline); }
+.viralfan .ff-panel img, .viralfan .ff-panel video,
+.viralfan .filmframe .base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.viralfan .nation-band { position: absolute; top: 0; left: 0; right: 0; height: 6px; z-index: 2; }
+.viralfan .wm {
+  position: absolute; bottom: 10px; left: 0; right: 0; z-index: 3; text-align: center;
+  font-family: var(--vf-serif); font-size: 13px; letter-spacing: 0.06em; color: rgba(255,255,255,0.95);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.45);
+}
+.viralfan .pv {
+  position: absolute; top: 12px; left: 12px; z-index: 3; background: rgba(255,255,255,0.92);
+  border: 1px solid var(--hairline); font-size: 10px; font-weight: 500; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 5px 9px;
+}
+.viralfan .result h3 { font-family: var(--vf-serif); font-size: clamp(24px, 3vw, 31px); font-weight: 400; }
+.viralfan .result p.r-sub { color: var(--slate); font-size: 15px; margin-top: 10px; max-width: 40ch; }
+.viralfan .r-actions { display: grid; gap: 10px; margin-top: 22px; max-width: 360px; }
+.viralfan .r-actions .btn { width: 100%; }
+.viralfan .r-meta { font-size: 12px; color: var(--slate); margin-top: 14px; }
+
+/* Overlay chrome for the shared try-on modal when used by the FIFA campaign.
+   These are GLOBAL (un-scoped) on purpose: the modal is portaled to <body>,
+   outside the .viralfan tree, so .viralfan-scoped rules wouldn't reach them.
+   They sit over the modal's dark .media frame (.inset is z-index 4). */
+.vf-band { position: absolute; top: 0; left: 0; right: 0; height: 6px; z-index: 5; }
+.vf-pv {
+  position: absolute; top: 12px; left: 12px; z-index: 6;
+  background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #1a1814; font-size: 10px; font-weight: 500; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 5px 9px;
+}
+.vf-wm {
+  position: absolute; bottom: 14px; left: 0; right: 0; z-index: 6; text-align: center;
+  font-family: "Miller Text", Georgia, serif; font-size: 14px; letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.95); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+.viralfan-veil {
+  /* z-index above the portaled .modal-scrim (100) so the membership sheet,
+     opened from the modal's locked Download/Share, sits on top. */
+  position: fixed; inset: 0; z-index: 200; background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px;
+  font-family: var(--vf-sans);
+}
+.viralfan-veil .sheet {
+  width: 100%; max-width: 440px; background: var(--paper); border: 1px solid #000; padding: 36px 32px;
+  max-height: 90vh; overflow-y: auto; color: #000;
+}
+.viralfan-veil .s-close { background: none; border: none; cursor: pointer; float: right; font-size: 22px; line-height: 1; color: #6b6b6b; }
+.viralfan-veil h3 { font-family: var(--vf-serif); font-weight: 400; font-size: 30px; margin-top: 10px; }
+.viralfan-veil .s-price { font-family: var(--vf-serif); font-size: 19px; margin-top: 14px; }
+.viralfan-veil .s-price span { font-family: var(--vf-sans); font-size: 13px; color: #6b6b6b; }
+.viralfan-veil p.s-body { color: #6b6b6b; font-size: 15px; margin-top: 14px; }
+.viralfan-veil .s-list { margin-top: 18px; border-top: 1px solid #e6e4e0; }
+.viralfan-veil .s-list div { padding: 10px 0; border-bottom: 1px solid #e6e4e0; font-size: 14px; }
+.viralfan-veil .s-btn {
+  width: 100%; margin-top: 24px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 15px; border: 1px solid #000; background: #000; color: #fff; cursor: pointer; font-weight: 500;
+}
+.viralfan-veil .s-note { font-size: 12px; color: #6b6b6b; text-align: center; margin-top: 12px; }
+
+.viralfan section { padding: 72px 0; }
+.viralfan .rule { border: 0; border-top: 1px solid var(--hairline); }
+.viralfan .sec-head { max-width: 640px; margin-bottom: 40px; }
+.viralfan .sec-head h2 { font-size: clamp(30px, 4.6vw, 52px); margin-top: 16px; }
+.viralfan .sec-head p { color: var(--slate); margin-top: 14px; }
+
+.viralfan .how-steps { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--hairline); }
+.viralfan .how-step { padding: 26px 22px 26px 0; border-bottom: 1px solid var(--hairline); }
+.viralfan .how-step + .how-step { border-left: 1px solid var(--hairline); padding-left: 22px; }
+.viralfan .how-step .hs-no { font-family: var(--vf-serif); font-style: italic; font-size: 26px; color: var(--orange); line-height: 1; }
+.viralfan .how-step h3 { font-family: var(--vf-serif); font-weight: 400; font-size: 22px; margin: 14px 0 8px; }
+.viralfan .how-step p { color: var(--slate); font-size: 14.5px; line-height: 1.55; }
+
+.viralfan details { border-bottom: 1px solid var(--hairline); }
+.viralfan details summary { cursor: pointer; list-style: none; font-weight: 500; font-size: 16px; padding: 18px 0; display: flex; justify-content: space-between; }
+.viralfan details summary::-webkit-details-marker { display: none; }
+.viralfan details summary::after { content: "+"; color: var(--slate); font-size: 20px; }
+.viralfan details[open] summary::after { content: "–"; }
+.viralfan details p { color: var(--slate); font-size: 15px; padding-bottom: 18px; max-width: 60ch; }
+.viralfan .faq-list { border-top: 1px solid var(--hairline); }
+
+.viralfan footer { border-top: 1px solid var(--hairline); padding: 40px 0 120px; }
+.viralfan .foot-inner { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-start; }
+.viralfan .legal { color: var(--slate); font-size: 12px; max-width: 620px; line-height: 1.6; }
+.viralfan .legal strong { color: var(--ink); font-weight: 500; }
+.viralfan .roman { font-family: var(--vf-serif); font-size: 13px; color: var(--slate); margin-top: 10px; }
+
+.viralfan .sticky-cta {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(10px); border-top: 1px solid var(--hairline); display: none;
+}
+.viralfan .sticky-cta .btn { width: 100%; }
+
+@media (max-width: 920px) {
+  .viralfan .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+  .viralfan .nav-links a.link { display: none; }
+  .viralfan .creator { box-shadow: 8px 8px 0 var(--soft), 8px 8px 0 1px var(--hairline); }
+  .viralfan .how-steps { grid-template-columns: 1fr 1fr; }
+  .viralfan .how-step { padding-left: 0; }
+  .viralfan .how-step + .how-step { border-left: 0; }
+  .viralfan .how-step:nth-child(even) { border-left: 1px solid var(--hairline); padding-left: 22px; }
+}
+
+@media (max-width: 640px) {
+  .viralfan .wrap { padding: 0 16px; }
+  .viralfan section { padding: 48px 0; }
+  .viralfan .hero { padding: 28px 0 28px; }
+  .viralfan .hero h1 { font-size: clamp(34px, 11vw, 46px); }
+  .viralfan .hero p.lede { font-size: 15px; }
+
+  /* the funnel sits flush — no offset shadow, full-width card */
+  .viralfan .creator { box-shadow: none; }
+  .viralfan .c-head { padding: 15px 18px; }
+  .viralfan .c-head .t { font-size: 19px; }
+  .viralfan .c-body { padding: 18px; gap: 22px; }
+  .viralfan .c-foot { padding: 16px 18px 20px; }
+  .viralfan .c-foot .btn { padding: 15px 22px; font-size: 15px; }
+
+  /* jersey kits: one compact, swipeable row */
+  .viralfan .jersey-opts { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 12px -2px 0; padding: 0 2px; }
+  .viralfan .jersey-opts::-webkit-scrollbar { display: none; }
+  .viralfan .jersey-opt { width: 82px; flex: 0 0 auto; }
+  .viralfan .jersey-opt .k { font-size: 10.5px; }
+
+  /* uploads stay two-up but shorter so both fit above the fold */
+  .viralfan .uploads { gap: 10px; }
+  .viralfan .up { aspect-ratio: 1 / 1; }
+  .viralfan .up .u-t { font-size: 13px; }
+  .viralfan .up .u-s { font-size: 11px; }
+
+  .viralfan .result { padding: 18px; }
+  .viralfan .result-grid { grid-template-columns: 1fr; gap: 18px; }
+  .viralfan .filmframe { max-width: 220px; margin: 0 auto; }
+  .viralfan .r-actions { max-width: none; }
+
+  .viralfan .sticky-cta { display: block; }
+  .viralfan .nav-links .btn { display: none; }
+  .viralfan footer { padding: 36px 0 110px; } /* clear the sticky CTA */
+  .viralfan .how-steps { grid-template-columns: 1fr; }
+  .viralfan .how-step { padding: 22px 0; }
+  .viralfan .how-step:nth-child(even) { border-left: 0; padding-left: 0; }
+
+  /* membership sheet uses the full small screen */
+  .viralfan-veil { padding: 0; align-items: flex-end; }
+  .viralfan-veil .sheet { max-width: none; max-height: 92vh; padding: 28px 22px 32px; border-width: 1px 0 0; }
+}

@@ -669,3 +669,105 @@ insert into subscriptions (user_id, plan, status, current_period_start)
   from profiles p
   where not exists (select 1 from subscriptions s where s.user_id = p.user_id)
 on conflict (user_id) do nothing;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION: campaigns (e.g. the FIFA "Viral Fan" microsite). Idempotent.
+-- Campaign jerseys are normal products flagged campaign_only so they stay out
+-- of the main Curator. A campaign maps countries → jersey products (per kit) and
+-- defines the film "moments". Adds an additive 'fan' membership tier.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Keep campaign jerseys out of the luxury Curator grid.
+alter table products add column if not exists campaign_only boolean not null default false;
+
+create table if not exists campaigns (
+  id         text primary key,            -- 'fifa-worldcup'
+  title      text not null,
+  subtitle   text,
+  accent     text,                        -- theme accent (hex)
+  active     boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+
+-- One row per supported nation (colour/flag for the themed UI).
+create table if not exists campaign_teams (
+  id          uuid primary key default gen_random_uuid(),
+  campaign_id text not null references campaigns (id) on delete cascade,
+  country     text not null,
+  accent      text,                        -- nation colour (hex)
+  flag        text,                        -- emoji or image URL
+  sort_order  integer not null default 0,
+  unique (campaign_id, country)
+);
+
+-- A nation can have several jerseys (Home/Away/Authentic); each is a product.
+create table if not exists campaign_jerseys (
+  id          uuid primary key default gen_random_uuid(),
+  campaign_id text not null references campaigns (id) on delete cascade,
+  country     text not null,
+  kit         text not null,               -- 'Home' | 'Home (Authentic)' | 'Away' | 'Away (Authentic)'
+  product_id  text references products (id) on delete set null,
+  sort_order  integer not null default 0
+);
+
+-- Film "moments" → admin-authored video prompts.
+create table if not exists campaign_moments (
+  id          uuid primary key default gen_random_uuid(),
+  campaign_id text not null references campaigns (id) on delete cascade,
+  label       text not null,
+  prompt      text not null,
+  sort_order  integer not null default 0
+);
+
+-- Public read for the landing; service-role writes only (admin).
+alter table campaigns        enable row level security;
+alter table campaign_teams   enable row level security;
+alter table campaign_jerseys enable row level security;
+alter table campaign_moments enable row level security;
+drop policy if exists "public read campaigns"        on campaigns;
+drop policy if exists "public read campaign_teams"   on campaign_teams;
+drop policy if exists "public read campaign_jerseys" on campaign_jerseys;
+drop policy if exists "public read campaign_moments" on campaign_moments;
+create policy "public read campaigns"        on campaigns        for select using (true);
+create policy "public read campaign_teams"   on campaign_teams   for select using (true);
+create policy "public read campaign_jerseys" on campaign_jerseys for select using (true);
+create policy "public read campaign_moments" on campaign_moments for select using (true);
+
+-- Additive 'fan' membership tier ($25 / 10 videos) — leaves free/starter/pro intact.
+alter table subscriptions drop constraint if exists subscriptions_plan_check;
+alter table subscriptions
+  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'fan'));
+
+insert into billing_plans (id, name, tagline, monthly_price, video_limit, features, most_popular, active, sort_order) values
+  ('fan', 'Fan Membership', 'Keep every fan video you make.', 25, 10,
+     array['10 fan videos / month', 'Every nation & moment', 'HD, without the mark', 'Priority queue'],
+     false, false, 5)
+on conflict (id) do nothing;
+
+-- Seed the FIFA "Viral Fan" campaign + a starter set of nations + the moments.
+-- Jerseys (per-kit products) are attached by admin after adding the jersey
+-- products (Pieces tab, campaign_only) — see admin Campaigns.
+insert into campaigns (id, title, subtitle, accent) values
+  ('fifa-worldcup', 'Viral Fan', 'Be the fan the whole stadium watches', '#F37021')
+on conflict (id) do nothing;
+
+insert into campaign_teams (campaign_id, country, accent, flag, sort_order) values
+  ('fifa-worldcup', 'USA', '#1F3A93', '🇺🇸', 0),
+  ('fifa-worldcup', 'Mexico', '#006341', '🇲🇽', 1),
+  ('fifa-worldcup', 'Argentina', '#75AADB', '🇦🇷', 2),
+  ('fifa-worldcup', 'Brazil', '#009C3B', '🇧🇷', 3),
+  ('fifa-worldcup', 'England', '#C8102E', '🏴', 4),
+  ('fifa-worldcup', 'France', '#1A2B6D', '🇫🇷', 5),
+  ('fifa-worldcup', 'Germany', '#1A1A1A', '🇩🇪', 6),
+  ('fifa-worldcup', 'Spain', '#AA151B', '🇪🇸', 7)
+on conflict (campaign_id, country) do nothing;
+
+insert into campaign_moments (campaign_id, label, prompt, sort_order)
+select 'fifa-worldcup', label, prompt, ord from (values
+  ('Stadium fan cam', 'Stadium fan-cam moment: the subject, wearing the team jersey, jumps and cheers ecstatically in a packed World Cup stadium crowd, scarf raised, broadcast fan-cam look, floodlights, vivid team colours, slow-motion crowd around them.', 0),
+  ('Goal celebration', 'Wild goal celebration: the subject in the team jersey roars and runs with arms wide, sliding on their knees on the pitch edge, confetti and floodlights, euphoric stadium crowd behind, cinematic broadcast slow motion.', 1),
+  ('VIP box', 'VIP box at the stadium: the subject in the team jersey watches from a luxury hospitality box, glass and city lights behind, poised and proud, elegant broadcast b-roll, golden hour.', 2),
+  ('Crowd reaction', 'Crowd reaction wave: the subject in the team jersey leaps up with the crowd in a tense match moment, hands on head then exploding into celebration, authentic fan emotion, stadium floodlights.', 3),
+  ('Big screen feature', 'Big-screen feature: the subject in the team jersey appears larger-than-life on the stadium jumbotron as the fan of the match, crowd cheering up at the screen, confident wave, broadcast graphics energy.', 4)
+) as m(label, prompt, ord)
+where not exists (select 1 from campaign_moments cm where cm.campaign_id = 'fifa-worldcup');

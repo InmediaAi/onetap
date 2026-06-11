@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import PackagesAdmin from "@/components/admin/PackagesAdmin";
 import CampaignLinks from "@/components/admin/CampaignLinks";
+import CampaignManager from "@/components/admin/CampaignManager";
 import { formatPrice, type Product } from "@/lib/data/products";
 import {
   CURRENCIES,
@@ -31,6 +32,7 @@ interface Draft {
   occasions: string[];
   dropDate: string;
   oneTapScore: number;
+  campaignOnly: boolean;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -51,6 +53,7 @@ const EMPTY: Draft = {
   occasions: [],
   dropDate: today(),
   oneTapScore: 70,
+  campaignOnly: false,
 };
 
 export default function AdminPage() {
@@ -117,6 +120,7 @@ export default function AdminPage() {
       occasions: p.occasions ?? [],
       dropDate: p.droppedAt ?? today(),
       oneTapScore: p.oneTapScore ?? 70,
+      campaignOnly: Boolean(p.campaignOnly),
     });
     setHasDraft(true);
     setEditingId(p.id);
@@ -278,7 +282,10 @@ export default function AdminPage() {
       {tab === "packages" ? (
         <PackagesAdmin password={password} />
       ) : tab === "campaigns" ? (
-        <CampaignLinks password={password} />
+        <>
+          <CampaignManager password={password} />
+          <CampaignLinks password={password} />
+        </>
       ) : (
         <>
           <form className="admin-card" onSubmit={fetchFromUrl}>
@@ -430,6 +437,15 @@ export default function AdminPage() {
               onChange={set("buyUrl")}
               placeholder="Where members buy it — the retailer product page"
             />
+
+            <label className="pkg-check" style={{ marginTop: "0.25rem" }}>
+              <input
+                type="checkbox"
+                checked={draft.campaignOnly}
+                onChange={(e) => setDraft((d) => ({ ...d, campaignOnly: e.target.checked }))}
+              />
+              Campaign only (e.g. FIFA jersey) — hidden from the Curator
+            </label>
 
             <label className="admin-field">
               <span className="admin-label">Description</span>

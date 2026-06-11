@@ -67,6 +67,7 @@ export interface ProductRow {
   description: string | null;
   stylist_note: string | null;
   one_tap_score: number | null;
+  campaign_only: boolean | null;
   created_at?: string;
 }
 
@@ -93,6 +94,7 @@ export function rowToProduct(row: ProductRow): Product {
     stylistNote: row.stylist_note ?? undefined,
     sourceSite: row.source_site ?? siteFromUrl(row.buy_url ?? row.source_url),
     buyUrl: row.buy_url ?? row.source_url ?? undefined,
+    campaignOnly: row.campaign_only ?? false,
     oneTapScore: row.one_tap_score ?? undefined,
   };
 }

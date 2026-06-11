@@ -11,7 +11,7 @@
  */
 
 /** Paid subscription tiers (Razorpay). The `free` tier is not a subscription. */
-export type PlanId = "starter" | "pro";
+export type PlanId = "starter" | "pro" | "fan";
 
 /** All billing tiers, including the display-only free tier. */
 export type BillingTierId = "free" | PlanId;
@@ -79,6 +79,27 @@ export const SEED_PLANS: BillingPlan[] = [
     active: true,
     sortOrder: 2,
   },
+  {
+    // Campaign membership (FIFA "Viral Fan"). active:false → hidden from the
+    // public /pricing page, but reachable via /fifa (subscribe doesn't filter
+    // on active). Kept here so a missing/empty DB still resolves the tier +
+    // its video limit. Mirror lib/supabase/schema.sql's `fan` seed.
+    id: "fan",
+    name: "Fan Membership",
+    tagline: "Keep every fan video you make.",
+    monthlyPrice: 25,
+    currency: "USD",
+    videoLimit: 10,
+    features: [
+      "10 fan videos / month",
+      "Every nation & every moment",
+      "HD, without the watermark",
+      "Priority generation queue",
+    ],
+    mostPopular: false,
+    active: false,
+    sortOrder: 5,
+  },
 ];
 
 export const SEED_CONFIG: BillingConfig = {
@@ -88,18 +109,20 @@ export const SEED_CONFIG: BillingConfig = {
 };
 
 /** Env var holding each subscription tier's Razorpay plan id. */
-export const RAZORPAY_PLAN_ENV: Record<PlanId, string> = {
+export const RAZORPAY_PLAN_ENV: Partial<Record<PlanId, string>> = {
   starter: "RAZORPAY_PLAN_STARTER",
   pro: "RAZORPAY_PLAN_PRO",
+  fan: "RAZORPAY_PLAN_FAN",
 };
 
 /** Fallbacks derived from the seed (used when DB is unavailable). */
 export const FREE_VIDEO_TRIAL =
   SEED_PLANS.find((p) => p.id === "free")?.videoLimit ?? 1;
 
-export const VIDEO_LIMIT: Record<PlanId, number> = {
+export const VIDEO_LIMIT: Partial<Record<PlanId, number>> = {
   starter: SEED_PLANS.find((p) => p.id === "starter")!.videoLimit,
   pro: SEED_PLANS.find((p) => p.id === "pro")!.videoLimit,
+  fan: SEED_PLANS.find((p) => p.id === "fan")!.videoLimit,
 };
 
 /** Look up a seed tier by id (fallback display when DB plans aren't loaded). */

@@ -14,6 +14,7 @@ interface ResolvedLook {
   assetUrl: string;
   posterUrl?: string;
   productId?: string;
+  campaign?: string;
 }
 
 export default function LookPage() {
@@ -120,10 +121,24 @@ export default function LookPage() {
             </motion.div>
 
             <div className="mt-12 flex flex-col items-center gap-4">
-              <p className="text-sm text-muted">Visualized with OneTap Atelier.</p>
-              <Link href="/" className="btn-line">
-                Create Your Own Look
-              </Link>
+              {look.campaign === "fifa-worldcup" ? (
+                <>
+                  <p className="text-sm text-muted">Made with Viral Fan · by OneTap.</p>
+                  <Link
+                    href="/fifa?utm_campaign=fifa-worldcup&utm_source=share&utm_medium=look"
+                    className="btn-line"
+                  >
+                    Try your team’s jersey →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted">Visualized with OneTap Atelier.</p>
+                  <Link href="/" className="btn-line">
+                    Create Your Own Look
+                  </Link>
+                </>
+              )}
             </div>
           </>
         )}
