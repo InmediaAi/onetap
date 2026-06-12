@@ -60,8 +60,25 @@ async function post(url: string, body: unknown) {
   });
   if (res.status === 401) throw new SignInRequiredError();
   if (res.status === 402) throw new VideoLimitError();
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Generation failed");
+  // Parse defensively: a 500/413/timeout can return plain text or an HTML page,
+  // and calling res.json() on that throws a cryptic "Unexpected token" instead
+  // of the real message. Read text, then try JSON.
+  const text = await res.text();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    /* non-JSON body (error page / provider text) */
+  }
+  if (!res.ok) {
+    const msg =
+      data?.error ||
+      (text ? text.replace(/<[^>]+>/g, "").trim().slice(0, 200) : "") ||
+      `Generation failed (${res.status})`;
+    throw new Error(msg);
+  }
+  if (!data) throw new Error("Generation returned an unexpected response.");
   return data;
 }
 

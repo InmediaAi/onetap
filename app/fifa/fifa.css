@@ -72,6 +72,8 @@
 }
 .viralfan .nav-links .vf-signin:hover { color: var(--ink); }
 .viralfan .nav-links .vf-account { font-size: 13px; color: var(--slate); }
+.viralfan .nav-links .vf-navlink { font-size: 14px; color: var(--slate); white-space: nowrap; }
+.viralfan .nav-links .vf-navlink:hover { color: var(--ink); }
 
 .viralfan .hero { padding: 64px 0 56px; }
 .viralfan .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: start; }
@@ -358,6 +360,11 @@
 
   .viralfan .sticky-cta { display: block; }
   .viralfan .nav-links .btn { display: none; }
+  /* account links stay visible on phones — keep them compact so the logo +
+     Profile / My Closet / Sign out fit a 390px bar */
+  .viralfan .nav-links { gap: 14px; }
+  .viralfan .nav-links .vf-navlink,
+  .viralfan .nav-links .vf-signin { font-size: 13px; }
   .viralfan footer { padding: 36px 0 110px; } /* clear the sticky CTA */
   .viralfan .how-steps { grid-template-columns: 1fr; }
   .viralfan .how-step { padding: 22px 0; }

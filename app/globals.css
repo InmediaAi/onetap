@@ -240,6 +240,56 @@
   background: var(--stone);
 }
 
+/* FIFA 2026 Viral Fan — attention-drawing pill: rounded border, orange spot-
+   highlight gradient, a sweeping highlight + a blinking glow. */
+.catnav a.fifa-tab {
+  color: var(--ivory);
+  border: 1px solid rgba(243, 112, 33, 0.55);
+  border-radius: 999px;
+  padding: 6px 16px;
+  background: linear-gradient(90deg, rgba(243, 112, 33, 0.18), rgba(243, 112, 33, 0.05));
+  overflow: hidden;
+  white-space: nowrap;
+  animation: fifaGlow 1.8s ease-in-out infinite;
+}
+.catnav a.fifa-tab::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -45%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 200, 150, 0.6), transparent);
+  filter: blur(2px);
+  animation: fifaSweep 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.catnav a.fifa-tab:hover {
+  color: #fff;
+  border-color: rgba(243, 112, 33, 1);
+}
+.catnav a.fifa-tab.on::after {
+  display: none; /* the pill replaces the underline */
+}
+@keyframes fifaGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(243, 112, 33, 0);
+    border-color: rgba(243, 112, 33, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px 1px rgba(243, 112, 33, 0.5);
+    border-color: rgba(243, 112, 33, 0.9);
+  }
+}
+@keyframes fifaSweep {
+  0% { left: -45%; }
+  55%, 100% { left: 115%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .catnav a.fifa-tab { animation: none; }
+  .catnav a.fifa-tab::before { display: none; }
+}
+
 /* ———————————————————————————— PAGE HEAD ———————————————————————————— */
 .pagehead {
   text-align: center;
@@ -1352,6 +1402,80 @@
 }
 .act.on svg.fillable {
   fill: currentColor;
+}
+
+/* ———————————————————————————— CLOSET / HISTORY ———————————————————————————— */
+.closet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+.closet-card {
+  display: block;
+  border: 1px solid var(--noir-line);
+  background: var(--noir-raise);
+  overflow: hidden;
+  transition: border-color 0.25s var(--ease);
+}
+.closet-card:hover {
+  border-color: var(--stone);
+}
+.closet-card .cc-media {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  background: var(--noir-raise);
+}
+.closet-card .cc-media img,
+.closet-card .cc-media video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.closet-card .cc-play {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 11px;
+  color: var(--ivory);
+  background: rgba(15, 14, 12, 0.6);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.closet-card .cc-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 11px;
+}
+.closet-card .cc-kind {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+.closet-card .cc-date {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--taupe);
+}
+.closet-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 28px 0;
+  color: var(--taupe);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
 }
 
 /* modal footer (composer + closet gallery) */
@@ -3009,7 +3133,15 @@
   }
   .catnav-inner {
     padding: 11px 16px;
-    gap: 18px;
+    gap: 14px 16px;
+    /* wrap instead of horizontal-scroll so the FIFA pill is never cropped */
+    flex-wrap: wrap;
+    overflow-x: visible;
+    justify-content: center;
+  }
+  .catnav a.fifa-tab {
+    padding: 5px 13px;
+    font-size: 10px;
   }
   .credits-chip {
     margin-left: 6px;

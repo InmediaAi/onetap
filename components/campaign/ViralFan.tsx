@@ -9,6 +9,7 @@ import {
   SignInRequiredError,
 } from "@/lib/generate";
 import { startSubscription } from "@/lib/billing/checkout";
+import { hasVideoQuota } from "@/lib/billing/gate";
 import { signInWithProvider, signOut, uploadIdentity } from "@/lib/auth/client";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 import ResultModal from "@/components/ResultModal";
@@ -119,10 +120,10 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
         if (e instanceof SignInRequiredError) {
           setStage("signin"); // shouldn't usually hit — we gate before run
         } else if (e instanceof VideoLimitError) {
-          // Membership is offered ONLY at the keep step (Download/Share) — not
-          // here. Out of free previews surfaces as an inline note.
-          setError("You’ve used your free preview for now. Keep a video to unlock more.");
+          // Out of free previews → offer membership (the other place the sheet
+          // opens is a non-member tapping Download/Share).
           setStage("form");
+          setSheet(true);
         } else {
           // Keep the modal open and SHOW the failure (e.g. a provider is named
           // in env but its key is missing → 500) instead of silently closing it.
@@ -134,15 +135,35 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     [],
   );
 
+  /**
+   * Pre-flight: confirm the user still has video quota BEFORE we start
+   * generating. Without this, generation begins (composing the free Kling
+   * try-on still, showing the progress modal) and only discovers the limit when
+   * the metered video step returns 402 — a jarring "it started then vanished".
+   * Returns false (and opens the membership sheet) when out of credits.
+   */
+  async function ensureQuotaOrSubscribe(): Promise<boolean> {
+    // Always pull the freshest quota — a credit may have been spent on the last
+    // generation (server-side) or on another device, so cached usage can lie.
+    await refreshProfile();
+    if (!hasVideoQuota(useAtelier.getState().usage)) {
+      setSheet(true);
+      return false;
+    }
+    return true;
+  }
+
   async function generate() {
     if (!ready || !jersey || !photo || !moment) return;
-    track(EVENTS.GENERATION_STARTED, { kind: "video", productId: jersey.product.id, campaign: campaign?.id });
     if (!email) {
       // stash selections + photos in IndexedDB to survive the OAuth redirect
       await putStash({ country, kitIdx, momentId, bodyImg, faceImg });
       setStage("signin");
       return;
     }
+    // Out of credits → ask to subscribe FIRST; never start generation.
+    if (!(await ensureQuotaOrSubscribe())) return;
+    track(EVENTS.GENERATION_STARTED, { kind: "video", productId: jersey.product.id, campaign: campaign?.id });
     void persistUploads(bodyImg, faceImg); // save photos to the profile (non-blocking)
     void run({
       jerseyImage: jersey.product.imageUrl,
@@ -190,7 +211,13 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     resumeFired.current = true;
     void clearStash();
     void persistUploads(resume.bodyImg, resume.faceImg);
-    void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, likeness });
+    // Same pre-flight as a manual tap: if they're out of credits, ask to
+    // subscribe instead of silently starting (and 402-ing) a generation.
+    void (async () => {
+      if (!(await ensureQuotaOrSubscribe())) return;
+      void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, likeness });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resume, email, teams, moments, run, persistUploads]);
 
   async function pick(kind: "body" | "face", file?: File) {
@@ -246,13 +273,17 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
               </button>
             )}
             {hydrated && email && (
-              <button
-                className="vf-signin"
-                title={email}
-                onClick={async () => { await signOut(); await refreshProfile(); }}
-              >
-                Sign out
-              </button>
+              <>
+                <a className="vf-navlink" href="/profile">Profile</a>
+                <a className="vf-navlink" href="/closet">My Closet</a>
+                <button
+                  className="vf-signin"
+                  title={email}
+                  onClick={async () => { await signOut(); await refreshProfile(); }}
+                >
+                  Sign out
+                </button>
+              </>
             )}
             <a className="btn" href="#creator">Make my fan video</a>
           </nav>
