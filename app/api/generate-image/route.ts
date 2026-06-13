@@ -27,10 +27,11 @@ export async function POST(req: Request) {
     productImage?: string;
     productId?: string;
     campaign?: string;
+    prompt?: string;
   } = {};
   try {
     body = await req.json();
-    const { userImage, productImage, productId, campaign } = body;
+    const { userImage, productImage, productId, campaign, prompt } = body;
     if (!userImage || !productImage) {
       return NextResponse.json(
         { error: "userImage and productImage are required" },
@@ -38,9 +39,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Kling Virtual Try-On is pure image-to-image — no prompt.
+    // Pass the optional prompt through. Prompt-capable providers (GPT-Image)
+    // use it to compose the scene; Kling Virtual Try-On ignores it.
     const provider = getTryOnProvider();
-    const result = await provider.generateTryOn({ userImage, productImage });
+    const result = await provider.generateTryOn({ userImage, productImage, prompt });
 
     // Re-host into our durable storage; returns our URL + look id (best-effort).
     const userId = await currentUserId();

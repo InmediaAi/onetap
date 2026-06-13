@@ -10,6 +10,7 @@ import {
   GrokVideoProvider,
 } from "@/lib/ai/providers/grok";
 import { KlingProvider, KlingTryOnProvider } from "@/lib/ai/providers/kling";
+import { OpenAIImageProvider } from "@/lib/ai/providers/openai";
 
 /**
  * Provider registry — plug-and-play, env-driven.
@@ -52,6 +53,16 @@ const TRYON_REGISTRY: Record<string, ProviderDescriptor<TryOnProvider>> = {
   grok: {
     requiredEnv: ["XAI_API_KEY"],
     create: () => new GrokProvider(process.env.XAI_API_KEY!, tryOnModel()),
+  },
+  // GPT-Image (Images Edit): person + garment + prompt → composed scene image.
+  // Prompt-capable (unlike Kling try-on). Used for the FIFA moment image prompt.
+  "gpt-image": {
+    requiredEnv: ["OPENAI_API_KEY"],
+    create: () =>
+      new OpenAIImageProvider(
+        process.env.OPENAI_API_KEY!,
+        process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-2",
+      ),
   },
 };
 

@@ -103,7 +103,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
 
   /* ---- core generation ---- */
   const run = useCallback(
-    async (opts: { jerseyImage: string; jerseyId: string; prompt: string; likeness: string }) => {
+    async (opts: { jerseyImage: string; jerseyId: string; prompt: string; imagePrompt?: string; likeness: string }) => {
       setStage("gen");
       setError(null);
       try {
@@ -111,7 +111,8 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
           kind: "video",
           likeness: opts.likeness,
           pieceImage: opts.jerseyImage,
-          prompt: opts.prompt,
+          prompt: opts.prompt, // video prompt → Grok
+          imagePrompt: opts.imagePrompt, // image prompt → GPT-Image (image step)
           productId: opts.jerseyId,
         });
         setResult({ videoUrl: res.videoUrl, posterUrl: res.posterUrl, lookId: res.lookId });
@@ -169,6 +170,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
       jerseyImage: jersey.product.imageUrl,
       jerseyId: jersey.product.id,
       prompt: moment.prompt,
+      imagePrompt: moment.imagePrompt ?? undefined,
       likeness: photo,
     });
   }
@@ -215,7 +217,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     // subscribe instead of silently starting (and 402-ing) a generation.
     void (async () => {
       if (!(await ensureQuotaOrSubscribe())) return;
-      void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, likeness });
+      void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, imagePrompt: m.imagePrompt ?? undefined, likeness });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resume, email, teams, moments, run, persistUploads]);

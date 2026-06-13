@@ -38,8 +38,10 @@ export interface ComposeArgs {
   likeness: string;
   /** The garment/piece image to wear (data/hosted URL). Optional. */
   pieceImage?: string;
-  /** Optional directive prompt (e.g. the built film brief). */
+  /** Optional directive prompt for the VIDEO step (e.g. the built film brief). */
   prompt?: string;
+  /** Optional prompt for the IMAGE step (prompt-capable providers, e.g. GPT-Image). */
+  imagePrompt?: string;
   /** Product id to attach to the saved look (for /look/[id]). */
   productId: string;
 }
@@ -87,6 +89,7 @@ export async function composeReel({
   likeness,
   pieceImage,
   prompt,
+  imagePrompt,
   productId,
 }: ComposeArgs): Promise<ComposeResult> {
   const startedAt = Date.now();
@@ -105,6 +108,7 @@ export async function composeReel({
         productImage: pieceImage,
         productId,
         campaign,
+        prompt: imagePrompt, // image-step prompt (prompt-capable providers); Kling ignores it
       });
       sourceImage = tryon.imageUrl;
     }
