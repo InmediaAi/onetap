@@ -5,7 +5,9 @@ import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// 300s to match the video/360 routes — prompt-capable providers (GPT-Image) can
+// take well over 60s when composing from high-fidelity reference images.
+export const maxDuration = 300;
 
 /** Authenticated user id, or null (so dev/anon keeps working). */
 async function currentUserId(): Promise<string | null> {
