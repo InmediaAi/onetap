@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import ClosetGallery from "@/components/ClosetGallery";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function ClosetPage() {
   return (
@@ -13,6 +14,7 @@ export default function ClosetPage() {
         </p>
         <ClosetGallery />
       </div>
+      <SiteFooter />
     </main>
   );
 }

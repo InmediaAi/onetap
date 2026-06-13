@@ -1,0 +1,137 @@
+/* Legal documents (Terms, Privacy) — light editorial layout, fully scoped under
+   .legal-doc so it never collides with the dark product theme. Ported from the
+   approved OneTap Atelier legal design. */
+.legal-doc {
+  --paper: #ffffff;
+  --ink: #000000;
+  --slate: #6b6b6b;
+  --hairline: #e6e4e0;
+  --orange: #f37021;
+  --serif: var(--font-newsreader), Georgia, serif;
+  --sans: "Gill Sans", "Gill Sans MT", Calibri, "Helvetica Neue", Arial, sans-serif;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.62;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.legal-doc * { box-sizing: border-box; }
+.legal-doc .wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1.4rem, 5vw, 2.4rem) 5rem;
+}
+.legal-doc h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.4rem;
+}
+.legal-doc h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  margin: 2.8rem 0 0.8rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--hairline);
+}
+.legal-doc h3 {
+  font-family: var(--sans);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  color: var(--ink);
+  margin: 1.6rem 0 0.5rem;
+}
+.legal-doc p,
+.legal-doc li { max-width: 64ch; }
+.legal-doc p { margin: 0 0 1rem; }
+.legal-doc ul { margin: 0 0 1rem; padding-left: 1.2rem; }
+.legal-doc li { margin: 0.35rem 0; }
+.legal-doc a { color: var(--ink); }
+.legal-doc strong { font-weight: 500; }
+.legal-doc .legal-caps {
+  text-transform: uppercase;
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+.legal-doc .mark {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  color: var(--ink);
+  display: inline-block;
+  margin-bottom: 2.2rem;
+}
+.legal-doc .eyebrow {
+  font-family: var(--sans);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.66rem;
+  color: var(--slate);
+}
+.legal-doc .meta { color: var(--slate); font-size: 0.85rem; margin: 1rem 0 0; }
+.legal-doc .accent {
+  display: inline-block;
+  width: 46px;
+  height: 2px;
+  background: var(--orange);
+  margin: 1.4rem 0 2rem;
+}
+.legal-doc .note {
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--orange);
+  padding: 1rem 1.2rem;
+  margin: 1.4rem 0;
+  font-size: 0.86rem;
+  color: var(--slate);
+  line-height: 1.55;
+}
+.legal-doc .ph {
+  color: var(--orange);
+  font-style: italic;
+  font-family: var(--serif);
+}
+.legal-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.4rem;
+  font-size: 0.9rem;
+}
+.legal-doc th {
+  text-align: left;
+  font-family: var(--sans);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.62rem;
+  color: var(--slate);
+  border-bottom: 1px solid var(--ink);
+  padding: 0 0.8rem 0.6rem 0;
+}
+.legal-doc td {
+  border-bottom: 1px solid var(--hairline);
+  padding: 0.6rem 0.8rem 0.6rem 0;
+  vertical-align: top;
+}
+.legal-doc .legal-foot {
+  border-top: 1px solid var(--ink);
+  margin-top: 3rem;
+  padding-top: 1.4rem;
+  color: var(--slate);
+  font-size: 0.78rem;
+}
+.legal-doc .legal-foot a { color: var(--slate); }
+.legal-doc .legal-foot a:hover { color: var(--ink); }
+.legal-doc .legal-nav { margin-bottom: 0.6rem; display: flex; gap: 14px; flex-wrap: wrap; }

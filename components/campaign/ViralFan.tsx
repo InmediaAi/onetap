@@ -557,6 +557,9 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
           <div>
             <div className="logo"><span className="mark serif">Viral Fan</span><span className="tag">by OneTap</span></div>
             <p className="roman">© MMXXVI OneTap</p>
+            <p className="vf-foot-links">
+              <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
+            </p>
           </div>
           <p className="legal">
             <strong>Not affiliated with, endorsed by, or sponsored by FIFA or any national football federation.</strong>{" "}

@@ -308,6 +308,9 @@
 .viralfan .legal { color: var(--slate); font-size: 12px; max-width: 620px; line-height: 1.6; }
 .viralfan .legal strong { color: var(--ink); font-weight: 500; }
 .viralfan .roman { font-family: var(--vf-serif); font-size: 13px; color: var(--slate); margin-top: 10px; }
+.viralfan .vf-foot-links { font-size: 13px; color: var(--slate); margin-top: 6px; }
+.viralfan .vf-foot-links a { color: var(--slate); }
+.viralfan .vf-foot-links a:hover { color: var(--ink); }
 
 .viralfan .sticky-cta {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;

@@ -810,6 +810,13 @@
 .foot .fmeta .label {
   color: var(--taupe);
 }
+.foot .fmeta a.flink {
+  text-decoration: none;
+  transition: color 0.2s var(--ease);
+}
+.foot .fmeta a.flink:hover {
+  color: var(--ivory);
+}
 
 /* ———————————————————————————— TRY-ON MODAL ———————————————————————————— */
 .modal-scrim {
