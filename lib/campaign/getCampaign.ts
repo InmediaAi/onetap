@@ -22,7 +22,10 @@ export interface CampaignTeam {
 export interface CampaignMoment {
   id: string;
   label: string;
+  /** The video/film scene prompt. */
   prompt: string;
+  /** The still prompt (composed onto the try-on image) — used later for image gen. */
+  imagePrompt: string | null;
 }
 export interface CampaignSnapshot {
   id: string;
@@ -76,7 +79,12 @@ export async function getCampaign(id: string): Promise<CampaignSnapshot | null> 
       subtitle: campaign.subtitle ?? null,
       accent: campaign.accent ?? null,
       teams: teamList,
-      moments: (moments ?? []).map((m) => ({ id: m.id, label: m.label, prompt: m.prompt })),
+      moments: (moments ?? []).map((m) => ({
+        id: m.id,
+        label: m.label,
+        prompt: m.prompt,
+        imagePrompt: m.image_prompt ?? null,
+      })),
     };
   } catch {
     return null;

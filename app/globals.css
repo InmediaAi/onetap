@@ -3880,6 +3880,179 @@
   color: var(--noir); text-decoration: underline; text-underline-offset: 2px;
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   ADMIN DASHBOARD THEME — scoped ENTIRELY to .admin-shell (the /admin route).
+   A high-contrast, utilitarian dashboard skin. It deliberately overrides the
+   brand-themed .admin-* classes ONLY inside .admin-shell, so the same classes
+   reused on /profile and /closet (which are NOT wrapped in .admin-shell) keep
+   the luxury theme, and the OneTap product theme is untouched.
+   ════════════════════════════════════════════════════════════════════ */
+.admin-shell {
+  --ad-bg: #eef1f6;
+  --ad-card: #ffffff;
+  --ad-border: #d7dde7;
+  --ad-text: #1f2733;
+  --ad-muted: #5b6675;
+  --ad-accent: #4f46e5;
+  --ad-accent-ink: #ffffff;
+  --ad-accent-soft: #ececfd;
+  --ad-danger: #c0392b;
+  --ad-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+/* paint the whole viewport behind the (centred) main with the dashboard bg */
+.admin-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--ad-bg);
+}
+.admin-shell.admin-wrap {
+  max-width: 1040px;
+  padding: 2.5rem 2rem 5rem;
+  color: var(--ad-text);
+  font-family: var(--ad-sans);
+}
+
+/* headings */
+.admin-shell .eyebrow { color: var(--ad-accent); font-weight: 600; }
+.admin-shell .admin-title {
+  font-family: var(--ad-sans);
+  font-weight: 700;
+  font-size: 1.9rem;
+  letter-spacing: -0.01em;
+  color: var(--ad-text);
+}
+.admin-shell .admin-subtitle {
+  font-family: var(--ad-sans);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--ad-text);
+}
+.admin-shell .admin-head { margin-bottom: 1.5rem; }
+.admin-shell .admin-link { color: var(--ad-accent); }
+.admin-shell .admin-link:hover { color: var(--ad-text); }
+
+/* cards */
+.admin-shell .admin-card {
+  background: var(--ad-card);
+  border: 1px solid var(--ad-border);
+  border-radius: 12px;
+  padding: 1.5rem 1.6rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 6px rgba(16, 24, 40, 0.06);
+}
+
+/* labels + hints */
+.admin-shell .admin-label {
+  color: var(--ad-muted);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.admin-shell .admin-hint { color: var(--ad-muted); }
+.admin-shell .admin-inline-btn { color: var(--ad-accent); }
+
+/* inputs / selects / textareas */
+.admin-shell .admin-input {
+  background: #fff;
+  border: 1px solid var(--ad-border);
+  border-radius: 8px;
+  color: var(--ad-text);
+  font-family: var(--ad-sans);
+}
+.admin-shell .admin-input::placeholder { color: #9aa4b2; }
+.admin-shell .admin-input:focus {
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px var(--ad-accent-soft);
+}
+.admin-shell select.admin-input { cursor: pointer; }
+
+/* primary buttons (admin-btn + the shared btn-line, only inside the shell) */
+.admin-shell .admin-btn,
+.admin-shell .btn-line {
+  background: var(--ad-accent);
+  color: var(--ad-accent-ink);
+  border: 1px solid var(--ad-accent);
+  border-radius: 8px;
+  font-family: var(--ad-sans);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  padding: 0.6rem 1.15rem;
+  transition: filter 0.15s ease, background 0.15s ease;
+}
+.admin-shell .admin-btn:hover,
+.admin-shell .btn-line:hover { filter: brightness(1.08); }
+.admin-shell .admin-btn:disabled { opacity: 0.45; cursor: default; filter: none; }
+
+/* tabs → underlined dashboard tabs */
+.admin-shell .admin-tabs {
+  gap: 4px;
+  border-bottom: 1px solid var(--ad-border);
+  margin-bottom: 1.75rem;
+}
+.admin-shell .admin-tab {
+  background: transparent;
+  border: 0;
+  color: var(--ad-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 10px 16px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+}
+.admin-shell .admin-tab:hover { color: var(--ad-text); }
+.admin-shell .admin-tab.on {
+  background: transparent;
+  color: var(--ad-accent);
+  border-bottom-color: var(--ad-accent);
+}
+
+/* recent / list rows */
+.admin-shell .admin-recent li { border-bottom: 1px solid var(--ad-border); }
+.admin-shell .admin-recent-name { color: var(--ad-muted); }
+.admin-shell .admin-recent-row:hover { background: var(--ad-accent-soft); }
+.admin-shell .admin-recent-row.on {
+  background: var(--ad-accent-soft);
+  box-shadow: inset 3px 0 0 var(--ad-accent);
+}
+
+/* status / error */
+.admin-shell .admin-status {
+  background: var(--ad-accent-soft);
+  border: 1px solid var(--ad-border);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  color: var(--ad-text);
+}
+.admin-shell .admin-err { color: var(--ad-danger); font-weight: 500; }
+
+/* small icon buttons (remove / reorder) */
+.admin-shell .admin-img-rm {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--ad-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ad-muted);
+  cursor: pointer;
+}
+.admin-shell .admin-img-rm:hover:not(:disabled) {
+  color: var(--ad-text);
+  border-color: var(--ad-muted);
+}
+.admin-shell .admin-img-rm:disabled { opacity: 0.35; cursor: default; }
+
+/* wells + misc */
+.admin-shell .admin-preview,
+.admin-shell .admin-preview-empty {
+  background: #fff;
+  border: 1px dashed var(--ad-border);
+  color: var(--ad-muted);
+  border-radius: 8px;
+}
+.admin-shell .pkg-check { color: var(--ad-text); }
+.admin-shell .moment-edit { border-top-color: var(--ad-border); }
+
 /* profile — 4 photos + taste sections */
 .profile-imgs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 1rem; }
 .profile-multi { margin-bottom: 1.1rem; }

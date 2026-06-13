@@ -221,7 +221,7 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <main className="admin-wrap">
+      <main className="admin-wrap admin-shell">
         <p className="eyebrow">OneTap Atelier — Atelier Desk</p>
         <h1 className="admin-title">Admin</h1>
         <form className="admin-card admin-gate" onSubmit={authenticate}>
@@ -241,7 +241,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="admin-wrap">
+    <main className="admin-wrap admin-shell">
       <div className="admin-head">
         <div>
           <p className="eyebrow">OneTap Atelier — Atelier Desk</p>

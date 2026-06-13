@@ -80,12 +80,21 @@ export async function POST(req: Request) {
       case "moment": {
         const label = clean(body.label, 80);
         const prompt = clean(body.prompt, 8000); // scene prompts can be long
+        const imagePrompt = clean(body.imagePrompt, 8000); // optional still prompt
         if (!label || !prompt) {
           return NextResponse.json({ error: "label and prompt are required" }, { status: 400 });
         }
+        // Append to the end of the order so new moments don't collide at 0.
+        const { data: last } = await db
+          .from("campaign_moments")
+          .select("sort_order")
+          .eq("campaign_id", CAMPAIGN)
+          .order("sort_order", { ascending: false })
+          .limit(1);
+        const sort_order = (last?.[0]?.sort_order ?? -1) + 1;
         const { error } = await db
           .from("campaign_moments")
-          .insert({ campaign_id: CAMPAIGN, label, prompt });
+          .insert({ campaign_id: CAMPAIGN, label, prompt, image_prompt: imagePrompt || null, sort_order });
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
         break;
       }
@@ -93,15 +102,34 @@ export async function POST(req: Request) {
         const id = clean(body.id, 80);
         const label = clean(body.label, 80);
         const prompt = clean(body.prompt, 8000);
+        const imagePrompt = clean(body.imagePrompt, 8000); // optional
         if (!id || !label || !prompt) {
           return NextResponse.json({ error: "id, label and prompt are required" }, { status: 400 });
         }
         const { error } = await db
           .from("campaign_moments")
-          .update({ label, prompt })
+          .update({ label, prompt, image_prompt: imagePrompt || null })
           .eq("id", id)
           .eq("campaign_id", CAMPAIGN);
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        break;
+      }
+      case "reorderMoments": {
+        // body.ids = moment ids in the desired order → sort_order = index.
+        const ids = Array.isArray(body.ids)
+          ? (body.ids as unknown[]).map((x) => clean(x, 80)).filter(Boolean)
+          : [];
+        if (!ids.length) {
+          return NextResponse.json({ error: "ids are required" }, { status: 400 });
+        }
+        for (let i = 0; i < ids.length; i++) {
+          const { error } = await db
+            .from("campaign_moments")
+            .update({ sort_order: i })
+            .eq("id", ids[i])
+            .eq("campaign_id", CAMPAIGN);
+          if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        }
         break;
       }
       case "removeMoment": {

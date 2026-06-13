@@ -22,7 +22,8 @@
       "WebFetch(domain:tryonlabs.github.io)",
       "Bash(sed -n '60,90p' components/CreatorBuilder.tsx)",
       "Bash(sed -n '30,55p' components/Studio360.tsx)",
-      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(awk '/create table if not exists campaign_moments/,/\\\\\\);/' lib/supabase/schema.sql)"
     ]
   }
 }

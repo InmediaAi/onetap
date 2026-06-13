@@ -645,10 +645,12 @@ end; $$;
 -- a paid plan reuses the same row (webhook upsert on user_id).
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Allow 'free' as a plan value.
+-- Allow 'free' as a plan value (and the campaign 'fan' tier, so re-running this
+-- cumulative script on a DB that already has 'fan' rows doesn't fail here before
+-- the canonical constraint below). Kept in sync with the final constraint.
 alter table subscriptions drop constraint if exists subscriptions_plan_check;
 alter table subscriptions
-  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro'));
+  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'fan'));
 
 -- Seed a free subscription on signup (profile + free sub). Lifetime: end = NULL.
 create or replace function handle_new_user()
@@ -718,6 +720,10 @@ create table if not exists campaign_moments (
   prompt      text not null,
   sort_order  integer not null default 0
 );
+-- Each moment carries TWO prompts: `prompt` (the video/film scene, required) and
+-- `image_prompt` (the still composed onto the try-on image — used later for
+-- image generation). image_prompt is optional/nullable.
+alter table campaign_moments add column if not exists image_prompt text;
 
 -- Public read for the landing; service-role writes only (admin).
 alter table campaigns        enable row level security;

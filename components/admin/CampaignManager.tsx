@@ -13,7 +13,7 @@ const KITS = ["Home", "Home (Authentic)", "Away", "Away (Authentic)"];
 
 interface Team { id: string; country: string; accent: string | null; flag: string | null }
 interface Jersey { id: string; country: string; kit: string; product_id: string | null }
-interface Moment { id: string; label: string; prompt: string }
+interface Moment { id: string; label: string; prompt: string; image_prompt: string | null; sort_order: number }
 interface JerseyProduct { id: string; brand: string; name: string; image_url: string }
 
 export default function CampaignManager({ password }: { password: string }) {
@@ -27,6 +27,7 @@ export default function CampaignManager({ password }: { password: string }) {
   const [draft, setDraft] = useState<Record<string, { kit: string; productId: string }>>({});
   const [newLabel, setNewLabel] = useState("");
   const [newPrompt, setNewPrompt] = useState("");
+  const [newImagePrompt, setNewImagePrompt] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -158,16 +159,29 @@ export default function CampaignManager({ password }: { password: string }) {
       <section className="admin-card">
         <h2 className="admin-subtitle">Moments</h2>
         <p className="admin-hint">
-          The scene prompt sent to the video model — write it as a full, detailed
-          description. Edit any time to improve results.
+          Each moment has two prompts — the <strong>video</strong> scene (sent to the
+          film model) and the <strong>image</strong> prompt (used to compose the still
+          onto the try-on). Use ↑/↓ to set the order shown on{" "}
+          <a className="admin-inline-btn" href="/fifa" target="_blank" rel="noreferrer">/fifa</a>.
         </p>
 
-        {moments.map((m) => (
+        {moments.map((m, i) => (
           <MomentEditor
             key={m.id}
             moment={m}
             busy={busy}
-            onSave={(label, prompt) => post({ action: "updateMoment", id: m.id, label, prompt })}
+            canUp={i > 0}
+            canDown={i < moments.length - 1}
+            onMove={(dir) => {
+              const next = [...moments];
+              const j = dir === "up" ? i - 1 : i + 1;
+              if (j < 0 || j >= next.length) return;
+              [next[i], next[j]] = [next[j], next[i]];
+              post({ action: "reorderMoments", ids: next.map((x) => x.id) });
+            }}
+            onSave={(label, prompt, imagePrompt) =>
+              post({ action: "updateMoment", id: m.id, label, prompt, imagePrompt })
+            }
             onRemove={() => post({ action: "removeMoment", id: m.id })}
           />
         ))}
@@ -183,17 +197,25 @@ export default function CampaignManager({ password }: { password: string }) {
           <textarea
             className="admin-input admin-textarea"
             rows={4}
-            placeholder="Full scene prompt — describe the shot, motion, stadium, lighting, mood…"
+            placeholder="Video scene prompt — describe the shot, motion, stadium, lighting, mood…"
             value={newPrompt}
             onChange={(e) => setNewPrompt(e.target.value)}
+          />
+          <textarea
+            className="admin-input admin-textarea"
+            rows={4}
+            placeholder="Image prompt (optional) — how to compose the still onto the try-on…"
+            value={newImagePrompt}
+            onChange={(e) => setNewImagePrompt(e.target.value)}
           />
           <button
             className="btn-line admin-btn"
             disabled={busy || !newLabel.trim() || !newPrompt.trim()}
             onClick={async () => {
-              await post({ action: "moment", label: newLabel, prompt: newPrompt });
+              await post({ action: "moment", label: newLabel, prompt: newPrompt, imagePrompt: newImagePrompt });
               setNewLabel("");
               setNewPrompt("");
+              setNewImagePrompt("");
             }}
           >
             Add moment
@@ -206,46 +228,71 @@ export default function CampaignManager({ password }: { password: string }) {
   );
 }
 
-/** Inline editor for one moment — editable label + full scene prompt. */
+/** Inline editor for one moment — editable label + video prompt + image prompt,
+    plus reorder (↑/↓) controls. */
 function MomentEditor({
   moment,
   busy,
+  canUp,
+  canDown,
+  onMove,
   onSave,
   onRemove,
 }: {
   moment: Moment;
   busy: boolean;
-  onSave: (label: string, prompt: string) => void;
+  canUp: boolean;
+  canDown: boolean;
+  onMove: (dir: "up" | "down") => void;
+  onSave: (label: string, prompt: string, imagePrompt: string) => void;
   onRemove: () => void;
 }) {
   const [label, setLabel] = useState(moment.label);
   const [prompt, setPrompt] = useState(moment.prompt);
+  const [imagePrompt, setImagePrompt] = useState(moment.image_prompt ?? "");
   // Keep in sync if the parent reloads after a save.
   useEffect(() => {
     setLabel(moment.label);
     setPrompt(moment.prompt);
-  }, [moment.label, moment.prompt]);
+    setImagePrompt(moment.image_prompt ?? "");
+  }, [moment.label, moment.prompt, moment.image_prompt]);
 
-  const dirty = label !== moment.label || prompt !== moment.prompt;
+  const dirty =
+    label !== moment.label || prompt !== moment.prompt || imagePrompt !== (moment.image_prompt ?? "");
 
   return (
     <div className="moment-edit">
       <div className="moment-edit-head">
         <input className="admin-input" value={label} onChange={(e) => setLabel(e.target.value)} />
+        <button className="admin-img-rm" onClick={() => onMove("up")} disabled={busy || !canUp} aria-label="Move up">
+          ↑
+        </button>
+        <button className="admin-img-rm" onClick={() => onMove("down")} disabled={busy || !canDown} aria-label="Move down">
+          ↓
+        </button>
         <button className="admin-img-rm" onClick={onRemove} disabled={busy} aria-label="Remove moment">
           ✕
         </button>
       </div>
+      <span className="admin-label">Video prompt</span>
       <textarea
         className="admin-input admin-textarea"
         rows={5}
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
       />
+      <span className="admin-label">Image prompt</span>
+      <textarea
+        className="admin-input admin-textarea"
+        rows={5}
+        placeholder="How to compose the still onto the try-on image (used later for image gen)…"
+        value={imagePrompt}
+        onChange={(e) => setImagePrompt(e.target.value)}
+      />
       <button
         className="btn-line admin-btn"
         disabled={busy || !dirty || !label.trim() || !prompt.trim()}
-        onClick={() => onSave(label, prompt)}
+        onClick={() => onSave(label, prompt, imagePrompt)}
       >
         {dirty ? "Save changes" : "Saved"}
       </button>
