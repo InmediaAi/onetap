@@ -11,6 +11,7 @@ import {
 } from "@/lib/ai/providers/grok";
 import { KlingProvider, KlingTryOnProvider } from "@/lib/ai/providers/kling";
 import { OpenAIImageProvider } from "@/lib/ai/providers/openai";
+import { GeminiImageProvider } from "@/lib/ai/providers/gemini";
 
 /**
  * Provider registry — plug-and-play, env-driven.
@@ -62,6 +63,16 @@ const TRYON_REGISTRY: Record<string, ProviderDescriptor<TryOnProvider>> = {
       new OpenAIImageProvider(
         process.env.OPENAI_API_KEY!,
         process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-2",
+      ),
+  },
+  // Gemini ("Nano Banana") image editing: person + garment + prompt → scene image.
+  // Lower latency than GPT-Image; switch models via GEMINI_IMAGE_MODEL.
+  gemini: {
+    requiredEnv: ["GEMINI_API_KEY"],
+    create: () =>
+      new GeminiImageProvider(
+        process.env.GEMINI_API_KEY!,
+        process.env.GEMINI_IMAGE_MODEL ?? "gemini-3.1-flash-image",
       ),
   },
 };
