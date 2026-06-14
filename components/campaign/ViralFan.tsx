@@ -72,31 +72,27 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
   /* ---- persist the uploaded photos to the user's Supabase profile ----
      Runs once the user is authenticated. Best-effort: a storage failure must
      not block the (already cost-incurring) preview generation. */
-  const persisted = useRef(false);
-  const persistUploads = useCallback(
-    async (body: string | null, face: string | null) => {
-      if (persisted.current) return;
-      persisted.current = true;
+  // Persist one uploaded photo to the user's profile (full-length → body,
+  // face → selfie). Idempotent per kind: skips if the same image was already
+  // saved, but re-saves when the photo CHANGES. No-op until signed in.
+  const lastPersisted = useRef<{ body: string | null; face: string | null }>({ body: null, face: null });
+  const persistImage = useCallback(
+    async (kind: "body" | "face", dataUrl: string | null) => {
+      if (!dataUrl) return;
+      if (!useAtelier.getState().email) return; // needs an authed user (RLS)
+      if (lastPersisted.current[kind] === dataUrl) return; // already saved this exact image
+      lastPersisted.current[kind] = dataUrl;
       try {
-        const patch: Record<string, string> = {};
-        if (body) {
-          const p = await uploadIdentity("body", body);
-          if (p) patch.bodyPath = p;
-        }
-        if (face) {
-          const p = await uploadIdentity("selfie", face);
-          if (p) patch.selfiePath = p;
-        }
-        if (Object.keys(patch).length) {
-          await fetch("/api/profile", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(patch),
-          });
-          await refreshProfile();
-        }
+        const path = await uploadIdentity(kind === "face" ? "selfie" : "body", dataUrl);
+        if (!path) return;
+        await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(kind === "face" ? { selfiePath: path } : { bodyPath: path }),
+        });
+        await refreshProfile();
       } catch (e) {
-        persisted.current = false; // allow a retry on the next generate
+        lastPersisted.current[kind] = null; // allow a retry
         track(EVENTS.GENERATION_FAILED, { stage: "persist", message: e instanceof Error ? e.message : "persist failed" });
       }
     },
@@ -167,7 +163,8 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     // Out of credits → ask to subscribe FIRST; never start generation.
     if (!(await ensureQuotaOrSubscribe())) return;
     track(EVENTS.GENERATION_STARTED, { kind: "video", productId: jersey.product.id, campaign: campaign?.id });
-    void persistUploads(bodyImg, faceImg); // save photos to the profile (non-blocking)
+    void persistImage("body", bodyImg); // save photos to the profile (non-blocking)
+    void persistImage("face", faceImg);
     void run({
       jerseyImage: jersey.product.imageUrl,
       jerseyId: jersey.product.id,
@@ -214,7 +211,8 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     if (!j || !m) return;
     resumeFired.current = true;
     void clearStash();
-    void persistUploads(resume.bodyImg, resume.faceImg);
+    void persistImage("body", resume.bodyImg);
+    void persistImage("face", resume.faceImg);
     // Same pre-flight as a manual tap: if they're out of credits, ask to
     // subscribe instead of silently starting (and 402-ing) a generation.
     void (async () => {
@@ -222,7 +220,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
       void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, imagePrompt: m.imagePrompt ?? undefined, likeness });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resume, email, teams, moments, run, persistUploads]);
+  }, [resume, email, teams, moments, run, persistImage]);
 
   async function pick(kind: "body" | "face", file?: File) {
     if (!file) return;
@@ -235,6 +233,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     const url = await readAsDataURL(file);
     if (kind === "body") setBodyImg(url);
     else setFaceImg(url);
+    void persistImage(kind, url); // save/update on the profile right away (if signed in)
   }
 
   async function beginMembership() {
