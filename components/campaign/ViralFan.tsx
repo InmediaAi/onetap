@@ -29,8 +29,10 @@ function readAsDataURL(file: File): Promise<string> {
   });
 }
 
-type Stage = "form" | "signin" | "gen" | "result";
+type Stage = "form" | "gen" | "result";
 interface Result { videoUrl: string; posterUrl?: string; lookId: string }
+
+const WELCOME_FLAG = "vf_welcome"; // sessionStorage: set on OAuth start, read on return
 
 export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | null }) {
   const hydrated = useHydrated();
@@ -57,6 +59,8 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
   const [sheet, setSheet] = useState(false);
   const [busy, setBusy] = useState(false);
   const [resume, setResume] = useState<CampaignStash | null>(null);
+  const [authOpen, setAuthOpen] = useState(false); // sign-up/sign-in popup
+  const [welcome, setWelcome] = useState(false); // post-sign-in success popup
 
   const team: CampaignTeam | undefined = teams.find((t) => t.country === country);
   const jerseys = team?.jerseys ?? [];
@@ -117,7 +121,8 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
         setStage("result");
       } catch (e) {
         if (e instanceof SignInRequiredError) {
-          setStage("signin"); // shouldn't usually hit — we gate before run
+          setStage("form");
+          setAuthOpen(true); // shouldn't usually hit — we gate before run
         } else if (e instanceof VideoLimitError) {
           // Out of free previews → offer membership (the other place the sheet
           // opens is a non-member tapping Download/Share).
@@ -152,12 +157,23 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     return true;
   }
 
+  /** Begin OAuth from the FIFA popup; flag so we celebrate on return. */
+  function startAuth(provider: "google" | "apple") {
+    try {
+      sessionStorage.setItem(WELCOME_FLAG, "1");
+    } catch {
+      /* ignore */
+    }
+    void signInWithProvider(provider, "/fifa");
+  }
+
   async function generate() {
     if (!ready || !jersey || !photo || !moment) return;
     if (!email) {
-      // stash selections + photos in IndexedDB to survive the OAuth redirect
+      // stash selections + photos in IndexedDB to survive the OAuth redirect,
+      // then urge sign-up via the popup.
       await putStash({ country, kitIdx, momentId, bodyImg, faceImg });
-      setStage("signin");
+      setAuthOpen(true);
       return;
     }
     // Out of credits → ask to subscribe FIRST; never start generation.
@@ -181,27 +197,52 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     }
   }, []);
 
-  /* ---- resume after OAuth — load the IndexedDB stash once, restore selections ---- */
+  /* ---- resume after OAuth — load the IndexedDB stash once, restore selections.
+     `resumeChecked` flips once we know the resume state (with or without a stash),
+     so the welcome popup can decide whether a generation is pending. ---- */
   const resumeLoaded = useRef(false);
+  const [resumeChecked, setResumeChecked] = useState(false);
   useEffect(() => {
     if (resumeLoaded.current) return;
     resumeLoaded.current = true;
     void (async () => {
       const saved = await getStash();
-      if (!saved) return;
-      setResume(saved);
-      if (saved.country) setCountry(saved.country);
-      setKitIdx(saved.kitIdx ?? 0);
-      setMomentId(saved.momentId ?? null);
-      if (saved.bodyImg) setBodyImg(saved.bodyImg);
-      if (saved.faceImg) setFaceImg(saved.faceImg);
+      if (saved) {
+        setResume(saved);
+        if (saved.country) setCountry(saved.country);
+        setKitIdx(saved.kitIdx ?? 0);
+        setMomentId(saved.momentId ?? null);
+        if (saved.bodyImg) setBodyImg(saved.bodyImg);
+        if (saved.faceImg) setFaceImg(saved.faceImg);
+      }
+      setResumeChecked(true);
     })();
   }, []);
 
-  /* ---- once signed in AND the stash is restored, persist + auto-generate.
-     Split from the load above because `email` lands a beat later (after /api/me). */
-  const resumeFired = useRef(false);
+  /* ---- "registration successful" delight: show once after a sign-in WE started
+     (the vf_welcome flag), as soon as the session + resume state are known. ---- */
+  const cameFromAuth = useRef(false);
+  const welcomed = useRef(false);
   useEffect(() => {
+    try {
+      if (sessionStorage.getItem(WELCOME_FLAG)) {
+        cameFromAuth.current = true;
+        sessionStorage.removeItem(WELCOME_FLAG);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  useEffect(() => {
+    if (welcomed.current || !email || !cameFromAuth.current || !resumeChecked) return;
+    welcomed.current = true;
+    setAuthOpen(false);
+    setWelcome(true);
+  }, [email, resumeChecked]);
+
+  /* ---- the deferred generation kickoff, owned by the welcome popup ---- */
+  const resumeFired = useRef(false);
+  const runResume = useCallback(async () => {
     if (resumeFired.current || !resume || !email) return;
     const likeness = resume.bodyImg || resume.faceImg;
     if (!likeness || !resume.momentId) return;
@@ -213,14 +254,35 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     void clearStash();
     void persistImage("body", resume.bodyImg);
     void persistImage("face", resume.faceImg);
-    // Same pre-flight as a manual tap: if they're out of credits, ask to
-    // subscribe instead of silently starting (and 402-ing) a generation.
-    void (async () => {
-      if (!(await ensureQuotaOrSubscribe())) return;
-      void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, imagePrompt: m.imagePrompt ?? undefined, likeness });
-    })();
+    if (!(await ensureQuotaOrSubscribe())) return;
+    void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, imagePrompt: m.imagePrompt ?? undefined, likeness });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resume, email, teams, moments, run, persistImage]);
+
+  /** Whether the welcome popup has a generation to auto-continue into. */
+  const pendingGen = Boolean(
+    resume &&
+      (resume.bodyImg || resume.faceImg) &&
+      resume.momentId &&
+      teams.find((x) => x.country === resume.country)?.jerseys[resume.kitIdx ?? 0] &&
+      moments.find((x) => x.id === resume.momentId),
+  );
+
+  function proceedWelcome() {
+    setWelcome(false);
+    if (pendingGen) void runResume();
+    else document.getElementById("creator")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // Auto-continue to generation a beat after the delight shows.
+  useEffect(() => {
+    if (!welcome || !pendingGen) return;
+    const t = setTimeout(() => {
+      setWelcome(false);
+      void runResume();
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [welcome, pendingGen, runResume]);
 
   async function pick(kind: "body" | "face", file?: File) {
     if (!file) return;
@@ -265,13 +327,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
             <a className="link" href="#how">How it works</a>
             <a className="link" href="#faq">Good to know</a>
             {hydrated && !email && (
-              <button
-                className="vf-signin"
-                onClick={() => {
-                  setStage("signin");
-                  document.getElementById("creator")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
+              <button className="vf-signin" onClick={() => setAuthOpen(true)}>
                 Sign in
               </button>
             )}
@@ -345,8 +401,8 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
           </div>
 
           <div className="creator" id="creator">
-            {/* STAGE: form (also the backdrop while the modal generates/shows result) */}
-            {stage !== "signin" && (
+            {/* The funnel form — also the backdrop while the modal generates/shows result. */}
+            {(
               <>
                 <div className="c-head">
                   <span className="t serif">Make yours</span>
@@ -484,29 +540,6 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
               </>
             )}
 
-            {/* STAGE: sign-in */}
-            {stage === "signin" && (
-              <>
-                <div className="c-head"><span className="t serif">One quick step</span></div>
-                <div className="c-body">
-                  <div className="signin">
-                    <p className="lede" style={{ margin: 0, fontSize: 15 }}>
-                      Sign in to make your free fan video. No credit card.
-                    </p>
-                    <button className="oauth" onClick={() => signInWithProvider("google", "/fifa")}>
-                      Continue with Google
-                    </button>
-                    <button className="oauth" onClick={() => signInWithProvider("apple", "/fifa")}>
-                      Continue with Apple
-                    </button>
-                    <button className="link" style={{ background: "none", border: 0, cursor: "pointer", color: "var(--slate)" }} onClick={() => setStage("form")}>
-                      ← Back
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-
           </div>
         </div>
       </section>
@@ -557,6 +590,45 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
               {busy ? "Opening…" : "Begin membership"}
             </button>
             <p className="s-note">Everything you keep remains yours, always.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Sign-up / sign-in popup — shown whenever auth is required on /fifa. */}
+      {authOpen && (
+        <div className="viralfan-veil" onMouseDown={(e) => { if (e.target === e.currentTarget) setAuthOpen(false); }}>
+          <div className="sheet vf-auth">
+            <button className="s-close" onClick={() => setAuthOpen(false)} aria-label="Close">×</button>
+            <span className="label">Free · No credit card</span>
+            <h3 className="serif">Claim your stadium moment</h3>
+            <p className="s-body">
+              Create your account to make your free Viral Fan video — your jersey, your face,
+              on the stadium big screen, in under a minute.
+            </p>
+            <div className="vf-oauth">
+              <button className="oauth" onClick={() => startAuth("google")}>Continue with Google</button>
+              <button className="oauth" onClick={() => startAuth("apple")}>Continue with Apple</button>
+            </div>
+            <p className="s-note">Preview free. Keep it with membership.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Post-sign-in delight → auto-continues to the generation. */}
+      {welcome && (
+        <div className="viralfan-veil">
+          <div className="sheet vf-welcome">
+            <div className="vf-check" aria-hidden="true">✓</div>
+            <span className="label">Registration successful</span>
+            <h3 className="serif">You’re in! 🎉</h3>
+            <p className="s-body">
+              {pendingGen
+                ? "Putting you on the stadium big screen — your fan video is starting…"
+                : "You’re all set. Pick your jersey and make your Viral Fan video."}
+            </p>
+            <button className="s-btn" onClick={proceedWelcome}>
+              {pendingGen ? "Make my fan video →" : "Start creating →"}
+            </button>
           </div>
         </div>
       )}

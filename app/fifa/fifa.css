@@ -335,6 +335,31 @@
 }
 .viralfan-veil .s-note { font-size: 12px; color: #6b6b6b; text-align: center; margin-top: 12px; }
 
+/* sign-up / sign-in popup — OAuth buttons inside the sheet */
+.viralfan-veil .vf-oauth { display: grid; gap: 10px; margin: 20px 0 6px; }
+.viralfan-veil .oauth {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  padding: 14px; border: 1px solid var(--ink); background: var(--paper);
+  color: var(--ink); cursor: pointer; font-family: var(--vf-sans); font-weight: 500; font-size: 15px;
+  transition: background .15s;
+}
+.viralfan-veil .oauth:hover { background: var(--soft); }
+
+/* post-sign-in success / welcome popup */
+.viralfan-veil .vf-welcome { text-align: center; }
+.viralfan-veil .vf-welcome .s-body { margin-left: auto; margin-right: auto; }
+.viralfan-veil .vf-welcome .s-btn { margin-top: 22px; }
+.viralfan-veil .vf-check {
+  width: 58px; height: 58px; border-radius: 50%;
+  background: var(--orange); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; margin: 6px auto 16px;
+  box-shadow: 0 8px 22px rgba(243, 112, 33, 0.4);
+  animation: vfPop 0.42s cubic-bezier(0.18, 1.4, 0.4, 1) both;
+}
+@keyframes vfPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .viralfan-veil .vf-check { animation: none; } }
+
 .viralfan section { padding: 72px 0; }
 .viralfan .rule { border: 0; border-top: 1px solid var(--hairline); }
 .viralfan .sec-head { max-width: 640px; margin-bottom: 40px; }
