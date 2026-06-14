@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/components/admin/Toast";
 
 /**
  * Admin manager for the FIFA "Viral Fan" campaign: attach jersey products
@@ -17,6 +18,7 @@ interface Moment { id: string; label: string; prompt: string; image_prompt: stri
 interface JerseyProduct { id: string; brand: string; name: string; image_url: string }
 
 export default function CampaignManager({ password }: { password: string }) {
+  const toast = useToast();
   const [teams, setTeams] = useState<Team[]>([]);
   const [jerseys, setJerseys] = useState<Jersey[]>([]);
   const [moments, setMoments] = useState<Moment[]>([]);
@@ -57,8 +59,15 @@ export default function CampaignManager({ password }: { password: string }) {
         body: JSON.stringify({ password, ...payload }),
       });
       const d = await res.json().catch(() => ({}));
-      setStatus(res.ok ? "Saved." : d?.error || "Save failed.");
-      if (res.ok) load();
+      if (res.ok) {
+        setStatus("Saved.");
+        toast.success("Saved.");
+        load();
+      } else {
+        const msg = d?.error || "Save failed.";
+        setStatus(msg);
+        toast.error(msg);
+      }
     } finally {
       setBusy(false);
     }

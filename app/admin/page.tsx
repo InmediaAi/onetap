@@ -5,6 +5,7 @@ import Link from "next/link";
 import PackagesAdmin from "@/components/admin/PackagesAdmin";
 import CampaignLinks from "@/components/admin/CampaignLinks";
 import CampaignManager from "@/components/admin/CampaignManager";
+import { useToast } from "@/components/admin/Toast";
 import { formatPrice, type Product } from "@/lib/data/products";
 import {
   CURRENCIES,
@@ -57,6 +58,7 @@ const EMPTY: Draft = {
 };
 
 export default function AdminPage() {
+  const toast = useToast();
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
@@ -91,8 +93,14 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
-    if (res.ok) setAuthed(true);
-    else setAuthErr((await res.json().catch(() => ({})))?.error || "Incorrect password");
+    if (res.ok) {
+      setAuthed(true);
+      toast.success("Signed in.");
+    } else {
+      const msg = (await res.json().catch(() => ({})))?.error || "Incorrect password";
+      setAuthErr(msg);
+      toast.error(msg);
+    }
   }
 
   function startBlank() {
@@ -142,7 +150,9 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setStatus(data?.error || "Could not read that URL.");
+        const msg = data?.error || "Could not read that URL.";
+        setStatus(msg);
+        toast.error(msg);
         return;
       }
       const p = data.product ?? {};
@@ -161,11 +171,19 @@ export default function AdminPage() {
       });
       setHasDraft(true);
       setEditingId(null);
-      if (data.blocked) setStatus("That site blocked automated reading — fill the fields in manually.");
-      else if (data.partial) setStatus("Some fields couldn’t be detected — review and complete them.");
-      else setStatus("Details extracted — review, then save.");
+      if (data.blocked) {
+        setStatus("That site blocked automated reading — fill the fields in manually.");
+        toast.error("That site blocked automated reading — fill the fields in manually.");
+      } else if (data.partial) {
+        setStatus("Some fields couldn’t be detected — review and complete them.");
+        toast.success("Some fields couldn’t be detected — review and complete them.");
+      } else {
+        setStatus("Details extracted — review, then save.");
+        toast.success("Details extracted — review, then save.");
+      }
     } catch {
       setStatus("Something went wrong reading that URL.");
+      toast.error("Something went wrong reading that URL.");
     } finally {
       setBusy(false);
     }
@@ -183,12 +201,14 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setStatus(data?.error || "Save failed.");
+        const msg = data?.error || "Save failed.";
+        setStatus(msg);
+        toast.error(msg);
         return;
       }
-      setStatus(
-        `${editingId ? "Updated" : "Added"} “${data.product.brand} — ${data.product.name}”.`,
-      );
+      const msg = `${editingId ? "Updated" : "Added"} “${data.product.brand} — ${data.product.name}”.`;
+      setStatus(msg);
+      toast.success(msg);
       setDraft({ ...EMPTY, dropDate: today() });
       setHasDraft(false);
       setEditingId(null);
@@ -196,6 +216,7 @@ export default function AdminPage() {
       loadRecent(password);
     } catch {
       setStatus("Save failed.");
+      toast.error("Save failed.");
     } finally {
       setBusy(false);
     }

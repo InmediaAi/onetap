@@ -17,6 +17,7 @@ import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 import { getAttribution, setFirstTouch } from "@/lib/analytics/utm";
 import { putStash, getStash, clearStash, type CampaignStash } from "@/lib/campaign/stash";
+import { FIFA_SHOWCASE } from "@/lib/campaign/showcase";
 import type { CampaignSnapshot, CampaignTeam } from "@/lib/campaign/getCampaign";
 
 function readAsDataURL(file: File): Promise<string> {
@@ -40,6 +41,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
 
   const teams = campaign?.teams ?? [];
   const moments = campaign?.moments ?? [];
+  const showcase = FIFA_SHOWCASE;
 
   const [country, setCountry] = useState(teams[0]?.country ?? "");
   const [kitIdx, setKitIdx] = useState(0);
@@ -307,6 +309,40 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
               <span><b />Ready in under a minute</span>
               <span><b />Vertical, feed-ready</span>
             </div>
+
+            {showcase.length > 0 && (
+              <div className="tia">
+                <span className="tia-eyebrow serif">Try-on in Action</span>
+                <div className="tia-rail" aria-label="Viral fan videos made on OneTap">
+                  {/* duplicated track for a seamless slow auto-scroll */}
+                  <div className="tia-track">
+                    {[...showcase, ...showcase].map((s, i) => {
+                      const dup = i >= showcase.length;
+                      const card = (
+                        <span className="tia-poster">
+                          <video src={s.videoUrl} poster={s.poster} autoPlay loop muted playsInline preload="metadata" />
+                          {(s.caption || s.views) && (
+                            <span className="tia-meta">
+                              {s.caption && <span className="tia-caption">{s.caption}</span>}
+                              {s.views && <span className="tia-views">{s.views}</span>}
+                            </span>
+                          )}
+                        </span>
+                      );
+                      return s.href ? (
+                        <a key={i} className="tia-card" href={s.href} aria-hidden={dup} tabIndex={dup ? -1 : 0}>
+                          {card}
+                        </a>
+                      ) : (
+                        <span key={i} className="tia-card" aria-hidden={dup}>
+                          {card}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="creator" id="creator">

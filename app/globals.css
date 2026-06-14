@@ -4060,6 +4060,64 @@
 .admin-shell .pkg-check { color: var(--ad-text); }
 .admin-shell .moment-edit { border-top-color: var(--ad-border); }
 
+/* Admin toasts — top-right, green (success) / red (error). These class names
+   are used ONLY by the admin Toast component, so they never touch the product
+   theme. (Rendered at the route-layout level, outside .admin-shell, so they are
+   intentionally not scoped under it.) */
+.admin-toast-wrap {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.admin-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 10px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.22);
+  animation: adToastIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.admin-toast.success { background: #16a34a; }
+.admin-toast.error { background: #dc2626; }
+.admin-toast .at-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-toast .at-msg { flex: 1 1 auto; }
+@keyframes adToastIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 640px) {
+  .admin-toast-wrap { top: 12px; left: 16px; right: 16px; max-width: none; }
+}
+
 /* profile — 4 photos + taste sections */
 .profile-imgs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 1rem; }
 .profile-multi { margin-bottom: 1.1rem; }

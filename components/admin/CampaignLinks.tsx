@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useToast } from "@/components/admin/Toast";
 
 interface Item {
   id: string;
@@ -22,6 +23,7 @@ function slug(s: string): string {
  * ready-to-paste /try/<id>?utm_* URLs (one per product). Pure client; no DB.
  */
 export default function CampaignLinks({ password }: { password: string }) {
+  const toast = useToast();
   const [items, setItems] = useState<Item[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [campaign, setCampaign] = useState("");
@@ -74,8 +76,9 @@ export default function CampaignLinks({ password }: { password: string }) {
       await navigator.clipboard.writeText(text);
       setCopied(text);
       setTimeout(() => setCopied(null), 1400);
+      toast.success("Link copied to clipboard.");
     } catch {
-      /* clipboard unavailable */
+      toast.error("Couldn’t copy — copy it manually.");
     }
   }
 

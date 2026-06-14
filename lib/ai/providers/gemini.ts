@@ -1,4 +1,4 @@
-import { logApiRequest, logApiResponse, summarizeImage } from "@/lib/ai/debug";
+import { logApiRequest, logApiResponse, logApiNote, summarizeImage } from "@/lib/ai/debug";
 import type { TryOnProvider, TryOnInput, TryOnResult } from "@/lib/ai/types";
 
 /**
@@ -75,56 +75,66 @@ export class GeminiImageProvider implements TryOnProvider {
       toInlineImage(input.productImage, "garment image"),
     ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const generationConfig: Record<string, any> = { responseModalities: ["TEXT", "IMAGE"] };
-    // Optional aspect/size control — only sent when explicitly configured, so
-    // the default call stays robust against API field-name changes.
+    // Optional aspect/size control. The docs show string values, but some
+    // v1beta deployments reject them (enum mismatch) — so if the API 400s on
+    // these fields we transparently retry WITHOUT them rather than fail.
     const aspect = process.env.GEMINI_IMAGE_ASPECT;
     const size = process.env.GEMINI_IMAGE_SIZE;
-    if (aspect || size) {
-      generationConfig.responseFormat = {
-        image: { ...(aspect ? { aspectRatio: aspect } : {}), ...(size ? { imageSize: size } : {}) },
-      };
-    }
-
-    const body = {
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: person.mime, data: person.data } },
-            { inline_data: { mime_type: garment.mime, data: garment.data } },
-          ],
-        },
-      ],
-      generationConfig,
-    };
+    const responseFormat =
+      aspect || size
+        ? { image: { ...(aspect ? { aspectRatio: aspect } : {}), ...(size ? { imageSize: size } : {}) } }
+        : null;
 
     const baseUrl = process.env.GEMINI_BASE_URL || DEFAULT_BASE;
     const url = `${baseUrl}/models/${this.model}:generateContent`;
-    logApiRequest("gemini:image", "POST", url, {
-      model: this.model,
-      prompt,
-      generationConfig,
-      person: summarizeImage(input.userImage),
-      garment: summarizeImage(input.productImage),
-    });
+    const parts = [
+      { text: prompt },
+      { inline_data: { mime_type: person.mime, data: person.data } },
+      { inline_data: { mime_type: garment.mime, data: garment.data } },
+    ];
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": this.apiKey },
-      body: JSON.stringify(body),
-    });
+    const attempt = async (withFormat: boolean) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const generationConfig: Record<string, any> = { responseModalities: ["TEXT", "IMAGE"] };
+      if (withFormat && responseFormat) generationConfig.responseFormat = responseFormat;
+      logApiRequest("gemini:image", "POST", url, {
+        model: this.model,
+        prompt,
+        generationConfig,
+        person: summarizeImage(input.userImage),
+        garment: summarizeImage(input.productImage),
+      });
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": this.apiKey },
+        body: JSON.stringify({ contents: [{ parts }], generationConfig }),
+      });
+      return { ok: res.ok, status: res.status, text: await res.text() };
+    };
 
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      logApiResponse("gemini:image", `edit ${res.status}`, detail);
-      throw new Error(`Gemini image failed (${res.status}): ${detail.slice(0, 300)}`);
+    let r = await attempt(Boolean(responseFormat));
+    if (
+      !r.ok &&
+      responseFormat &&
+      r.status === 400 &&
+      /response_format|aspect_ratio|image_size/i.test(r.text)
+    ) {
+      logApiNote("gemini:image", "aspect/size rejected by API — retrying without responseFormat");
+      r = await attempt(false);
+    }
+    if (!r.ok) {
+      logApiResponse("gemini:image", `edit ${r.status}`, r.text);
+      throw new Error(`Gemini image failed (${r.status}): ${r.text.slice(0, 300)}`);
     }
 
-    const data = (await res.json()) as unknown;
+    let data: unknown;
+    try {
+      data = JSON.parse(r.text);
+    } catch {
+      throw new Error("Gemini returned a non-JSON response.");
+    }
     const img = firstImagePart(data);
-    logApiResponse("gemini:image", `edit ${res.status}`, { gotImage: Boolean(img) });
+    logApiResponse("gemini:image", `edit ${r.status}`, { gotImage: Boolean(img) });
     if (!img) {
       // No image part — usually a safety block or text-only response.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

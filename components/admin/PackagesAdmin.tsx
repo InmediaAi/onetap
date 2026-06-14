@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/components/admin/Toast";
 
 /** Admin editor for the subscription tiers + top-up config (DB-backed). */
 
@@ -49,6 +50,7 @@ function rowToDraft(r: PlanRow): PlanDraft {
 }
 
 export default function PackagesAdmin({ password }: { password: string }) {
+  const toast = useToast();
   const [plans, setPlans] = useState<PlanDraft[]>([]);
   const [config, setConfig] = useState<ConfigDraft | null>(null);
   const [status, setStatus] = useState("");
@@ -101,8 +103,15 @@ export default function PackagesAdmin({ password }: { password: string }) {
         }),
       });
       const d = await res.json().catch(() => ({}));
-      setStatus(res.ok ? `Saved “${p.name}”.` : d?.error || "Save failed.");
-      if (res.ok) load();
+      if (res.ok) {
+        setStatus(`Saved “${p.name}”.`);
+        toast.success(`Saved “${p.name}”.`);
+        load();
+      } else {
+        const msg = d?.error || "Save failed.";
+        setStatus(msg);
+        toast.error(msg);
+      }
     } finally {
       setBusy(false);
     }
@@ -123,8 +132,15 @@ export default function PackagesAdmin({ password }: { password: string }) {
         }),
       });
       const d = await res.json().catch(() => ({}));
-      setStatus(res.ok ? "Top-up settings saved." : d?.error || "Save failed.");
-      if (res.ok) load();
+      if (res.ok) {
+        setStatus("Top-up settings saved.");
+        toast.success("Top-up settings saved.");
+        load();
+      } else {
+        const msg = d?.error || "Save failed.";
+        setStatus(msg);
+        toast.error(msg);
+      }
     } finally {
       setBusy(false);
     }
