@@ -111,6 +111,9 @@ export default function LookPage() {
                   src={look.assetUrl}
                   poster={look.posterUrl}
                   controls
+                  controlsList="nodownload noplaybackrate noremoteplayback"
+                  disablePictureInPicture
+                  onContextMenu={(e) => e.preventDefault()}
                   autoPlay
                   loop
                   muted

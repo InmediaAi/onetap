@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import GenerationProgress from "@/components/GenerationProgress";
 
 /**
@@ -38,6 +38,8 @@ export interface ResultMediaProps {
   emptyState?: ReactNode;
   /** Frame class — "media" (main) keeps the global modal CSS; "ff-panel" for FIFA. */
   className?: string;
+  /** Try to autoplay WITH sound (films). Silent media (360° spin) leaves this off. */
+  sound?: boolean;
 }
 
 export default function ResultMedia({
@@ -54,10 +56,38 @@ export default function ResultMedia({
   mono,
   emptyState,
   className = "media",
+  sound = false,
 }: ResultMediaProps) {
   const videoPhase = phase === "spin" || phase === "video";
   const composing = phase === "tryon" && !image; // try-on still being composed
   const hasResult = Boolean(image || video);
+
+  // Autoplay. Try WITH sound for films; if the browser blocks unmuted autoplay
+  // (no recent gesture), fall back to muted + a one-tap "Tap for sound".
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [needsUnmute, setNeedsUnmute] = useState(false);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !showVideo || !video) return;
+    setNeedsUnmute(false);
+    v.muted = !sound;
+    const p = v.play();
+    if (sound && p && typeof p.catch === "function") {
+      p.catch(() => {
+        v.muted = true;
+        v.play().catch(() => {});
+        setNeedsUnmute(true);
+      });
+    }
+  }, [video, showVideo, sound]);
+
+  function enableSound() {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = false;
+    void v.play().catch(() => {});
+    setNeedsUnmute(false);
+  }
 
   return (
     <div className={className}>
@@ -66,8 +96,24 @@ export default function ResultMedia({
       {/* the moving result (final) */}
       {showVideo && video && (
         <>
-          <video className="base" src={video} poster={poster ?? undefined} autoPlay loop muted playsInline />
+          <video
+            ref={videoRef}
+            className="base"
+            src={video}
+            poster={poster ?? undefined}
+            loop
+            playsInline
+            controls
+            controlsList="nodownload noplaybackrate noremoteplayback"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()}
+          />
           {videoOverlay}
+          {needsUnmute && (
+            <button type="button" className="unmute" onClick={enableSound}>
+              🔊 Tap for sound
+            </button>
+          )}
         </>
       )}
 

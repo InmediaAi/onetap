@@ -153,6 +153,7 @@ export default function ResultStage({
           showVideo={showingTurn}
           phase={phase}
           showInset
+          sound={kind === "video"}
           videoOverlay={
             videoOverlay ?? (
               <div className="turn-ctl">
