@@ -1,7 +1,7 @@
 "use client";
 
 import mixpanel from "mixpanel-browser";
-import type { EventName } from "@/lib/analytics/events";
+import { EVENTS, type EventName } from "@/lib/analytics/events";
 
 /**
  * Thin analytics wrapper (Mixpanel). Components and the store NEVER call
@@ -28,7 +28,31 @@ export function initAnalytics(): void {
   ready = true;
 }
 
+/**
+ * Fire a Meta (Facebook) Pixel event — standard or custom. No-ops safely when
+ * the pixel script hasn't loaded (or no pixel id is set). Independent of
+ * Mixpanel readiness. Value events (Subscribe/Purchase) call this directly.
+ */
+export function metaTrack(event: string, params?: Record<string, unknown>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.fbq?.("track", event, params);
+  } catch {
+    /* analytics must never break the app */
+  }
+}
+
+/** Funnel events forwarded to the Meta Pixel as standard conversion events. */
+const META_EVENTS: Partial<Record<EventName, string>> = {
+  [EVENTS.ONBOARDING_COMPLETED]: "CompleteRegistration",
+  [EVENTS.GENERATION_COMPLETED]: "ViewContent",
+  [EVENTS.SUBSCRIBE_CLICKED]: "InitiateCheckout",
+};
+
 export function track(event: EventName, props?: Record<string, unknown>): void {
+  // Forward to the Meta Pixel first — independent of Mixpanel being configured.
+  const meta = META_EVENTS[event];
+  if (meta) metaTrack(meta);
   if (!ready) return;
   try {
     mixpanel.track(event, props);

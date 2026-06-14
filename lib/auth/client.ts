@@ -1,6 +1,7 @@
 "use client";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
+import { metaTrack } from "@/lib/analytics";
 
 /** Client auth + identity-image helpers (browser Supabase client). */
 
@@ -10,6 +11,7 @@ export async function signInWithProvider(
 ): Promise<void> {
   const sb = createBrowserSupabase();
   if (!sb) throw new Error("Auth is not configured");
+  metaTrack("Lead", { method: provider, next }); // sign-in intent (Meta Pixel)
   await sb.auth.signInWithOAuth({
     provider,
     options: {
@@ -21,6 +23,7 @@ export async function signInWithProvider(
 export async function signInWithEmail(email: string, next = "/onboarding"): Promise<void> {
   const sb = createBrowserSupabase();
   if (!sb) throw new Error("Auth is not configured");
+  metaTrack("Lead", { method: "email", next });
   const { error } = await sb.auth.signInWithOtp({
     email,
     options: {

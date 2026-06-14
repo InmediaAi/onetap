@@ -1,8 +1,8 @@
 "use client";
 
-import { track } from "@/lib/analytics";
+import { track, metaTrack } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
-import type { PlanId } from "@/lib/pricing/plans";
+import { getPlan, type PlanId } from "@/lib/pricing/plans";
 
 /**
  * Client-side subscription start: ask the server to create a Razorpay
@@ -50,7 +50,13 @@ export async function startSubscription(planId: PlanId): Promise<void> {
     description: `${planId} plan`,
     theme: { color: "#1a1814" },
     handler: () => {
-      // Payment captured; webhook will activate. Refresh to pick up status.
+      // Payment captured; webhook will activate. Fire the Meta conversion (with
+      // the plan value) before refreshing to pick up status.
+      const plan = getPlan(planId);
+      const value = plan?.monthlyPrice;
+      const currency = plan?.currency || "USD";
+      metaTrack("Subscribe", { value, currency, predicted_ltv: value, content_name: `${planId} plan` });
+      metaTrack("Purchase", { value, currency, content_name: `${planId} plan`, content_type: "subscription" });
       setTimeout(() => window.location.reload(), 1500);
     },
   });
@@ -90,7 +96,13 @@ export async function startTopup(quantity: number): Promise<void> {
     description: `${data.quantity} extra try-on${data.quantity === 1 ? "" : "s"}`,
     theme: { color: "#1a1814" },
     handler: () => {
-      // Payment captured; webhook credits the balance. Refresh to pick it up.
+      // Payment captured; webhook credits the balance. Fire the Meta Purchase
+      // (Razorpay amount is in the smallest unit) before refreshing.
+      metaTrack("Purchase", {
+        value: typeof data.amount === "number" ? data.amount / 100 : undefined,
+        currency: data.currency || "USD",
+        content_name: "video top-up",
+      });
       setTimeout(() => window.location.reload(), 1500);
     },
   });
