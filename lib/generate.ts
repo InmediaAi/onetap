@@ -42,6 +42,8 @@ export interface ComposeArgs {
   prompt?: string;
   /** Optional prompt for the IMAGE step (prompt-capable providers, e.g. GPT-Image). */
   imagePrompt?: string;
+  /** A pre-composed scene image (from composeImageOnly) — skips the image step. */
+  precomposedImage?: string;
   /** Product id to attach to the saved look (for /look/[id]). */
   productId: string;
 }
@@ -84,12 +86,35 @@ async function post(url: string, body: unknown) {
   return data;
 }
 
+/**
+ * Just the IMAGE step (auth-free): compose the garment + likeness + prompt into a
+ * scene still and return its durable URL. Used to pre-compose during sign-in, so
+ * the slow image work overlaps OAuth; the video step (which needs auth) runs after.
+ */
+export async function composeImageOnly(args: {
+  likeness: string;
+  pieceImage: string;
+  imagePrompt?: string;
+  productId: string;
+}): Promise<string> {
+  const campaign = getAttribution()?.utm_campaign;
+  const tryon = await post("/api/generate-image", {
+    userImage: args.likeness,
+    productImage: args.pieceImage,
+    productId: args.productId,
+    campaign,
+    prompt: args.imagePrompt,
+  });
+  return tryon.imageUrl as string;
+}
+
 export async function composeReel({
   kind,
   likeness,
   pieceImage,
   prompt,
   imagePrompt,
+  precomposedImage,
   productId,
 }: ComposeArgs): Promise<ComposeResult> {
   const startedAt = Date.now();
@@ -102,7 +127,10 @@ export async function composeReel({
     //    uses its own predefined prompt (server default) — the film/spin prompt
     //    describes motion and only applies to the video step below.
     let sourceImage = likeness;
-    if (pieceImage) {
+    if (precomposedImage) {
+      // Image was already composed (e.g. during sign-in) — skip the image step.
+      sourceImage = precomposedImage;
+    } else if (pieceImage) {
       const tryon = await post("/api/generate-image", {
         userImage: likeness,
         productImage: pieceImage,

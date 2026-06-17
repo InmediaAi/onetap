@@ -72,6 +72,7 @@ export default function ProfilePanel() {
   const [modelBusy, setModelBusy] = useState(false);
   const [modelMsg, setModelMsg] = useState<string | null>(null);
   const [topupBusy, setTopupBusy] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   // How many angles are on file — gates the composite generation.
   const photoCount = [imgs.body, imgs.selfie, imgs.left, imgs.right, imgs.back].filter(
@@ -185,13 +186,16 @@ export default function ProfilePanel() {
   async function cancelSubscription() {
     setBusy(true);
     const res = await fetch("/api/billing/cancel", { method: "POST" });
-    setBusy(false);
+    const data = await res.json().catch(() => ({}));
+    setConfirmCancel(false);
     if (res.ok) {
       track(EVENTS.SUBSCRIPTION_CANCELLED, { plan: usage.planId });
-      setStatus("Subscription will end at the period close.");
+      await store.refreshProfile(); // reflect the scheduled-cancel state immediately
+      setStatus("Your membership will end at the period close — you keep access until then.");
     } else {
-      setStatus("Could not cancel.");
+      setStatus(data?.error || "Could not cancel.");
     }
+    setBusy(false);
   }
 
   async function doSignOut() {
@@ -349,18 +353,62 @@ export default function ProfilePanel() {
               {usage.videoLimit} try-ons left this month
               {usage.topupBalance > 0 ? ` · +${usage.topupBalance} top-up in reserve` : ""}
               {usage.currentPeriodEnd
-                ? ` · renews ${new Date(usage.currentPeriodEnd).toLocaleDateString()}`
+                ? usage.cancelAtPeriodEnd
+                  ? ` · ends ${new Date(usage.currentPeriodEnd).toLocaleDateString()}`
+                  : ` · renews ${new Date(usage.currentPeriodEnd).toLocaleDateString()}`
                 : ""}
               .
             </p>
-            {usage.topupEnabled && (
-              <button className="btn-line admin-btn" onClick={buyTopups} disabled={topupBusy}>
-                {topupBusy ? "Opening…" : `Buy 5 top-ups · $${(usage.topupUnitPrice * 5).toFixed(2)}`}
-              </button>
+            {usage.cancelAtPeriodEnd ? (
+              <p className="admin-hint">
+                Your membership won’t renew — you keep access until it ends.
+              </p>
+            ) : (
+              <>
+                {usage.topupEnabled && (
+                  <button className="btn-line admin-btn" onClick={buyTopups} disabled={topupBusy}>
+                    {topupBusy
+                      ? "Opening…"
+                      : `Buy 5 top-ups · $${(usage.topupUnitPrice * 5).toFixed(2)}`}
+                  </button>
+                )}
+                {confirmCancel ? (
+                  <div className="admin-confirm">
+                    <p className="admin-hint">
+                      Cancel at the period close
+                      {usage.currentPeriodEnd
+                        ? ` (${new Date(usage.currentPeriodEnd).toLocaleDateString()})`
+                        : ""}
+                      ? You keep access until then.
+                    </p>
+                    <div className="admin-confirm-row">
+                      <button
+                        className="btn-line admin-btn"
+                        onClick={() => setConfirmCancel(false)}
+                        disabled={busy}
+                      >
+                        Keep plan
+                      </button>
+                      <button
+                        className="btn-line admin-btn"
+                        onClick={cancelSubscription}
+                        disabled={busy}
+                      >
+                        {busy ? "Cancelling…" : "Confirm cancel"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="btn-line admin-btn"
+                    onClick={() => setConfirmCancel(true)}
+                    disabled={busy}
+                  >
+                    Cancel subscription
+                  </button>
+                )}
+              </>
             )}
-            <button className="btn-line admin-btn" onClick={cancelSubscription} disabled={busy}>
-              Cancel subscription
-            </button>
           </>
         ) : (
           <>

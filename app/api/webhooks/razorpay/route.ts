@@ -88,6 +88,7 @@ export async function POST(req: Request) {
         current_period_start: periodStart,
         current_period_end: periodEnd,
         videos_used: 0,
+        cancel_at_period_end: false, // (re)activation/renewal clears any schedule
         updated_at: new Date().toISOString(),
       };
       if (plan) patch.plan = plan;
@@ -114,9 +115,14 @@ export async function POST(req: Request) {
     }
     case "subscription.cancelled":
     case "subscription.completed":
+      // Terminal — fully cancelled now, no longer merely "scheduled".
       await svc
         .from("subscriptions")
-        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .update({
+          status: "cancelled",
+          cancel_at_period_end: false,
+          updated_at: new Date().toISOString(),
+        })
         .match(match);
       break;
     case "subscription.halted":

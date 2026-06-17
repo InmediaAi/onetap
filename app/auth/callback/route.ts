@@ -17,8 +17,18 @@ export async function GET(req: Request) {
   const { searchParams, origin } = new URL(req.url);
   const code = searchParams.get("code");
   const nextParam = searchParams.get("next") ?? "/";
+  const popup = searchParams.get("popup") === "1";
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Popup-OAuth landing: notify the opener (which then reads the new session) and
+  // self-close, instead of redirecting. Session cookies ride this HTML response.
+  const popupHtml = `<!doctype html><meta charset="utf-8"><body style="font:14px system-ui;padding:24px;color:#333">Signed in — returning to OneTap…<script>try{if(window.opener)window.opener.postMessage("otp-oauth-done",${JSON.stringify(origin)});}catch(e){}window.close();</script></body>`;
+  const popupResponse = (cookies: { name: string; value: string; options: CookieOptions }[]) => {
+    const res = new NextResponse(popupHtml, { headers: { "content-type": "text/html; charset=utf-8" } });
+    for (const { name, value, options } of cookies) res.cookies.set(name, value, options);
+    return res;
+  };
 
   let dest = nextParam;
 
@@ -62,12 +72,15 @@ export async function GET(req: Request) {
       }
     }
 
+    if (popup) return popupResponse(pending); // self-close + notify opener
     const res = NextResponse.redirect(`${origin}${dest}`);
     for (const { name, value, options } of pending) {
       res.cookies.set(name, value, options);
     }
     return res;
   }
+
+  if (popup) return popupResponse([]); // no code / unconfigured — still close the popup
 
   return NextResponse.redirect(`${origin}${dest}`);
 }

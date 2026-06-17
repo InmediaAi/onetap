@@ -29,7 +29,7 @@ export async function GET() {
 
   const { data: sub } = await sb
     .from("subscriptions")
-    .select("plan, status, videos_used, current_period_end, topup_balance")
+    .select("plan, status, videos_used, current_period_end, topup_balance, cancel_at_period_end")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -55,7 +55,13 @@ export async function GET() {
   // Everyone now has a subscriptions row (free | starter | pro). `planId` stays
   // PAID-only (null for free) so all paid-only UI/topup gating is unchanged.
   const tier = (sub?.plan as "free" | PlanId | undefined) ?? null;
-  const active = sub?.status === "active";
+  // Defensive lapse: if a cancellation was scheduled and the cycle has closed but
+  // the subscription.cancelled webhook never arrived, treat the plan as ended.
+  const periodEnded = Boolean(
+    sub?.current_period_end && new Date(sub.current_period_end).getTime() <= Date.now(),
+  );
+  const scheduledLapse = Boolean(sub?.cancel_at_period_end) && periodEnded;
+  const active = sub?.status === "active" && !scheduledLapse;
   const isPaid = active && tier !== null && tier !== "free";
   const planId = isPaid ? (tier as PlanId) : null;
   const videosUsed = sub?.videos_used ?? 0;
@@ -90,7 +96,8 @@ export async function GET() {
     usage: {
       planId,
       planName: planNameOf(plans, planId),
-      status: sub?.status ?? null,
+      status: scheduledLapse ? "cancelled" : (sub?.status ?? null),
+      cancelAtPeriodEnd: Boolean(sub?.cancel_at_period_end) && !scheduledLapse,
       videosUsed,
       videoLimit: isPaid ? videoLimitOf(plans, planId) : 0,
       topupBalance: sub?.topup_balance ?? 0,

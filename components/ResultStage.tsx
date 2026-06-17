@@ -42,6 +42,9 @@ export interface ResultStageProps {
       instead (e.g. behind a campaign membership). Defaults to allowed. */
   canKeep?: boolean;
   onLocked?: () => void;
+  /** Action buttons rendered BELOW the media (e.g. FIFA's Download + Explore).
+      When set, the right-side icon rail is hidden — the footer owns the actions. */
+  footer?: ReactNode;
 }
 
 export default function ResultStage({
@@ -64,6 +67,7 @@ export default function ResultStage({
   videoOverlay,
   canKeep,
   onLocked,
+  footer,
 }: ResultStageProps) {
   const [view, setView] = useState<"tryon" | "turn">("turn");
   useEffect(() => {
@@ -176,27 +180,32 @@ export default function ResultStage({
           mono={mono}
           emptyState={emptyState}
         />
+        {/* Campaign footer actions — sit directly under the clip (e.g. FIFA's
+            Download + Explore). When present, they replace the icon rail below. */}
+        {footer && <div className="media-foot">{footer}</div>}
       </div>
 
-      {/* action rail */}
-      <div className="actrail">
-        {onSave && (
-          <button className={"act" + (wished ? " on" : "")} onClick={onSave} title="Save">
-            <Heart className="fillable" size={18} strokeWidth={1.4} />
+      {/* action rail — hidden when a footer owns the actions */}
+      {!footer && (
+        <div className="actrail">
+          {onSave && (
+            <button className={"act" + (wished ? " on" : "")} onClick={onSave} title="Save">
+              <Heart className="fillable" size={18} strokeWidth={1.4} />
+            </button>
+          )}
+          <button className="act" onClick={download} disabled={!hasResult} title="Download">
+            <Download size={18} strokeWidth={1.4} />
           </button>
-        )}
-        <button className="act" onClick={download} disabled={!hasResult} title="Download">
-          <Download size={18} strokeWidth={1.4} />
-        </button>
-        <button className="act" onClick={share} disabled={!shownLookId} title="Share">
-          <Share2 size={18} strokeWidth={1.4} />
-        </button>
-        {buyUrl && (
-          <button className="act" onClick={shop} title="Shop this piece">
-            <ShoppingBag size={18} strokeWidth={1.4} />
+          <button className="act" onClick={share} disabled={!shownLookId} title="Share">
+            <Share2 size={18} strokeWidth={1.4} />
           </button>
-        )}
-      </div>
+          {buyUrl && (
+            <button className="act" onClick={shop} title="Shop this piece">
+              <ShoppingBag size={18} strokeWidth={1.4} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

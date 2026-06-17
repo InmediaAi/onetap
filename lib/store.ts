@@ -23,6 +23,8 @@ export interface UsageSnapshot {
   planId: PlanId | null;
   planName: string | null;
   status: string | null; // active | cancelled | halted | created | null
+  /** True once the user has scheduled a cancellation (active until period end). */
+  cancelAtPeriodEnd: boolean;
   videosUsed: number;
   videoLimit: number;
   /** Roll-over paid extras, consumed after the monthly allowance. */
@@ -72,6 +74,7 @@ const EMPTY_USAGE: UsageSnapshot = {
   planId: null,
   planName: null,
   status: null,
+  cancelAtPeriodEnd: false,
   videosUsed: 0,
   videoLimit: 0,
   topupBalance: 0,

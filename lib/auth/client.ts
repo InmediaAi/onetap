@@ -20,6 +20,50 @@ export async function signInWithProvider(
   });
 }
 
+/**
+ * Popup-window OAuth — keeps the calling page alive so work can run in parallel
+ * (FIFA pre-composes the scene image while the user signs in). The popup is
+ * opened SYNCHRONOUSLY in the click (to dodge popup blockers) at about:blank,
+ * then pointed at the OAuth URL once it resolves. Returns the popup handle, or
+ * null if the browser blocked it (caller falls back to a full-page redirect).
+ * The popup lands on /auth/callback?...&popup=1, which postMessages + self-closes.
+ */
+export function openAuthPopup(provider: "google" | "apple", next = "/fifa"): Window | null {
+  if (typeof window === "undefined") return null;
+  const popup = window.open(
+    "about:blank",
+    "otp-oauth",
+    "width=480,height=720,menubar=no,toolbar=no,location=no,status=no",
+  );
+  if (!popup) return null; // blocked
+  metaTrack("Lead", { method: provider, next });
+  const sb = createBrowserSupabase();
+  if (!sb) {
+    popup.close();
+    return null;
+  }
+  void sb.auth
+    .signInWithOAuth({
+      provider,
+      options: {
+        skipBrowserRedirect: true,
+        redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}&popup=1`,
+      },
+    })
+    .then(({ data, error }) => {
+      if (error || !data?.url) {
+        try {
+          popup.close();
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+      popup.location.href = data.url;
+    });
+  return popup;
+}
+
 export async function signInWithEmail(email: string, next = "/onboarding"): Promise<void> {
   const sb = createBrowserSupabase();
   if (!sb) throw new Error("Auth is not configured");

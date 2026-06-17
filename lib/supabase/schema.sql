@@ -534,6 +534,11 @@ insert into billing_config (id) values ('default') on conflict (id) do nothing;
 alter table subscriptions add column if not exists topup_balance integer not null default 0
   check (topup_balance >= 0);
 
+-- Scheduled cancellation: set true when the user cancels at cycle end. The plan
+-- stays active until current_period_end, then lapses (never auto-renews). Cleared
+-- on (re)activation and on the terminal subscription.cancelled/completed webhook.
+alter table subscriptions add column if not exists cancel_at_period_end boolean not null default false;
+
 -- One-time top-up payments — idempotency + audit (service role writes only).
 create table if not exists topup_payments (
   payment_id text primary key,
@@ -576,27 +581,37 @@ begin
   select * into s from subscriptions where user_id = uid for update;
   if found and s.status = 'active' then
     if s.current_period_end is not null and now() >= s.current_period_end then
-      update subscriptions
-         set videos_used = 0,
-             current_period_start = s.current_period_end,
-             current_period_end   = s.current_period_end + interval '1 month',
-             updated_at = now()
-       where user_id = uid
-      returning * into s;
+      if s.cancel_at_period_end then
+        -- Scheduled cancellation reached its cycle end → lapse, do NOT renew.
+        update subscriptions set status = 'cancelled', updated_at = now()
+         where user_id = uid
+        returning * into s;
+      else
+        update subscriptions
+           set videos_used = 0,
+               current_period_start = s.current_period_end,
+               current_period_end   = s.current_period_end + interval '1 month',
+               updated_at = now()
+         where user_id = uid
+        returning * into s;
+      end if;
     end if;
-    lim := plan_video_limit(s.plan);
-    if s.videos_used < lim then
-      update subscriptions set videos_used = videos_used + 1, updated_at = now()
-       where user_id = uid;
-      return jsonb_build_object('ok', true, 'source', 'subscription',
-                                'remaining', lim - s.videos_used - 1);
-    elsif s.topup_balance > 0 then
-      update subscriptions set topup_balance = topup_balance - 1, updated_at = now()
-       where user_id = uid;
-      return jsonb_build_object('ok', true, 'source', 'topup',
-                                'remaining', s.topup_balance - 1);
+    -- Skip the subscription grant if it just lapsed above (falls to free trial).
+    if s.status = 'active' then
+      lim := plan_video_limit(s.plan);
+      if s.videos_used < lim then
+        update subscriptions set videos_used = videos_used + 1, updated_at = now()
+         where user_id = uid;
+        return jsonb_build_object('ok', true, 'source', 'subscription',
+                                  'remaining', lim - s.videos_used - 1);
+      elsif s.topup_balance > 0 then
+        update subscriptions set topup_balance = topup_balance - 1, updated_at = now()
+         where user_id = uid;
+        return jsonb_build_object('ok', true, 'source', 'topup',
+                                  'remaining', s.topup_balance - 1);
+      end if;
+      return jsonb_build_object('ok', false, 'reason', 'limit_reached', 'source', 'subscription');
     end if;
-    return jsonb_build_object('ok', false, 'reason', 'limit_reached', 'source', 'subscription');
   end if;
 
   -- 2) Free trial (one-time; count from billing_plans 'free').

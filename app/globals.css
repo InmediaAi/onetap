@@ -1001,6 +1001,84 @@
   overflow: hidden;
   box-shadow: 0 40px 100px -40px rgba(0, 0, 0, 0.9);
 }
+/* leave room for the footer actions (campaign result) without overflowing */
+.media-col:has(.media-foot) .media {
+  height: min(64vh, 560px);
+}
+
+/* footer actions below the clip — two compact buttons + a promoted share */
+.media-foot {
+  width: 100%;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+.media-foot .mf-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.mf-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 12px;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid var(--stone);
+  background: var(--stone);
+  color: #14110c;
+  transition: opacity 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.mf-btn svg {
+  flex: none;
+}
+.mf-btn:hover {
+  opacity: 0.88;
+}
+.mf-btn.alt {
+  background: transparent;
+  color: var(--ivory);
+  border-color: var(--stone-soft);
+}
+.mf-btn.alt:hover {
+  background: rgba(200, 184, 154, 0.1);
+  border-color: var(--stone);
+  opacity: 1;
+}
+/* promoted share — a clear tertiary action, brighter than a footnote */
+.mf-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(238, 232, 220, 0.82);
+  padding: 5px 10px;
+  transition: color 0.2s var(--ease);
+}
+.mf-share svg {
+  color: var(--stone);
+}
+.mf-share:hover {
+  color: var(--ivory);
+}
 .media .inset {
   position: absolute;
   inset: 16px;
@@ -3706,6 +3784,14 @@
 }
 .admin-btn:disabled { opacity: 0.5; cursor: default; }
 .admin-gate .admin-btn { margin-top: 1rem; width: 100%; }
+
+/* inline cancel confirmation (profile subscription) */
+.admin-confirm-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-confirm-row .admin-btn { flex: 1; min-width: 130px; }
 
 .admin-err { color: #9a3b2f; font-size: 0.85rem; margin-top: 0.75rem; }
 .admin-status {
