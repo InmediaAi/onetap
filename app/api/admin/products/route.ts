@@ -182,7 +182,11 @@ export async function POST(req: Request) {
       saved = data;
     }
 
+    // Refresh every statically-prerendered page that reads the catalog, so a new
+    // or edited piece appears immediately (not just the home page).
     revalidatePath("/");
+    revalidatePath("/curator");
+    revalidatePath("/creator");
     return NextResponse.json({ ok: true, product: rowToProduct(saved as ProductRow) });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Save failed";
