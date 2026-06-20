@@ -13,6 +13,7 @@ import {
 import { startSubscription } from "@/lib/billing/checkout";
 import { hasVideoQuota } from "@/lib/billing/gate";
 import { signInWithProvider, signOut, uploadIdentity, openAuthPopup } from "@/lib/auth/client";
+import { downloadAsset } from "@/lib/download";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 import ResultModal from "@/components/ResultModal";
 import { useToast } from "@/components/Toast";
@@ -411,18 +412,16 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
   /* ---- result actions (rendered as buttons below the clip) ---- */
   // Download is hard-gated: no active sub OR no quota → the membership/upgrade
   // sheet, never the file. This is the ONLY download path on /fifa.
-  function downloadVideo() {
+  async function downloadVideo() {
     if (!canDownload) {
       setSheet(true);
       return;
     }
     if (!result?.videoUrl) return;
-    const a = document.createElement("a");
-    a.href = result.videoUrl;
-    a.download = `onetap-viralfan-${result.lookId}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const viewUrl = await downloadAsset(result.videoUrl, `onetap-viralfan-${result.lookId}`);
+    toast.success("Download complete", {
+      action: { label: "View", onClick: () => window.open(viewUrl, "_blank", "noopener") },
+    });
     track(EVENTS.RESULT_DOWNLOADED, { kind: "video", productId: jersey?.product.id, lookId: result.lookId });
   }
 

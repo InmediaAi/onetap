@@ -69,9 +69,31 @@ export async function GET(req: Request) {
     .from("products")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(1000); // full catalog for admin management + accurate per-category counts
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ products: (data as ProductRow[]).map(rowToProduct) });
+}
+
+/** DELETE — remove a piece. Body: { password, id }. */
+export async function DELETE(req: Request) {
+  const body = await req.json().catch(() => ({}));
+  if (!checkAdmin(body?.password)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const id = clean(body?.id, 200);
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  const db = createServiceClient();
+  if (!db) return NextResponse.json({ error: "Not configured" }, { status: 503 });
+
+  const { error } = await db.from("products").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Refresh the catalog pages that read products (same set as create/update).
+  revalidatePath("/");
+  revalidatePath("/curator");
+  revalidatePath("/creator");
+  return NextResponse.json({ ok: true });
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import PackagesAdmin from "@/components/admin/PackagesAdmin";
 import CampaignLinks from "@/components/admin/CampaignLinks";
 import CampaignManager from "@/components/admin/CampaignManager";
@@ -71,6 +72,8 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false);
   const [recent, setRecent] = useState<Product[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [catFilter, setCatFilter] = useState(""); // "" = all categories
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const loadRecent = useCallback(async (pw: string) => {
     try {
@@ -135,6 +138,34 @@ export default function AdminPage() {
     setStatus(`Editing “${p.brand} — ${p.name}”.`);
     setUrl("");
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /** Delete a piece (after one inline confirmation). */
+  async function deleteProduct(p: Product) {
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, id: p.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error || "Could not remove this piece.");
+        return;
+      }
+      setRecent((r) => r.filter((x) => x.id !== p.id));
+      setPendingDelete(null);
+      if (editingId === p.id) {
+        // The piece being edited was removed — clear the form.
+        setDraft({ ...EMPTY, dropDate: today() });
+        setHasDraft(false);
+        setEditingId(null);
+        setStatus("");
+      }
+      toast.success(`Removed “${p.brand} — ${p.name}”.`);
+    } catch {
+      toast.error("Could not remove this piece.");
+    }
   }
 
   async function fetchFromUrl(e: React.FormEvent) {
@@ -260,6 +291,53 @@ export default function AdminPage() {
       </main>
     );
   }
+
+  // Curator pieces vs campaign pieces (FIFA jerseys etc. are hidden from Curator).
+  const curatorItems = recent.filter((p) => !p.campaignOnly);
+  const campaignItems = recent.filter((p) => p.campaignOnly);
+  const catCounts: Record<string, number> = {};
+  for (const p of curatorItems) {
+    if (p.category) catCounts[p.category] = (catCounts[p.category] ?? 0) + 1;
+  }
+  const shownCurator = catFilter
+    ? curatorItems.filter((p) => p.category === catFilter)
+    : curatorItems;
+
+  // One list row — click to edit; the action cell deletes (with confirm).
+  const pieceRow = (p: Product) => (
+    <li
+      key={p.id}
+      className={"admin-recent-row" + (editingId === p.id ? " on" : "")}
+      onClick={() => loadForEdit(p)}
+      role="button"
+    >
+      <span className="admin-recent-brand">{p.brand}</span>
+      <span className="admin-recent-name">{p.name}</span>
+      <span className="admin-recent-cat">{p.category || "—"}</span>
+      <span className="admin-recent-price">{formatPrice(p.price)}</span>
+      <span className="admin-recent-act" onClick={(e) => e.stopPropagation()}>
+        {pendingDelete === p.id ? (
+          <>
+            <button className="admin-del-confirm" onClick={() => deleteProduct(p)}>
+              Delete
+            </button>
+            <button className="admin-del-cancel" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button
+            className="admin-recent-del"
+            onClick={() => setPendingDelete(p.id)}
+            aria-label="Delete piece"
+            title="Delete"
+          >
+            <Trash2 size={15} strokeWidth={1.6} />
+          </button>
+        )}
+      </span>
+    </li>
+  );
 
   return (
     <main className="admin-wrap admin-shell">
@@ -535,23 +613,38 @@ export default function AdminPage() {
         </form>
       )}
 
-          {recent.length > 0 && (
+          {/* Curator pieces — shown in the Curator grid; filterable by category */}
+          {curatorItems.length > 0 && (
             <section className="admin-recent">
-              <h2 className="admin-subtitle">Recently added — tap to edit</h2>
-              <ul>
-                {recent.map((p) => (
-                  <li
-                    key={p.id}
-                    className={"admin-recent-row" + (editingId === p.id ? " on" : "")}
-                    onClick={() => loadForEdit(p)}
-                    role="button"
-                  >
-                    <span className="admin-recent-brand">{p.brand}</span>
-                    <span className="admin-recent-name">{p.name}</span>
-                    <span className="admin-recent-price">{formatPrice(p.price)}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="admin-recent-head">
+                <h2 className="admin-subtitle">Curator pieces — {curatorItems.length}</h2>
+                <select
+                  className="admin-input admin-cat-filter"
+                  value={catFilter}
+                  onChange={(e) => setCatFilter(e.target.value)}
+                  aria-label="Filter by category"
+                >
+                  <option value="">All ({curatorItems.length})</option>
+                  {PRODUCT_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c} ({catCounts[c] ?? 0})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {shownCurator.length > 0 ? (
+                <ul>{shownCurator.map(pieceRow)}</ul>
+              ) : (
+                <p className="admin-hint">No {catFilter} pieces yet.</p>
+              )}
+            </section>
+          )}
+
+          {/* Campaign pieces — FIFA jerseys etc., hidden from the Curator */}
+          {campaignItems.length > 0 && (
+            <section className="admin-recent">
+              <h2 className="admin-subtitle">Campaign pieces — {campaignItems.length}</h2>
+              <ul>{campaignItems.map(pieceRow)}</ul>
             </section>
           )}
         </>

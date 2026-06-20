@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Search } from "lucide-react";
 import ReelsWall from "@/components/onboarding/ReelsWall";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
@@ -12,7 +12,7 @@ import { EVENTS } from "@/lib/analytics/events";
 import { signInWithProvider, uploadIdentity } from "@/lib/auth/client";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 
-type Step = "signin" | "upload" | "brands";
+type Step = "upload" | "brands";
 
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -146,10 +146,12 @@ export default function OnboardingPage() {
   const refreshProfile = useAtelier((s) => s.refreshProfile);
   const signedIn = Boolean(email);
 
-  const [step, setStep] = useState<Step>("signin");
+  const [step, setStep] = useState<Step>("upload");
   const [f, setF] = useState<string | null>(null);
   const [b, setB] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
+  const [brandQuery, setBrandQuery] = useState("");
+  const [customBrands, setCustomBrands] = useState<string[]>([]);
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -178,14 +180,15 @@ export default function OnboardingPage() {
     if (profileLoaded && signedIn && onboarded) router.replace(nextDest);
   }, [profileLoaded, signedIn, onboarded, router, nextDest]);
 
-  // Advance to upload once we know the user is signed in (and not onboarded).
+  // Pre-fill from any previously saved identity/brands once the profile loads.
+  // The sign-in vs upload vs brands decision is made in render from auth truth,
+  // so an already-authenticated first-time user never flashes the sign-in step.
   useEffect(() => {
     if (!profileLoaded) return;
-    if (signedIn && !onboarded) setStep((s) => (s === "signin" ? "upload" : s));
     setF((v) => v ?? face);
     setB((v) => v ?? body);
     setPicked((v) => (v.length ? v : brands));
-  }, [profileLoaded, signedIn, onboarded, face, body, brands]);
+  }, [profileLoaded, face, body, brands]);
 
   async function oauth(provider: "google" | "apple") {
     setAuthErr(null);
@@ -234,6 +237,39 @@ export default function OnboardingPage() {
     );
   }
 
+  // The selectable list = the curated houses plus any the user added (or had
+  // saved previously). New /api/profile accepts free-form brand strings.
+  const allBrands = useMemo(() => {
+    const base = new Set(BRANDS.map((b) => b.toLowerCase()));
+    const extras: string[] = [];
+    const seen = new Set<string>();
+    for (const b of [...customBrands, ...picked]) {
+      const k = b.toLowerCase();
+      if (!base.has(k) && !seen.has(k)) {
+        seen.add(k);
+        extras.push(b);
+      }
+    }
+    return [...BRANDS, ...extras];
+  }, [customBrands, picked]);
+
+  const bq = brandQuery.trim();
+  const bqLower = bq.toLowerCase();
+  const filteredBrands = bqLower
+    ? allBrands.filter((b) => b.toLowerCase().includes(bqLower))
+    : allBrands;
+  const canAddBrand = bq.length > 0 && !allBrands.some((b) => b.toLowerCase() === bqLower);
+
+  function addCustomBrand() {
+    const name = brandQuery.trim();
+    if (!name) return;
+    const existing = allBrands.find((b) => b.toLowerCase() === name.toLowerCase());
+    const finalName = existing ?? name;
+    if (!existing) setCustomBrands((c) => [...c, name]);
+    setPicked((p) => (p.includes(finalName) ? p : [...p, finalName]));
+    setBrandQuery("");
+  }
+
   async function finish() {
     setSaving(true);
     setSaveErr(null);
@@ -265,7 +301,13 @@ export default function OnboardingPage() {
         <div className="ob-panel-inner">
           <div className="wordmark ob-word">OneTap Atelier</div>
 
-          {step === "signin" ? (
+          {!hydrated || !profileLoaded || (signedIn && onboarded) ? (
+            // Loading / redirecting — never flash the sign-in step for a user
+            // who arrived already authenticated from the OAuth callback.
+            <div className="ob-step">
+              <p className="ob-sub">One moment…</p>
+            </div>
+          ) : !signedIn ? (
             <div className="ob-step">
               <p className="ob-sub">
                 Sign in to begin. Your likeness stays private to you.
@@ -277,9 +319,6 @@ export default function OnboardingPage() {
                 <AppleMark /> Sign in with Apple
               </button>
               {authErr && <p className="studio-err">{authErr}</p>}
-              <Link href="/" className="ob-skip">
-                Explore first →
-              </Link>
             </div>
           ) : step === "upload" ? (
             <div className="ob-step">
@@ -312,20 +351,35 @@ export default function OnboardingPage() {
                 {saving ? "Saving…" : "Continue"} <span aria-hidden="true">→</span>
               </button>
               {saveErr && <p className="studio-err">{saveErr}</p>}
-              <Link href="/" className="ob-skip">
-                Skip for now →
-              </Link>
             </div>
           ) : (
             <div className="ob-step">
               <p className="ob-sub">
-                Choose the houses you love — your edit will lead with them.
-                {picked.length > 0 && (
-                  <span className="ob-count"> {picked.length} selected</span>
-                )}
+                Choose at least five houses you love — your edit will lead with them.
+                <span className="ob-count"> {picked.length}/5 selected</span>
               </p>
+              <div className="brand-search ob-brand-search">
+                <Search size={14} strokeWidth={1.6} />
+                <input
+                  value={brandQuery}
+                  onChange={(e) => setBrandQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && canAddBrand) {
+                      e.preventDefault();
+                      addCustomBrand();
+                    }
+                  }}
+                  placeholder="Search houses, or add your own"
+                  aria-label="Search or add a brand"
+                />
+              </div>
               <div className="brand-grid">
-                {BRANDS.map((name) => (
+                {canAddBrand && (
+                  <button type="button" className="brand-tile brand-add" onClick={addCustomBrand}>
+                    <span className="brand-name">+ Add “{bq}”</span>
+                  </button>
+                )}
+                {filteredBrands.map((name) => (
                   <button
                     key={name}
                     className={"brand-tile" + (picked.includes(name) ? " on" : "")}
@@ -339,14 +393,18 @@ export default function OnboardingPage() {
                     <span className="brand-name">{name}</span>
                   </button>
                 ))}
+                {filteredBrands.length === 0 && !canAddBrand && (
+                  <p className="refine-none">No houses match.</p>
+                )}
               </div>
-              <button className="getin" onClick={finish} disabled={saving}>
+              <button
+                className="getin"
+                onClick={finish}
+                disabled={picked.length < 5 || saving}
+              >
                 {saving ? "Saving…" : "Get In"} <span aria-hidden="true">→</span>
               </button>
               {saveErr && <p className="studio-err">{saveErr}</p>}
-              <Link href="/" className="ob-skip">
-                Skip for now →
-              </Link>
             </div>
           )}
         </div>

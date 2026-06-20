@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useAtelier } from "@/lib/store";
-import { signInWithProvider, signInWithEmail } from "@/lib/auth/client";
+import { signInWithProvider } from "@/lib/auth/client";
 
 /* Monochrome provider marks (currentColor), matching the onboarding page. */
 const GoogleMark = () => (
@@ -26,8 +26,6 @@ export default function SignInModal() {
   const open = useAtelier((s) => s.signInOpen);
   const close = useAtelier((s) => s.closeSignIn);
 
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,17 +52,6 @@ export default function SignInModal() {
       await signInWithProvider(provider, next);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Sign-in failed");
-    }
-  }
-
-  async function emailLink(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    try {
-      await signInWithEmail(email.trim(), next);
-      setSent(true);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not send link");
     }
   }
 
@@ -95,23 +82,6 @@ export default function SignInModal() {
           <button className="oauth-btn" onClick={() => oauth("apple")}>
             <AppleMark /> Continue with Apple
           </button>
-
-          {sent ? (
-            <p className="pricing-note">Check your inbox for a sign-in link.</p>
-          ) : (
-            <form className="ob-email" onSubmit={emailLink}>
-              <input
-                type="email"
-                required
-                placeholder="you@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button type="submit" className="oauth-btn">
-                Email me a link
-              </button>
-            </form>
-          )}
           {err && <p className="studio-err">{err}</p>}
         </div>
       </div>

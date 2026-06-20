@@ -584,7 +584,12 @@
   background: #e4dac8;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px var(--stone-soft);
+  /* hairline frame + a very minor lift so cards read as floating tiles */
+  box-shadow: inset 0 0 0 1px var(--stone-soft), 0 8px 20px -12px rgba(20, 17, 12, 0.22);
+  transition: box-shadow 0.3s var(--ease);
+}
+.ptile:hover {
+  box-shadow: inset 0 0 0 1px var(--stone-soft), 0 14px 28px -14px rgba(20, 17, 12, 0.28);
 }
 .ptile .pimg {
   position: absolute;
@@ -780,6 +785,25 @@
 @media (hover: none) {
   .ptile .tile-cta {
     display: none;
+  }
+  /* On touch there's no hover overlay — give the card a clear, tappable
+     try-on action directly below the item (full-width outlined button). */
+  .meta .tryon-link {
+    align-self: stretch;
+    justify-content: center;
+    margin-top: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--noir);
+    color: var(--noir);
+    font-size: 11px;
+    letter-spacing: 0.13em;
+  }
+  .meta .tryon-link:active {
+    background: var(--noir);
+    color: var(--ivory);
+  }
+  .meta .tryon-link:active .mk {
+    background: var(--ivory);
   }
 }
 
@@ -1490,11 +1514,25 @@
 }
 
 /* ———————————————————————————— CLOSET / HISTORY ———————————————————————————— */
+/* sticky-footer page shell — keeps the dark footer at the very bottom and never
+   crowding the last row of looks, whatever the item count */
+.closet-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.closet-page > .closet-wrap {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
 .closet-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 16px;
   margin-top: 8px;
+  padding-bottom: 32px; /* clear gap before the footer */
 }
 .closet-card {
   display: block;
@@ -1550,6 +1588,42 @@
   font-family: var(--sans);
   font-size: 11px;
   color: var(--taupe);
+}
+
+/* Clips / Images section tabs */
+.closet-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 18px;
+}
+.closet-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--noir-line);
+  color: var(--taupe);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.closet-tab:hover {
+  color: var(--ivory);
+  border-color: var(--stone);
+}
+.closet-tab.on {
+  color: var(--noir);
+  background: var(--stone);
+  border-color: var(--stone);
+}
+.closet-tab .ct-count {
+  font-size: 10px;
+  opacity: 0.7;
 }
 .closet-empty {
   display: flex;
@@ -3623,15 +3697,33 @@
 .ob-count {
   color: var(--stone);
 }
+/* onboarding brand search (reuses .brand-search, light panel) */
+.ob-brand-search {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
 .brand-grid {
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  max-height: 46vh;
+  max-height: 40vh;
   overflow-y: auto;
   padding: 2px;
   margin-bottom: 22px;
+}
+/* "+ Add «query»" tile — distinct from the curated houses */
+.brand-tile.brand-add {
+  border-style: dashed;
+}
+.brand-tile.brand-add .brand-name {
+  color: var(--stone);
+}
+/* a "no matches" message fills both grid columns */
+.brand-grid .refine-none {
+  grid-column: 1 / -1;
 }
 .brand-tile {
   position: relative;
@@ -3856,7 +3948,8 @@
 .admin-recent ul { list-style: none; padding: 0; margin: 0; }
 .admin-recent li {
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
+  grid-template-columns: 1fr 1.6fr 0.9fr auto auto;
+  align-items: center;
   gap: 1rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--stone-soft);
@@ -3864,7 +3957,63 @@
 }
 .admin-recent-brand { font-weight: 400; }
 .admin-recent-name { color: var(--taupe); }
-.admin-recent-price { text-align: right; }
+.admin-recent-cat {
+  color: var(--taupe);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-recent-price { text-align: right; white-space: nowrap; }
+
+/* heading + category filter row */
+.admin-recent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.admin-cat-filter { width: auto; min-width: 190px; }
+
+/* per-row delete (with inline confirm) */
+.admin-recent-act {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.admin-recent-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--taupe);
+  padding: 4px;
+  transition: color 0.18s var(--ease);
+}
+.admin-recent-del:hover { color: #dc2626; }
+.admin-del-confirm,
+.admin-del-cancel {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.admin-del-confirm { background: #dc2626; color: #fff; border-color: #dc2626; }
+.admin-del-confirm:hover { background: #b91c1c; }
+.admin-del-cancel { background: transparent; color: var(--taupe); border-color: var(--stone-soft); }
+.admin-del-cancel:hover { color: var(--noir); }
+
+@media (max-width: 640px) {
+  .admin-recent li { grid-template-columns: 1fr 1fr auto auto; gap: 0.6rem; }
+  .admin-recent-cat { display: none; }
+}
 .admin-recent-row { cursor: pointer; transition: background 0.15s var(--ease); }
 .admin-recent-row:hover { background: var(--ivory-deep); }
 .admin-recent-row.on { background: var(--ivory-deep); box-shadow: inset 2px 0 0 var(--noir); }
@@ -4103,6 +4252,11 @@
 /* recent / list rows */
 .admin-shell .admin-recent li { border-bottom: 1px solid var(--ad-border); }
 .admin-shell .admin-recent-name { color: var(--ad-muted); }
+.admin-shell .admin-recent-cat { color: var(--ad-muted); }
+.admin-shell .admin-recent-del { color: var(--ad-muted); }
+.admin-shell .admin-recent-del:hover { color: #f87171; }
+.admin-shell .admin-del-cancel { color: var(--ad-muted); border-color: var(--ad-border); }
+.admin-shell .admin-del-cancel:hover { color: var(--ad-text); }
 .admin-shell .admin-recent-row:hover { background: var(--ad-accent-soft); }
 .admin-shell .admin-recent-row.on {
   background: var(--ad-accent-soft);
@@ -4196,6 +4350,20 @@
   font-weight: 700;
 }
 .admin-toast .at-msg { flex: 1 1 auto; }
+.admin-toast .at-action {
+  flex: 0 0 auto;
+  margin-top: -2px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  transition: background 0.18s ease;
+}
+.admin-toast .at-action:hover { background: rgba(255, 255, 255, 0.3); }
 @keyframes adToastIn {
   from { opacity: 0; transform: translateX(16px); }
   to { opacity: 1; transform: none; }
@@ -4210,6 +4378,16 @@
 .profile-img-hint {
   font-style: italic; font-weight: 300; color: var(--taupe);
   text-transform: none; letter-spacing: 0;
+}
+
+/* profile / closet — mobile: tighter gutters + wrap the model sheet so nothing
+   gets cut off on the right. (admin dashboard uses .admin-shell.admin-wrap and
+   is unaffected by the lower-specificity .admin-wrap rule below.) */
+@media (max-width: 640px) {
+  .admin-wrap { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .admin-card { padding: 1.2rem; }
+  .model-sheet { flex-wrap: wrap; }
+  .model-frame { width: 100%; max-width: 200px; }
 }
 
 /* ——— Curator try-on: 360°-composing caption + image/360 toggle ——— */
@@ -4460,8 +4638,8 @@
 .refine-apply:hover { opacity: 0.88; }
 
 @media (max-width: 480px) {
-  .curator-filterbar { flex-direction: column; align-items: stretch; gap: 12px; }
-  .refine-btn { align-self: flex-end; }
+  /* keep "New in" and "Refine" on one row (inline), not stacked */
+  .curator-filterbar { gap: 12px; padding: 14px 0; }
   .refine-drawer { width: 100%; }
 }
 

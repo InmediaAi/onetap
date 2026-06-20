@@ -17,14 +17,25 @@ import {
  */
 
 type ToastKind = "success" | "error";
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+interface ToastOptions {
+  /** A single inline action button (e.g. "View" after a download). */
+  action?: ToastAction;
+  /** Auto-dismiss delay in ms (default 4200). */
+  duration?: number;
+}
 interface ToastItem {
   id: number;
   kind: ToastKind;
   message: string;
+  action?: ToastAction;
 }
 interface ToastApi {
-  success: (message: string) => void;
-  error: (message: string) => void;
+  success: (message: string, opts?: ToastOptions) => void;
+  error: (message: string, opts?: ToastOptions) => void;
 }
 
 const ToastCtx = createContext<ToastApi | null>(null);
@@ -44,19 +55,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const push = useCallback(
-    (kind: ToastKind, message: string) => {
+    (kind: ToastKind, message: string, opts?: ToastOptions) => {
       const id = (idRef.current += 1);
       const msg = message?.trim() || (kind === "success" ? "Done." : "Something went wrong.");
-      setToasts((t) => [...t, { id, kind, message: msg }]);
-      setTimeout(() => remove(id), 4200);
+      setToasts((t) => [...t, { id, kind, message: msg, action: opts?.action }]);
+      setTimeout(() => remove(id), opts?.duration ?? 4200);
     },
     [remove],
   );
 
   const api = useMemo<ToastApi>(
     () => ({
-      success: (m) => push("success", m),
-      error: (m) => push("error", m),
+      success: (m, o) => push("success", m, o),
+      error: (m, o) => push("error", m, o),
     }),
     [push],
   );
@@ -66,18 +77,31 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div className="admin-toast-wrap" aria-live="polite">
         {toasts.map((t) => (
-          <button
+          <div
             key={t.id}
-            type="button"
             className={`admin-toast ${t.kind}`}
             onClick={() => remove(t.id)}
+            role="status"
             title="Dismiss"
           >
             <span className="at-icon" aria-hidden="true">
               {t.kind === "success" ? "✓" : "!"}
             </span>
             <span className="at-msg">{t.message}</span>
-          </button>
+            {t.action && (
+              <button
+                type="button"
+                className="at-action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  t.action!.onClick();
+                  remove(t.id);
+                }}
+              >
+                {t.action.label}
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </ToastCtx.Provider>

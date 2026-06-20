@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAtelier } from "@/lib/store";
 
@@ -22,15 +22,19 @@ const KIND_LABEL: Record<ClosetLook["kind"], string> = {
 };
 
 type State = "loading" | "ready" | "signedout" | "error";
+type Tab = "clips" | "images";
 
 /**
  * The signed-in user's generated looks — their closet/history. Server-fetched
- * (authoritative + cross-device) from /api/me/looks. Each card opens /look/[id].
+ * (authoritative + cross-device) from /api/me/looks. Split into Clips (360°/film)
+ * and Images (try-on stills); each card opens /look/[id], where download + share
+ * live.
  */
 export default function ClosetGallery() {
   const openSignIn = useAtelier((s) => s.openSignIn);
   const [state, setState] = useState<State>("loading");
   const [looks, setLooks] = useState<ClosetLook[]>([]);
+  const [tab, setTab] = useState<Tab>("clips"); // clips first, by default
 
   useEffect(() => {
     let active = true;
@@ -57,6 +61,10 @@ export default function ClosetGallery() {
       active = false;
     };
   }, []);
+
+  const clips = useMemo(() => looks.filter((l) => l.kind !== "tryon"), [looks]);
+  const images = useMemo(() => looks.filter((l) => l.kind === "tryon"), [looks]);
+  const shown = tab === "clips" ? clips : images;
 
   if (state === "loading") {
     return <p className="admin-status">Loading your closet…</p>;
@@ -89,30 +97,61 @@ export default function ClosetGallery() {
   }
 
   return (
-    <div className="closet-grid">
-      {looks.map((l) => {
-        const isVideo = l.kind !== "tryon";
-        const isFifa = l.campaign === "fifa-worldcup";
-        return (
-          <Link key={l.id} href={`/look/${l.id}`} className="closet-card" aria-label={`View ${KIND_LABEL[l.kind]}`}>
-            <div className="cc-media">
-              {isVideo && !l.posterUrl ? (
-                <video src={l.assetUrl ?? undefined} muted playsInline preload="metadata" />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={(isVideo ? l.posterUrl : l.assetUrl) ?? undefined} alt="" loading="lazy" />
-              )}
-              {isVideo && <span className="cc-play" aria-hidden="true">▶</span>}
-            </div>
-            <div className="cc-meta">
-              <span className="cc-kind">{isFifa ? "FIFA" : KIND_LABEL[l.kind]}</span>
-              <span className="cc-date">
-                {new Date(l.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-              </span>
-            </div>
-          </Link>
-        );
-      })}
-    </div>
+    <>
+      <div className="closet-tabs">
+        <button
+          className={"closet-tab" + (tab === "clips" ? " on" : "")}
+          onClick={() => setTab("clips")}
+        >
+          Clips <span className="ct-count">{clips.length}</span>
+        </button>
+        <button
+          className={"closet-tab" + (tab === "images" ? " on" : "")}
+          onClick={() => setTab("images")}
+        >
+          Images <span className="ct-count">{images.length}</span>
+        </button>
+      </div>
+
+      {shown.length === 0 ? (
+        <p className="admin-status">
+          {tab === "clips" ? "No clips yet — create a 360° or film." : "No try-on images yet."}
+        </p>
+      ) : (
+        <div className="closet-grid">
+          {shown.map((l) => {
+            const isVideo = l.kind !== "tryon";
+            const isFifa = l.campaign === "fifa-worldcup";
+            return (
+              <Link
+                key={l.id}
+                href={`/look/${l.id}`}
+                className="closet-card"
+                aria-label={`View ${KIND_LABEL[l.kind]}`}
+              >
+                <div className="cc-media">
+                  {isVideo && !l.posterUrl ? (
+                    <video src={l.assetUrl ?? undefined} muted playsInline preload="metadata" />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={(isVideo ? l.posterUrl : l.assetUrl) ?? undefined} alt="" loading="lazy" />
+                  )}
+                  {isVideo && <span className="cc-play" aria-hidden="true">▶</span>}
+                </div>
+                <div className="cc-meta">
+                  <span className="cc-kind">{isFifa ? "FIFA" : KIND_LABEL[l.kind]}</span>
+                  <span className="cc-date">
+                    {new Date(l.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }

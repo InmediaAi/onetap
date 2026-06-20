@@ -208,6 +208,10 @@ export default function ProfilePanel() {
   const monthlyLeft = Math.max(0, usage.videoLimit - usage.videosUsed);
   const remaining = active ? monthlyLeft + usage.topupBalance : usage.freeTrialRemaining;
 
+  // "Your model" widget hidden for now — the feature/handlers stay intact, just
+  // not surfaced. Flip to true to bring it back.
+  const SHOW_MODEL = false;
+
   async function buyTopups() {
     setTopupBusy(true);
     try {
@@ -289,39 +293,41 @@ export default function ProfilePanel() {
         </div>
       </section>
 
-      {/* System-derived model sheet (read-only) */}
-      <section className="admin-card">
-        <h2 className="admin-subtitle">Your model</h2>
-        <p className="admin-hint">
-          One multi-angle likeness composed by OneTap from your photos. We create
-          this for you — it can’t be uploaded or replaced.
-        </p>
-        <div className="model-sheet">
-          <div className="model-frame">
-            {modelUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={modelUrl} alt="Your composed model" />
-            ) : modelBusy ? (
-              <span className="admin-preview-empty">Composing…</span>
-            ) : (
-              <span className="admin-preview-empty">Not yet generated</span>
-            )}
+      {/* System-derived model sheet (read-only) — hidden for now (SHOW_MODEL). */}
+      {SHOW_MODEL && (
+        <section className="admin-card">
+          <h2 className="admin-subtitle">Your model</h2>
+          <p className="admin-hint">
+            One multi-angle likeness composed by OneTap from your photos. We create
+            this for you — it can’t be uploaded or replaced.
+          </p>
+          <div className="model-sheet">
+            <div className="model-frame">
+              {modelUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={modelUrl} alt="Your composed model" />
+              ) : modelBusy ? (
+                <span className="admin-preview-empty">Composing…</span>
+              ) : (
+                <span className="admin-preview-empty">Not yet generated</span>
+              )}
+            </div>
+            <div className="model-side">
+              <button
+                className="btn-line admin-btn"
+                onClick={generateModel}
+                disabled={modelBusy || photoCount < 2}
+              >
+                {modelBusy ? "Composing…" : modelUrl ? "Regenerate" : "Generate my model"}
+              </button>
+              {photoCount < 2 && (
+                <p className="admin-hint">Add at least two photos above first.</p>
+              )}
+              {modelMsg && <p className="admin-status">{modelMsg}</p>}
+            </div>
           </div>
-          <div className="model-side">
-            <button
-              className="btn-line admin-btn"
-              onClick={generateModel}
-              disabled={modelBusy || photoCount < 2}
-            >
-              {modelBusy ? "Composing…" : modelUrl ? "Regenerate" : "Generate my model"}
-            </button>
-            {photoCount < 2 && (
-              <p className="admin-hint">Add at least two photos above first.</p>
-            )}
-            {modelMsg && <p className="admin-status">{modelMsg}</p>}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Taste */}
       <section className="admin-card">

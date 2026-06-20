@@ -3,6 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Heart, Download, Share2, ShoppingBag } from "lucide-react";
 import ResultMedia from "@/components/result/ResultMedia";
+import { useToast } from "@/components/Toast";
+import { downloadAsset } from "@/lib/download";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
@@ -69,6 +71,7 @@ export default function ResultStage({
   onLocked,
   footer,
 }: ResultStageProps) {
+  const toast = useToast();
   const [view, setView] = useState<"tryon" | "turn">("turn");
   useEffect(() => {
     if (video) setView("turn");
@@ -80,16 +83,15 @@ export default function ResultStage({
   const hasResult = Boolean(image || video);
   const shownLookId = showingTurn ? videoLookId : imageLookId;
 
-  function download() {
+  async function download() {
     if (canKeep === false) { onLocked?.(); return; }
     const url = showingTurn ? video : image;
     if (!url) return;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `onetap-${productId ?? "look"}-${showingTurn ? "result" : "tryon"}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const filename = `onetap-${productId ?? "look"}-${showingTurn ? "result" : "tryon"}`;
+    const viewUrl = await downloadAsset(url, filename);
+    toast.success("Download complete", {
+      action: { label: "View", onClick: () => window.open(viewUrl, "_blank", "noopener") },
+    });
     track(EVENTS.RESULT_DOWNLOADED, { kind: showingTurn ? kind : "tryon", productId, lookId: shownLookId });
   }
   async function share() {

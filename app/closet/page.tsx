@@ -4,9 +4,9 @@ import SiteFooter from "@/components/SiteFooter";
 
 export default function ClosetPage() {
   return (
-    <main>
+    <main className="closet-page">
       <Header />
-      <div className="admin-wrap">
+      <div className="admin-wrap closet-wrap">
         <p className="eyebrow">OneTap Atelier</p>
         <h1 className="admin-title">Your closet</h1>
         <p className="admin-hint" style={{ marginBottom: 24 }}>

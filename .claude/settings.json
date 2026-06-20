@@ -23,7 +23,9 @@
       "Bash(sed -n '60,90p' components/CreatorBuilder.tsx)",
       "Bash(sed -n '30,55p' components/Studio360.tsx)",
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
-      "Bash(awk '/create table if not exists campaign_moments/,/\\\\\\);/' lib/supabase/schema.sql)"
+      "Bash(awk '/create table if not exists campaign_moments/,/\\\\\\);/' lib/supabase/schema.sql)",
+      "Bash(awk '/\\\\.foot \\\\{/{f=1} f{print NR\": \"$0} /\\\\}/{if\\(f\\)c++; if\\(c>1\\)f=0}' app/globals.css)",
+      "Bash(awk '/^function Multi/{f=1} f{print NR\": \"$0} f&&/^}/{c++; if\\(c>=1\\) exit}' components/ProfilePanel.tsx)"
     ]
   }
 }
