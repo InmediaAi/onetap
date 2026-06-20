@@ -804,3 +804,39 @@ select 'fifa-worldcup', label, prompt, ord from (values
   ('Big screen feature', 'Big-screen feature: the subject in the team jersey appears larger-than-life on the stadium jumbotron as the fan of the match, crowd cheering up at the screen, confident wave, broadcast graphics energy.', 4)
 ) as m(label, prompt, ord)
 where not exists (select 1 from campaign_moments cm where cm.campaign_id = 'fifa-worldcup');
+
+-- De-genericize the subject so the video model preserves the user's identity
+-- (a generic "the subject" invites a face swap). Idempotent — also fixes rows
+-- seeded before this change. The hard identity-lock preamble is added in code
+-- (withIdentityLock, lib/ai/prompts.ts); this just removes the conflicting wording.
+update campaign_moments
+   set prompt = replace(prompt, 'the subject', 'the person from the photo')
+ where campaign_id = 'fifa-worldcup' and prompt like '%the subject%';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION: admin-editable AI prompts. Idempotent — run as-is.
+-- The two core system prompts (try-on image base + video identity-lock) become
+-- DB-editable so they can be tuned without a deploy. Read SERVER-SIDE ONLY via
+-- the service role (lib/ai/getPrompts.ts) — RLS on, NO policy → not client-
+-- readable. Seeds equal the in-code SEED_PROMPTS (lib/ai/prompts.ts), so behavior
+-- is unchanged until an admin edits. `{scene}` marks where the per-request scene
+-- prompt is injected.
+-- ═══════════════════════════════════════════════════════════════════════════
+create table if not exists ai_prompts (
+  id         text primary key,           -- 'tryon_image' | 'video_identity'
+  label      text not null,
+  content    text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table ai_prompts enable row level security;
+-- No select/insert/update/delete policy → only the service role reads/writes.
+
+insert into ai_prompts (id, label, content) values
+  ('tryon_image', 'Try-on image (garment placement + identity)',
+   'The first image is the person. Every image after it is a reference view of the SAME garment (front/back/detail). Place that garment onto the person, using all the references together to reproduce its exact cut, colour, pattern and details, and preserving the person''s face, hair, body and proportions. Produce a single photorealistic image. {scene}'),
+  ('video_identity', 'Video identity-lock (face preservation)',
+   'Animate the real person shown in the provided image into a short video. CRITICAL — preserve their identity exactly: keep the same face, facial features, bone structure, skin tone and texture, hair, and body as in the image. Do NOT change, beautify, smooth, slim, restyle, age, swap, or replace the face, and do not alter the garment. Photorealistic and true to life — real skin texture, not airbrushed, plastic, or CGI — with natural, believable human motion and the identity perfectly consistent in every frame. Scene: {scene}'),
+  ('spin_scene', '360° spin scene (motion for the turn)',
+   'the person performs a 40-degree rotation in place: pausing precisely for 0.5 second, holding the pause with a natural, composed posture. then keep rotating 40-degree in the same direction, pause 0.5 seconds. then rotate back toward the camera and pause precisely for one full second. then they confidently walk to the left and leave off-screen from the side. in Paris Street')
+on conflict (id) do nothing;

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getTryOnProvider } from "@/lib/ai";
+import { getPrompts } from "@/lib/ai/getPrompts";
+import { composePrompt } from "@/lib/ai/prompts";
 import { logGeneration, imageRefOf } from "@/lib/ai/logGeneration";
 import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
@@ -50,14 +52,17 @@ export async function POST(req: Request) {
       .filter((u): u is string => typeof u === "string" && u.length > 0)
       .slice(0, 5);
 
-    // Prompt-capable providers (GPT-Image, Gemini) use the prompt + every garment
+    // Compose the admin-editable base prompt with the optional per-look scene
+    // prompt. Prompt-capable providers (GPT-Image, Gemini) use it + every garment
     // view; Kling Virtual Try-On uses just the primary image and ignores the prompt.
+    const { tryonImage } = await getPrompts();
+    const finalPrompt = composePrompt(tryonImage, prompt);
     const provider = getTryOnProvider();
     const result = await provider.generateTryOn({
       userImage,
       productImage,
       productImages: garmentImages,
-      prompt,
+      prompt: finalPrompt,
     });
 
     // Re-host into our durable storage; returns our URL + look id (best-effort).

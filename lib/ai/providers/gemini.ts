@@ -68,12 +68,11 @@ export class GeminiImageProvider implements TryOnProvider {
     // Garment reference views (front/back/detail). The first image is the
     // person; every image after it is a view of the SAME garment.
     const garmentSrcs = input.productImages?.length ? input.productImages : [input.productImage];
-    const base =
-      "The first image is the person. Every image after it is a reference view of the SAME garment " +
-      "(front/back/detail). Place that garment onto the person, using all the references together to " +
-      "reproduce its exact cut, colour, pattern and details, and preserving the person's face, hair, " +
-      "body and proportions. Produce a single photorealistic image.";
-    const prompt = input.prompt?.trim() ? `${base} ${input.prompt.trim()}` : base;
+    // The full prompt (admin-editable base + scene) is composed by the route.
+    const prompt =
+      input.prompt?.trim() ||
+      "Place the garment from the reference image(s) onto the person in the first image, " +
+        "preserving their face and identity. Produce a single photorealistic image.";
 
     const [person, ...garments] = await Promise.all([
       toInlineImage(input.userImage, "person image"),

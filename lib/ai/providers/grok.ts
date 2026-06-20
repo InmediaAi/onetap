@@ -171,8 +171,11 @@ export class GrokVideoProvider implements VideoProvider {
   private async run(prompt: string, image: string): Promise<VideoResult> {
     const duration = Number(process.env.VIDEO_DURATION) || 5;
     const aspect_ratio = process.env.VIDEO_ASPECT || "9:16";
-    const resolution = process.env.VIDEO_RESOLUTION || "480p";
+    // 720p (was 480p) — faces need the detail; 480p reads as mushy "AI slop".
+    const resolution = process.env.VIDEO_RESOLUTION || "720p";
 
+    // `prompt` is the fully-composed prompt from the route (admin identity-lock
+    // template + scene). The provider just sends it.
     const body = {
       model: this.model,
       prompt,

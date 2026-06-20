@@ -62,7 +62,7 @@ export const FILM_FORMATS: FilmFormat[] = [
       { id: "enh", label: "Enhancements", multi: true, opts: ["Slow-motion turns", "Wind effect", "Shallow bokeh", "Warm golden tones"] },
     ],
     build: (o, gd) =>
-      `Cinematic luxury fashion campaign video. An elegant poised female model wearing ${gd} in a ${one(o, "setting", "luxury interior").toLowerCase()} with soft natural light and shallow depth of field. Pacing: ${one(o, "pacing", "slow & controlled").toLowerCase()}. Shot sequence: ${many(o, "shots", "full 360° turn, walk toward camera, fabric close-up")}. Slow dolly and gentle tracking camera — zero jump cuts. Fabric drape and movement foregrounded in every frame. Model: calm, composed, utterly confident.${Array.isArray(o.enh) && o.enh.length ? " Enhancements: " + (o.enh as string[]).join(", ") + "." : ""} 4K cinematic output, no text overlays, no logos.`,
+      `Cinematic luxury fashion campaign video. The person from the photo, poised, wearing ${gd} in a ${one(o, "setting", "luxury interior").toLowerCase()} with soft natural light and shallow depth of field. Pacing: ${one(o, "pacing", "slow & controlled").toLowerCase()}. Shot sequence: ${many(o, "shots", "full 360° turn, walk toward camera, fabric close-up")}. Slow dolly and gentle tracking camera — zero jump cuts. Fabric drape and movement foregrounded in every frame. They stay calm, composed, utterly confident.${Array.isArray(o.enh) && o.enh.length ? " Enhancements: " + (o.enh as string[]).join(", ") + "." : ""} 4K cinematic output, no text overlays, no logos.`,
   },
   {
     id: "runway",
@@ -78,7 +78,7 @@ export const FILM_FORMATS: FilmFormat[] = [
       { id: "finale", label: "End moment", multi: false, opts: ["Pause & hold at camera", "Slow turn at runway end", "Return walk away", "Close-up on garment detail"] },
     ],
     build: (o, gd) =>
-      `Luxury runway fashion video. An elegant, statuesque female model wearing ${gd} walks a ${one(o, "runway", "fashion show catwalk").toLowerCase()}. Setting: ${one(o, "bg", "grand show venue").toLowerCase()} with controlled dramatic lighting — strong frontal key light, soft fill from sides. Atmosphere: ${one(o, "crowd", "fashion show audience (blurred)").toLowerCase()} in the background, softly out of focus. Model walks with total authority — long confident strides, straight posture, slight shoulder movement. Camera: slow dolly tracking at mid-distance, full body visible, then cuts to mid-shot as she approaches, ending with ${one(o, "finale", "pause & hold at camera").toLowerCase()}. Fabric movement captured as she walks — drape, flow, structure all visible. No fast cuts. Cinematic 4K. This is a luxury fashion show, not a commercial.`,
+      `Luxury runway fashion video. The person from the photo wearing ${gd} walks a ${one(o, "runway", "fashion show catwalk").toLowerCase()}. Setting: ${one(o, "bg", "grand show venue").toLowerCase()} with controlled dramatic lighting — strong frontal key light, soft fill from sides. Atmosphere: ${one(o, "crowd", "fashion show audience (blurred)").toLowerCase()} in the background, softly out of focus. They walk with total authority — long confident strides, straight posture, slight shoulder movement. Camera: slow dolly tracking at mid-distance, full body visible, then cuts to mid-shot as they approach, ending with ${one(o, "finale", "pause & hold at camera").toLowerCase()}. Fabric movement captured as they walk — drape, flow, structure all visible. No fast cuts. Cinematic 4K. This is a luxury fashion show, not a commercial.`,
   },
   {
     id: "reveal",
@@ -94,7 +94,7 @@ export const FILM_FORMATS: FilmFormat[] = [
       { id: "end", label: "Ending shot", multi: false, opts: ["Hold on full look", "Slow walk away", "Fabric detail close-up", "Direct look to camera"] },
     ],
     build: (o, gd) =>
-      `Luxury outfit reveal video. A striking female model wearing ${gd}. Reveal: ${one(o, "style", "slow camera pan upward").toLowerCase()}. Backdrop: ${one(o, "bg", "neutral ivory").toLowerCase()} with soft controlled lighting. Model energy: ${one(o, "energy", "composed & editorial").toLowerCase()}. Video builds anticipation — slow, deliberate — emphasising silhouette, fit, and fabric quality throughout. Ending: ${one(o, "end", "hold on full look").toLowerCase()}. Smooth camera movement only, zero fast cuts. The garment commands every frame. Ultra-realistic 4K.`,
+      `Luxury outfit reveal video. The person from the photo wearing ${gd}. Reveal: ${one(o, "style", "slow camera pan upward").toLowerCase()}. Backdrop: ${one(o, "bg", "neutral ivory").toLowerCase()} with soft controlled lighting. Energy: ${one(o, "energy", "composed & editorial").toLowerCase()}. Video builds anticipation — slow, deliberate — emphasising silhouette, fit, and fabric quality throughout. Ending: ${one(o, "end", "hold on full look").toLowerCase()}. Smooth camera movement only, zero fast cuts. The garment commands every frame. Ultra-realistic 4K.`,
   },
   {
     id: "slowliving",
@@ -110,7 +110,7 @@ export const FILM_FORMATS: FilmFormat[] = [
       { id: "pace", label: "Pacing", multi: false, opts: ["Extremely slow & meditative", "Slow & dreamy", "Unhurried & calm"] },
     ],
     build: (o, gd) =>
-      `Slow living aesthetic fashion video. A serene, naturally beautiful female model wearing ${gd} in a ${one(o, "setting", "morning apartment").toLowerCase()}. Activities: ${many(o, "activity", "morning coffee ritual, looking out window")}. Lighting: ${one(o, "light", "soft morning window light").toLowerCase()}. Pacing: ${one(o, "pace", "slow & dreamy").toLowerCase()} — this is atmosphere, not content. Camera: gentle drifting movement, extreme close-ups on fabric texture, hands, and quiet detail. No posing, no performance — the garment lives naturally in the scene. Cinematic 4K. Quiet, beautiful, worth stopping for.`,
+      `Slow living aesthetic fashion video. The person from the photo, serene, wearing ${gd} in a ${one(o, "setting", "morning apartment").toLowerCase()}. Activities: ${many(o, "activity", "morning coffee ritual, looking out window")}. Lighting: ${one(o, "light", "soft morning window light").toLowerCase()}. Pacing: ${one(o, "pace", "slow & dreamy").toLowerCase()} — this is atmosphere, not content. Camera: gentle drifting movement, extreme close-ups on fabric texture, hands, and quiet detail. No posing, no performance — the garment lives naturally in the scene. Cinematic 4K. Quiet, beautiful, worth stopping for.`,
   },
   {
     id: "streetstyle",
@@ -125,7 +125,7 @@ export const FILM_FORMATS: FilmFormat[] = [
       { id: "style", label: "Edit style", multi: false, opts: ["Candid & natural", "Polished editorial", "Fashion week walk", "Paparazzi-style"] },
     ],
     build: (o, gd) =>
-      `Street style luxury fashion video. An effortlessly stylish female model wearing ${gd} on ${one(o, "loc", "European cobblestone streets").toLowerCase()} during ${one(o, "time", "golden hour").toLowerCase()}. Edit style: ${one(o, "style", "polished editorial").toLowerCase()}. Movement: ${many(o, "movement", "walking toward camera, pausing / looking off-frame")}. Camera follows naturally — wide establishing, mid-body tracking, spontaneous detail shots. Shallow depth of field blurs environment softly. Natural ambient light throughout. The outfit always clearly visible, perfectly styled. Cinematic 4K. No rigs visible. Authentic luxury street presence.`,
+      `Street style luxury fashion video. The person from the photo, effortlessly stylish, wearing ${gd} on ${one(o, "loc", "European cobblestone streets").toLowerCase()} during ${one(o, "time", "golden hour").toLowerCase()}. Edit style: ${one(o, "style", "polished editorial").toLowerCase()}. Movement: ${many(o, "movement", "walking toward camera, pausing / looking off-frame")}. Camera follows naturally — wide establishing, mid-body tracking, spontaneous detail shots. Shallow depth of field blurs environment softly. Natural ambient light throughout. The outfit always clearly visible, perfectly styled. Cinematic 4K. No rigs visible. Authentic luxury street presence.`,
   },
   {
     id: "fashionweek",
@@ -141,7 +141,7 @@ export const FILM_FORMATS: FilmFormat[] = [
       { id: "cam", label: "Camera style", multi: false, opts: ["Candid documentary", "Polished editorial", "Slow cinematic", "Paparazzi-style"] },
     ],
     build: (o, gd) =>
-      `Fashion week luxury video set in ${one(o, "city", "Paris")}. A fashion-forward, elegantly dressed female model wearing ${gd}, outfit energy: ${one(o, "outfit", "quiet luxury statement").toLowerCase()}. Scene: ${one(o, "context", "front row arrival").toLowerCase()}. Camera style: ${one(o, "cam", "polished editorial").toLowerCase()}. Ambient city energy — architecture, blurred crowd, soft movement. Model navigates the environment with total ease and composure. Mix of wide establishing, mid-body movement, and close detail on outfit and accessories. Natural ambient light. Cinematic 4K. Fashion week energy — controlled, aspirational, editorial.`,
+      `Fashion week luxury video set in ${one(o, "city", "Paris")}. The person from the photo wearing ${gd}, outfit energy: ${one(o, "outfit", "quiet luxury statement").toLowerCase()}. Scene: ${one(o, "context", "front row arrival").toLowerCase()}. Camera style: ${one(o, "cam", "polished editorial").toLowerCase()}. Ambient city energy — architecture, blurred crowd, soft movement. They navigate the environment with total ease and composure. Mix of wide establishing, mid-body movement, and close detail on outfit and accessories. Natural ambient light. Cinematic 4K. Fashion week energy — controlled, aspirational, editorial.`,
   },
   {
     id: "grwm",
@@ -157,7 +157,7 @@ export const FILM_FORMATS: FilmFormat[] = [
       { id: "beats", label: "Key moments", multi: true, opts: ["Trying on", "Mirror check", "Jewellery close-up", "Final look walk-away", "Perfume finishing touch"] },
     ],
     build: (o, gd) =>
-      `GRWM luxury fashion video for ${one(o, "occasion", "a luxury event").toLowerCase()}. A stylish refined female model in a ${one(o, "loc", "luxury dressing room").toLowerCase()} styling ${gd}. Mood: ${one(o, "mood", "calm & aspirational").toLowerCase()}. Natural sequence: ${many(o, "beats", "trying on, mirror check, final look walk-away")}. Camera: handheld-steady, intimate close-ups on fabric texture, hands, mirror reflections. Warm personal lighting. Movement feels natural and unhurried. Final shot: confident full-length mirror look. Cinematic quality — personal yet aspirational.`,
+      `GRWM luxury fashion video for ${one(o, "occasion", "a luxury event").toLowerCase()}. The person from the photo in a ${one(o, "loc", "luxury dressing room").toLowerCase()} styling ${gd}. Mood: ${one(o, "mood", "calm & aspirational").toLowerCase()}. Natural sequence: ${many(o, "beats", "trying on, mirror check, final look walk-away")}. Camera: handheld-steady, intimate close-ups on fabric texture, hands, mirror reflections. Warm personal lighting. Movement feels natural and unhurried. Final shot: confident full-length mirror look. Cinematic quality — personal yet aspirational.`,
   },
 ];
 
@@ -167,8 +167,11 @@ export function getFilmFormat(id: string | null) {
 
 /**
  * Build the final influencer-film prompt: the format prose with the garment
- * description woven in, then any free-text direction. (Identity is carried by
- * the source image, so no "reference image" preamble is needed.)
+ * description woven in, then any free-text direction. The prose refers to the
+ * subject only as "the person from the photo" (never a generic "model") so it
+ * can't invite a face swap; the hard identity-lock preamble is the admin-editable
+ * "video_identity" prompt, wrapped around this scene in the video/360 routes
+ * (composePrompt + getPrompts).
  */
 export function buildFilmPrompt(
   formatId: string | null,

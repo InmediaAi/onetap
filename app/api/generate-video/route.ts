@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getVideoProvider } from "@/lib/ai";
 import { logGeneration, imageRefOf } from "@/lib/ai/logGeneration";
 import { reserveVideo, refundVideo } from "@/lib/billing/consume";
-import { FILM_PROMPT } from "@/lib/ai/prompts";
+import { FILM_PROMPT, composePrompt } from "@/lib/ai/prompts";
+import { getPrompts } from "@/lib/ai/getPrompts";
 import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 
@@ -53,8 +54,12 @@ export async function POST(req: Request) {
     }
     if ("ok" in r && r.ok) reserved = r.source;
 
-    // The film prompt is built per-format on the client; fall back to a default.
-    const finalPrompt = prompt?.trim() || FILM_PROMPT;
+    // The film scene is built per-format on the client; fall back to a default.
+    // Wrap it with the admin-editable identity-lock prompt so the user's face
+    // is preserved (provider-agnostic).
+    const scene = prompt?.trim() || FILM_PROMPT;
+    const { videoIdentity } = await getPrompts();
+    const finalPrompt = composePrompt(videoIdentity, scene);
 
     const provider = getVideoProvider();
     const result = await provider.generateVideo({ image, prompt: finalPrompt });

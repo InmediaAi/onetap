@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getVideoProvider } from "@/lib/ai";
 import { logGeneration, imageRefOf } from "@/lib/ai/logGeneration";
 import { reserveVideo, refundVideo } from "@/lib/billing/consume";
-import { SPIN_PROMPT } from "@/lib/ai/prompts";
+import { composePrompt } from "@/lib/ai/prompts";
+import { getPrompts } from "@/lib/ai/getPrompts";
 import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 
@@ -53,8 +54,11 @@ export async function POST(req: Request) {
     }
     if ("ok" in r && r.ok) reserved = r.source;
 
-    // Always attach the predefined 360° prompt unless the caller sent one.
-    const finalPrompt = prompt?.trim() || SPIN_PROMPT;
+    // The 360° spin scene (admin-editable; default unless the caller sent one),
+    // wrapped with the identity-lock prompt to preserve the user's face.
+    const { videoIdentity, spinScene } = await getPrompts();
+    const scene = prompt?.trim() || spinScene;
+    const finalPrompt = composePrompt(videoIdentity, scene);
 
     const provider = getVideoProvider();
     const result = await provider.generate360({ image, prompt: finalPrompt });

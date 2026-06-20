@@ -3877,6 +3877,24 @@
 .admin-btn:disabled { opacity: 0.5; cursor: default; }
 .admin-gate .admin-btn { margin-top: 1rem; width: 100%; }
 
+/* admin generation-prompt editor */
+.prompt-edit { margin-bottom: 1.5rem; }
+.prompt-textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.5;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+.prompt-edit-foot {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
 /* inline cancel confirmation (profile subscription) */
 .admin-confirm-row {
   display: flex;

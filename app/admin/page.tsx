@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import PackagesAdmin from "@/components/admin/PackagesAdmin";
+import PromptsAdmin from "@/components/admin/PromptsAdmin";
 import CampaignLinks from "@/components/admin/CampaignLinks";
 import CampaignManager from "@/components/admin/CampaignManager";
 import { useToast } from "@/components/admin/Toast";
@@ -63,7 +64,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
-  const [tab, setTab] = useState<"pieces" | "packages" | "campaigns">("pieces");
+  const [tab, setTab] = useState<"pieces" | "packages" | "campaigns" | "prompts">("pieces");
 
   const [url, setUrl] = useState("");
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -381,10 +382,18 @@ export default function AdminPage() {
         >
           Campaigns
         </button>
+        <button
+          className={"admin-tab" + (tab === "prompts" ? " on" : "")}
+          onClick={() => setTab("prompts")}
+        >
+          Prompts
+        </button>
       </div>
 
       {tab === "packages" ? (
         <PackagesAdmin password={password} />
+      ) : tab === "prompts" ? (
+        <PromptsAdmin password={password} />
       ) : tab === "campaigns" ? (
         <>
           <CampaignManager password={password} />
