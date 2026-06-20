@@ -53,17 +53,21 @@ export class OpenAIImageProvider implements TryOnProvider {
   }
 
   async generateTryOn(input: TryOnInput): Promise<TryOnResult> {
-    // Anchor the two reference images, then layer the admin scene prompt.
+    // Garment reference views (front/back/detail). The first image is the
+    // person; every image after it is a view of the SAME garment.
+    const garmentSrcs = input.productImages?.length ? input.productImages : [input.productImage];
     const base =
-      "Place the apparel/jersey shown in the second image onto the person in the first image, " +
-      "preserving the person's face, hair, body and proportions. Produce a single photorealistic image.";
+      "The first image is the person. Every image after it is a reference view of the SAME garment " +
+      "(front/back/detail). Place that garment onto the person, using all the references together to " +
+      "reproduce its exact cut, colour, pattern and details, and preserving the person's face, hair, " +
+      "body and proportions. Produce a single photorealistic image.";
     const prompt = input.prompt?.trim() ? `${base} ${input.prompt.trim()}` : base;
     const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
     const quality = process.env.OPENAI_IMAGE_QUALITY || "auto";
 
-    const [person, garment] = await Promise.all([
+    const [person, ...garments] = await Promise.all([
       toImageBlob(input.userImage, "person image"),
-      toImageBlob(input.productImage, "garment image"),
+      ...garmentSrcs.map((s, i) => toImageBlob(s, `garment image ${i + 1}`)),
     ]);
 
     const form = new FormData();
@@ -72,9 +76,9 @@ export class OpenAIImageProvider implements TryOnProvider {
     form.append("size", size);
     form.append("quality", quality);
     form.append("n", "1");
-    // Multiple reference images go under `image[]` (person first, garment second).
+    // Reference images go under `image[]` — person first, then every garment view.
     form.append("image[]", person, "person.png");
-    form.append("image[]", garment, "garment.png");
+    garments.forEach((g, i) => form.append("image[]", g, `garment-${i + 1}.png`));
 
     logApiRequest("openai:image", "POST", EDITS_URL, {
       model: this.model,
@@ -82,7 +86,7 @@ export class OpenAIImageProvider implements TryOnProvider {
       quality,
       prompt,
       person: summarizeImage(input.userImage),
-      garment: summarizeImage(input.productImage),
+      garments: garmentSrcs.length,
     });
 
     const res = await fetch(EDITS_URL, {

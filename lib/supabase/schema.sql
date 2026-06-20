@@ -467,6 +467,18 @@ create policy "looks public read" on storage.objects for select
   using (bucket_id = 'looks');
 -- No insert/update/delete policy → only the service role can write.
 
+-- Public read bucket for re-hosted product images. Admin save captures each
+-- retailer image (with browser headers) into here so try-on generation pulls a
+-- stable Supabase URL instead of a hotlink-protected CDN (which 403s server-side).
+insert into storage.buckets (id, name, public)
+  values ('product-images', 'product-images', true)
+  on conflict (id) do nothing;
+
+drop policy if exists "product images public read" on storage.objects;
+create policy "product images public read" on storage.objects for select
+  using (bucket_id = 'product-images');
+-- No insert/update/delete policy → only the service role can write.
+
 -- Poster frame for video looks (still image shown before play).
 alter table generated_looks add column if not exists poster_url text;
 

@@ -38,6 +38,8 @@ export interface ComposeArgs {
   likeness: string;
   /** The garment/piece image to wear (data/hosted URL). Optional. */
   pieceImage?: string;
+  /** Extra reference views of the same garment (optional) — passed to the image step. */
+  pieceImages?: string[];
   /** Optional directive prompt for the VIDEO step (e.g. the built film brief). */
   prompt?: string;
   /** Optional prompt for the IMAGE step (prompt-capable providers, e.g. GPT-Image). */
@@ -94,6 +96,7 @@ async function post(url: string, body: unknown) {
 export async function composeImageOnly(args: {
   likeness: string;
   pieceImage: string;
+  pieceImages?: string[];
   imagePrompt?: string;
   productId: string;
 }): Promise<string> {
@@ -101,6 +104,7 @@ export async function composeImageOnly(args: {
   const tryon = await post("/api/generate-image", {
     userImage: args.likeness,
     productImage: args.pieceImage,
+    productImages: args.pieceImages,
     productId: args.productId,
     campaign,
     prompt: args.imagePrompt,
@@ -112,6 +116,7 @@ export async function composeReel({
   kind,
   likeness,
   pieceImage,
+  pieceImages,
   prompt,
   imagePrompt,
   precomposedImage,
@@ -134,6 +139,7 @@ export async function composeReel({
       const tryon = await post("/api/generate-image", {
         userImage: likeness,
         productImage: pieceImage,
+        productImages: pieceImages,
         productId,
         campaign,
         prompt: imagePrompt, // image-step prompt (prompt-capable providers); Kling ignores it

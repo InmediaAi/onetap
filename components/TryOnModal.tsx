@@ -63,6 +63,8 @@ export default function TryOnModal({
     const pid = product.id;
     const like = portrait;
     const pImg = product.imageUrl;
+    // Send every view of the piece so the provider renders it more faithfully.
+    const pImgs = product.images?.length ? product.images : [product.imageUrl];
 
     (async () => {
       // 1) Try-on image — always free.
@@ -77,6 +79,7 @@ export default function TryOnModal({
           body: JSON.stringify({
             userImage: like,
             productImage: pImg,
+            productImages: pImgs,
             productId: pid,
             campaign: getAttribution()?.utm_campaign,
           }),

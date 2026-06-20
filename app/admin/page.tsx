@@ -240,6 +240,11 @@ export default function AdminPage() {
       const msg = `${editingId ? "Updated" : "Added"} “${data.product.brand} — ${data.product.name}”.`;
       setStatus(msg);
       toast.success(msg);
+      if (Array.isArray(data.failed) && data.failed.length > 0) {
+        toast.error(
+          `${data.failed.length} image(s) couldn’t be captured — kept the original link(s). Try-on may fail for those.`,
+        );
+      }
       setDraft({ ...EMPTY, dropDate: today() });
       setHasDraft(false);
       setEditingId(null);

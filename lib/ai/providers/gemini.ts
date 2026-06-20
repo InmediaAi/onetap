@@ -65,14 +65,19 @@ export class GeminiImageProvider implements TryOnProvider {
   }
 
   async generateTryOn(input: TryOnInput): Promise<TryOnResult> {
+    // Garment reference views (front/back/detail). The first image is the
+    // person; every image after it is a view of the SAME garment.
+    const garmentSrcs = input.productImages?.length ? input.productImages : [input.productImage];
     const base =
-      "Place the apparel/jersey shown in the second image onto the person in the first image, " +
-      "preserving the person's face, hair, body and proportions. Produce a single photorealistic image.";
+      "The first image is the person. Every image after it is a reference view of the SAME garment " +
+      "(front/back/detail). Place that garment onto the person, using all the references together to " +
+      "reproduce its exact cut, colour, pattern and details, and preserving the person's face, hair, " +
+      "body and proportions. Produce a single photorealistic image.";
     const prompt = input.prompt?.trim() ? `${base} ${input.prompt.trim()}` : base;
 
-    const [person, garment] = await Promise.all([
+    const [person, ...garments] = await Promise.all([
       toInlineImage(input.userImage, "person image"),
-      toInlineImage(input.productImage, "garment image"),
+      ...garmentSrcs.map((s, i) => toInlineImage(s, `garment image ${i + 1}`)),
     ]);
 
     // Optional aspect/size control. The docs show string values, but some
@@ -90,7 +95,7 @@ export class GeminiImageProvider implements TryOnProvider {
     const parts = [
       { text: prompt },
       { inline_data: { mime_type: person.mime, data: person.data } },
-      { inline_data: { mime_type: garment.mime, data: garment.data } },
+      ...garments.map((g) => ({ inline_data: { mime_type: g.mime, data: g.data } })),
     ];
 
     const attempt = async (withFormat: boolean) => {
@@ -102,7 +107,7 @@ export class GeminiImageProvider implements TryOnProvider {
         prompt,
         generationConfig,
         person: summarizeImage(input.userImage),
-        garment: summarizeImage(input.productImage),
+        garments: garmentSrcs.length,
       });
       const res = await fetch(url, {
         method: "POST",

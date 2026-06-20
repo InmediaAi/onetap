@@ -27,13 +27,14 @@ export async function POST(req: Request) {
   let body: {
     userImage?: string;
     productImage?: string;
+    productImages?: string[];
     productId?: string;
     campaign?: string;
     prompt?: string;
   } = {};
   try {
     body = await req.json();
-    const { userImage, productImage, productId, campaign, prompt } = body;
+    const { userImage, productImage, productImages, productId, campaign, prompt } = body;
     if (!userImage || !productImage) {
       return NextResponse.json(
         { error: "userImage and productImage are required" },
@@ -41,10 +42,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // Pass the optional prompt through. Prompt-capable providers (GPT-Image)
-    // use it to compose the scene; Kling Virtual Try-On ignores it.
+    // All views of the same garment (primary first), deduped + capped — extra
+    // reference images give the prompt-capable providers a more faithful render.
+    const garmentImages = Array.from(
+      new Set([productImage, ...(Array.isArray(productImages) ? productImages : [])]),
+    )
+      .filter((u): u is string => typeof u === "string" && u.length > 0)
+      .slice(0, 5);
+
+    // Prompt-capable providers (GPT-Image, Gemini) use the prompt + every garment
+    // view; Kling Virtual Try-On uses just the primary image and ignores the prompt.
     const provider = getTryOnProvider();
-    const result = await provider.generateTryOn({ userImage, productImage, prompt });
+    const result = await provider.generateTryOn({
+      userImage,
+      productImage,
+      productImages: garmentImages,
+      prompt,
+    });
 
     // Re-host into our durable storage; returns our URL + look id (best-effort).
     const userId = await currentUserId();

@@ -120,7 +120,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
 
   /* ---- core generation ---- */
   const run = useCallback(
-    async (opts: { jerseyImage: string; jerseyId: string; prompt: string; imagePrompt?: string; likeness: string; precomposedImage?: string }) => {
+    async (opts: { jerseyImage: string; jerseyImages?: string[]; jerseyId: string; prompt: string; imagePrompt?: string; likeness: string; precomposedImage?: string }) => {
       setStage("gen");
       setError(null);
       try {
@@ -128,6 +128,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
           kind: "video",
           likeness: opts.likeness,
           pieceImage: opts.jerseyImage,
+          pieceImages: opts.jerseyImages,
           prompt: opts.prompt, // video prompt → Grok
           imagePrompt: opts.imagePrompt, // image prompt → GPT-Image (image step)
           precomposedImage: opts.precomposedImage, // reuse the image composed during sign-in
@@ -188,6 +189,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     const key = `${jersey.product.id}|${moment.id}|${photo.length}`;
     if (imgJobRef.current?.key === key) return; // already composing this exact input
     const promise = composeImageOnly({
+      pieceImages: jersey.product.images,
       likeness: photo,
       pieceImage: jersey.product.imageUrl,
       imagePrompt: moment.imagePrompt ?? undefined,
@@ -220,6 +222,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     }
     void run({
       jerseyImage: jersey.product.imageUrl,
+      jerseyImages: jersey.product.images,
       jerseyId: jersey.product.id,
       prompt: moment.prompt,
       imagePrompt: moment.imagePrompt ?? undefined,
@@ -303,6 +306,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     void persistImage("face", faceImg);
     void run({
       jerseyImage: jersey.product.imageUrl,
+      jerseyImages: jersey.product.images,
       jerseyId: jersey.product.id,
       prompt: moment.prompt,
       imagePrompt: moment.imagePrompt ?? undefined,
@@ -355,7 +359,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     void persistImage("body", resume.bodyImg);
     void persistImage("face", resume.faceImg);
     if (!(await ensureQuotaOrSubscribe())) return;
-    void run({ jerseyImage: j.product.imageUrl, jerseyId: j.product.id, prompt: m.prompt, imagePrompt: m.imagePrompt ?? undefined, likeness });
+    void run({ jerseyImage: j.product.imageUrl, jerseyImages: j.product.images, jerseyId: j.product.id, prompt: m.prompt, imagePrompt: m.imagePrompt ?? undefined, likeness });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resume, email, teams, moments, run, persistImage]);
 

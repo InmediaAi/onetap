@@ -9,8 +9,12 @@ export type GenerationKind = "tryon" | "spin" | "video";
 export interface TryOnInput {
   /** Data URL or hosted URL of the user's portrait. */
   userImage: string;
-  /** Hosted URL of the product image. */
+  /** Hosted URL of the product image (the primary view). */
   productImage: string;
+  /** Optional extra reference views of the SAME garment (front/back/detail).
+      Prompt-capable providers (GPT-Image, Gemini) use all of them for a more
+      faithful render; Kling uses only `productImage`. Includes the primary. */
+  productImages?: string[];
   /** Optional styling/fit directive (predefined try-on prompt). */
   prompt?: string;
 }

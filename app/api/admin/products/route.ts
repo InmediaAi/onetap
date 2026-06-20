@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkAdmin } from "@/lib/admin/auth";
 import { createServiceClient } from "@/lib/supabase/server";
+import { persistProductImages } from "@/lib/storage/productImages";
 import {
   slugify,
   deriveMono,
@@ -20,6 +21,9 @@ import {
 } from "@/lib/data/vocab";
 
 export const runtime = "nodejs";
+// Saving re-hosts the product images into Supabase storage (downloading from the
+// retailer CDN can be slow), so allow well beyond the platform default timeout.
+export const maxDuration = 120;
 
 /** Max image variants stored per piece (scrape pulls up to 3; admin can add more). */
 const MAX_IMAGES = 6;
@@ -156,6 +160,12 @@ export async function POST(req: Request) {
       }
     }
 
+    // Resolve the stable id first, then re-host the images under it so try-on
+    // pulls a Supabase URL (never the retailer's hotlink-protected source).
+    const editId = clean(body.editId, 200);
+    const id = editId || (await uniqueId(db, slugify(brand, name)));
+    const hosted = await persistProductImages(images, id);
+
     // Shared column values for insert/update.
     const fields = {
       brand,
@@ -163,8 +173,8 @@ export async function POST(req: Request) {
       price: Number.isFinite(amount) && amount > 0 ? formatPrice({ amount, currency }) : null,
       price_amount: Number.isFinite(amount) ? amount : null,
       currency,
-      image_url: imageUrl,
-      images,
+      image_url: hosted.images[0] ?? imageUrl,
+      images: hosted.images,
       mono: deriveMono(brand),
       source_url: sourceUrl || null,
       source_site: siteFromUrl(buyUrl || sourceUrl) ?? null,
@@ -182,7 +192,6 @@ export async function POST(req: Request) {
     };
 
     // Update an existing piece (id stays stable) or create a new one.
-    const editId = clean(body.editId, 200);
     let saved;
     if (editId) {
       const { data, error } = await db
@@ -194,7 +203,6 @@ export async function POST(req: Request) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       saved = data;
     } else {
-      const id = await uniqueId(db, slugify(brand, name));
       const { data, error } = await db
         .from("products")
         .insert({ id, ...fields })
@@ -209,7 +217,11 @@ export async function POST(req: Request) {
     revalidatePath("/");
     revalidatePath("/curator");
     revalidatePath("/creator");
-    return NextResponse.json({ ok: true, product: rowToProduct(saved as ProductRow) });
+    return NextResponse.json({
+      ok: true,
+      product: rowToProduct(saved as ProductRow),
+      failed: hosted.failed,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Save failed";
     return NextResponse.json({ error: message }, { status: 500 });
