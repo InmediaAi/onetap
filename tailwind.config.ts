@@ -9,25 +9,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // OneTap Atelier palette — drawn from the brand guidelines.
-        // No pure white/black. Warm Stone is the sole accent.
-        noir: "#1A1814",
-        ivory: "#F5F0E8",
-        stone: "#C8B89A",
-        taupe: "#8C7B6B",
-        rose: "#E8D5C4",
-        ivoryPanel: "#EDE5D8",
-        ivoryDeep: "#E7DECF",
-        noirRaise: "#221F1A",
-        noirLine: "#312C25",
+        // OneTap Atelier palette — modern black & white editorial.
+        // Crisp white surfaces, near-black ink, neutral greys. Black is the accent.
+        noir: "#111111",
+        ivory: "#FFFFFF",
+        stone: "#8A8A8A", // accent → neutral mid grey
+        taupe: "#6B6B6B",
+        rose: "#EDEDED",
+        ivoryPanel: "#F5F5F5",
+        ivoryDeep: "#EDEDED",
+        noirRaise: "#1A1A1A",
+        noirLine: "#2A2A2A",
         // Legacy aliases kept so existing utility classes re-theme automatically.
-        canvas: "#F5F0E8", // → ivory
-        ink: "#1A1814", // → noir
-        muted: "#8C7B6B", // → taupe
-        hairline: "rgba(200, 184, 154, 0.32)", // → stone-soft
+        canvas: "#FFFFFF", // → ivory
+        ink: "#111111", // → noir
+        muted: "#6B6B6B", // → taupe
+        hairline: "rgba(0, 0, 0, 0.1)", // → stone-soft
       },
       fontFamily: {
-        display: ["var(--font-cormorant)", "Georgia", "serif"],
+        display: ["var(--font-display)", "'Helvetica Neue'", "Arial", "sans-serif"],
         sans: ["'Helvetica Neue'", "Helvetica", "Arial", "sans-serif"],
       },
       maxWidth: {

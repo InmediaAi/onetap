@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 import AnalyticsProvider from "@/components/AnalyticsProvider";
 import SessionLoader from "@/components/SessionLoader";
 import MetaPixel from "@/components/MetaPixel";
 import { ToastProvider } from "@/components/Toast";
 
-// Primary editorial typeface. Light/Regular/Medium + italics, per the
-// brand guidelines (no weights above Medium).
-const cormorant = Cormorant_Garamond({
+// Display typeface — a modern grotesque sans for headings & product names
+// (the crisp, editorial black-&-white look). Body stays Helvetica Neue.
+const display = Archivo({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
-  variable: "--font-cormorant",
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#1A1814",
+  themeColor: "#111111",
 };
 
 export default function RootLayout({
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cormorant.variable}>
+    <html lang="en" className={display.variable}>
       <body className="font-sans antialiased" suppressHydrationWarning>
         <MetaPixel />
         <AnalyticsProvider />

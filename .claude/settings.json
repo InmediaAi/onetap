@@ -25,7 +25,8 @@
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
       "Bash(awk '/create table if not exists campaign_moments/,/\\\\\\);/' lib/supabase/schema.sql)",
       "Bash(awk '/\\\\.foot \\\\{/{f=1} f{print NR\": \"$0} /\\\\}/{if\\(f\\)c++; if\\(c>1\\)f=0}' app/globals.css)",
-      "Bash(awk '/^function Multi/{f=1} f{print NR\": \"$0} f&&/^}/{c++; if\\(c>=1\\) exit}' components/ProfilePanel.tsx)"
+      "Bash(awk '/^function Multi/{f=1} f{print NR\": \"$0} f&&/^}/{c++; if\\(c>=1\\) exit}' components/ProfilePanel.tsx)",
+      "Bash(grep -n \"243, 112, 33\\\\|f37021\\\\|--orange\\\\|\\\\.sw\\\\b\\\\|nation-band\\\\|vf-band\\\\|\\\\.sw {\" app/fifa/fifa.css)"
     ]
   }
 }

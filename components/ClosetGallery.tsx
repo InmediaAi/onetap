@@ -67,12 +67,16 @@ export default function ClosetGallery() {
   const shown = tab === "clips" ? clips : images;
 
   if (state === "loading") {
-    return <p className="admin-status">Loading your closet…</p>;
+    return (
+      <div className="cl-empty">
+        <p>Loading your closet…</p>
+      </div>
+    );
   }
 
   if (state === "signedout") {
     return (
-      <div className="closet-empty">
+      <div className="cl-empty">
         <p>Sign in to see the looks and videos you’ve created.</p>
         <button className="btn-line" onClick={() => openSignIn()}>
           Sign in
@@ -82,12 +86,16 @@ export default function ClosetGallery() {
   }
 
   if (state === "error") {
-    return <p className="admin-status">Couldn’t load your closet. Please try again.</p>;
+    return (
+      <div className="cl-empty">
+        <p>Couldn’t load your closet. Please try again.</p>
+      </div>
+    );
   }
 
   if (!looks.length) {
     return (
-      <div className="closet-empty">
+      <div className="cl-empty">
         <p>Nothing here yet — make your first look.</p>
         <Link className="btn-line" href="/curator">
           Browse the Curator
@@ -114,11 +122,11 @@ export default function ClosetGallery() {
       </div>
 
       {shown.length === 0 ? (
-        <p className="admin-status">
-          {tab === "clips" ? "No clips yet — create a 360° or film." : "No try-on images yet."}
-        </p>
+        <div className="cl-empty">
+          <p>{tab === "clips" ? "No clips yet — create a 360° or film." : "No try-on images yet."}</p>
+        </div>
       ) : (
-        <div className="closet-grid">
+        <div className="cl-grid">
           {shown.map((l) => {
             const isVideo = l.kind !== "tryon";
             const isFifa = l.campaign === "fifa-worldcup";

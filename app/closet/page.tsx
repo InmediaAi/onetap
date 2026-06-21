@@ -6,12 +6,12 @@ export default function ClosetPage() {
   return (
     <main className="closet-page">
       <Header />
-      <div className="admin-wrap closet-wrap">
-        <p className="eyebrow">OneTap Atelier</p>
-        <h1 className="admin-title">Your closet</h1>
-        <p className="admin-hint" style={{ marginBottom: 24 }}>
-          Every look and video you’ve created — newest first.
-        </p>
+      <div className="closet-shell">
+        <header className="closet-head">
+          <p className="eyebrow">OneTap Atelier</p>
+          <h1 className="admin-title">Your closet</h1>
+          <p className="admin-hint">Every look and video you’ve created — newest first.</p>
+        </header>
         <ClosetGallery />
       </div>
       <SiteFooter />

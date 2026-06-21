@@ -6,9 +6,9 @@
   --ink: #000000;
   --slate: #6b6b6b;
   --hairline: #e6e4e0;
-  --orange: #f37021;
-  --serif: var(--font-newsreader), Georgia, serif;
-  --sans: "Gill Sans", "Gill Sans MT", Calibri, "Helvetica Neue", Arial, sans-serif;
+  --orange: #111111;
+  --serif: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  --sans: var(--font-display), "Helvetica Neue", Arial, sans-serif;
 
   background: var(--paper);
   color: var(--ink);

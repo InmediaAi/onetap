@@ -4,26 +4,28 @@
 
 /* ════════════════════════════════════════════════════════════════════
    OneTap Atelier — brand foundation
-   Colour & type drawn directly from the brand guidelines.
-   No gradients. No pure white/black. Warm Stone is the sole accent.
+   Modern black & white editorial (Net-a-Porter / Ganni). Crisp white
+   surfaces, near-black ink, neutral greys. Black is the only accent —
+   no warm tints, no colour. Images stay in colour; only the UI is mono.
    ════════════════════════════════════════════════════════════════════ */
 :root {
   /* Primary */
-  --noir: #1a1814;
-  --ivory: #f5f0e8;
+  --noir: #111111;
+  --ivory: #ffffff;
   /* Secondary */
-  --stone: #c8b89a; /* sole accent, used sparingly */
-  --taupe: #8c7b6b; /* secondary type */
-  --rose: #e8d5c4; /* correspondence only */
-  /* Derived surfaces (within-palette tints, used as solid fields only) */
-  --ivory-panel: #ede5d8;
-  --ivory-deep: #e7decf;
-  --noir-raise: #221f1a;
-  --noir-line: #312c25;
-  --stone-soft: rgba(200, 184, 154, 0.32);
-  --stone-hair: rgba(200, 184, 154, 0.55);
+  --stone: #8a8a8a; /* neutral accent — mid grey, legible on white AND dark.
+                       (Primary buttons use --noir/black; hairlines use --stone-soft.) */
+  --taupe: #6b6b6b; /* secondary type (mid grey) */
+  --rose: #ededed; /* light grey (was warm blush) */
+  /* Derived surfaces (neutral greys, used as solid fields only) */
+  --ivory-panel: #f5f5f5;
+  --ivory-deep: #ededed;
+  --noir-raise: #1a1a1a;
+  --noir-line: #2a2a2a;
+  --stone-soft: rgba(0, 0, 0, 0.1); /* hairline */
+  --stone-hair: rgba(0, 0, 0, 0.2); /* stronger hairline */
 
-  --serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --serif: var(--font-display), "Helvetica Neue", Arial, sans-serif;
   --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -38,12 +40,12 @@
      Dark defaults here keep the main modal unchanged; the FIFA microsite
      overrides these under .viralfan .filmframe to flip the frame to light. */
   --rs-surface: var(--noir-raise);
-  --rs-ink: var(--ivory);
-  --rs-muted: var(--taupe);
-  --rs-accent: var(--stone);
-  --rs-line: rgba(200, 184, 154, 0.22);
-  --rs-scrim: rgba(15, 14, 12, 0.72);
-  --rs-scrim-strong: rgba(15, 14, 12, 0.92);
+  --rs-ink: #ffffff;
+  --rs-muted: #a0a0a0;
+  --rs-accent: #ffffff; /* accent is LIGHT on the dark frame */
+  --rs-line: rgba(255, 255, 255, 0.22);
+  --rs-scrim: rgba(0, 0, 0, 0.72);
+  --rs-scrim-strong: rgba(0, 0, 0, 0.92);
 }
 
 @layer base {
@@ -95,7 +97,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(200, 184, 154, 0.18),
+      rgba(0, 0, 0, 0.06),
       transparent
     );
   }
@@ -218,7 +220,7 @@
   font-size: 11px;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: rgba(245, 240, 232, 0.78);
+  color: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   transition: color 0.25s var(--ease);
   position: relative;
@@ -244,13 +246,14 @@
    highlight gradient, a sweeping highlight + a blinking glow. */
 .catnav a.fifa-tab {
   color: var(--ivory);
-  border: 1px solid rgba(243, 112, 33, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 999px;
   padding: 6px 16px;
-  background: linear-gradient(90deg, rgba(243, 112, 33, 0.18), rgba(243, 112, 33, 0.05));
+  /* minor top-down sheen so the pill stands off the dark nav */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03));
   overflow: hidden;
   white-space: nowrap;
-  animation: fifaGlow 1.8s ease-in-out infinite;
+  animation: fifaGlow 2.4s ease-in-out infinite;
 }
 .catnav a.fifa-tab::before {
   content: "";
@@ -259,26 +262,27 @@
   bottom: 0;
   left: -45%;
   width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255, 200, 150, 0.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
   filter: blur(2px);
   animation: fifaSweep 2.6s ease-in-out infinite;
   pointer-events: none;
 }
 .catnav a.fifa-tab:hover {
   color: #fff;
-  border-color: rgba(243, 112, 33, 1);
+  border-color: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
 }
 .catnav a.fifa-tab.on::after {
   display: none; /* the pill replaces the underline */
 }
 @keyframes fifaGlow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(243, 112, 33, 0);
-    border-color: rgba(243, 112, 33, 0.4);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    border-color: rgba(255, 255, 255, 0.4);
   }
   50% {
-    box-shadow: 0 0 16px 1px rgba(243, 112, 33, 0.5);
-    border-color: rgba(243, 112, 33, 0.9);
+    box-shadow: 0 0 14px 0 rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.85);
   }
 }
 @keyframes fifaSweep {
@@ -581,7 +585,7 @@
 .ptile {
   position: relative;
   aspect-ratio: 3 / 4;
-  background: #e4dac8;
+  background: #f4f4f4;
   overflow: hidden;
   cursor: pointer;
   /* hairline frame + a very minor lift so cards read as floating tiles */
@@ -626,7 +630,7 @@
 .ptile .inset {
   position: absolute;
   inset: 14px;
-  border: 1px solid rgba(200, 184, 154, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   pointer-events: none;
   z-index: 2;
 }
@@ -926,7 +930,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(245, 240, 232, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   background: transparent;
   color: var(--ivory);
   cursor: pointer;
@@ -965,11 +969,11 @@
   background: var(--noir-raise);
   cursor: pointer;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(200, 184, 154, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
   transition: box-shadow 0.25s var(--ease);
 }
 .trthumb:hover {
-  box-shadow: inset 0 0 0 1px rgba(200, 184, 154, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 .trthumb.on {
   box-shadow: inset 0 0 0 2px var(--stone);
@@ -989,7 +993,7 @@
   bottom: 0;
   padding: 4px 0;
   text-align: center;
-  background: rgba(15, 14, 12, 0.7);
+  background: rgba(0, 0, 0, 0.7);
   font-family: var(--sans);
   font-size: 8px;
   letter-spacing: 0.1em;
@@ -1004,7 +1008,7 @@
   justify-content: center;
   font-family: var(--serif);
   font-style: italic;
-  color: rgba(200, 184, 154, 0.5);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
 }
 
@@ -1059,9 +1063,9 @@
   text-transform: uppercase;
   text-align: center;
   cursor: pointer;
-  border: 1px solid var(--stone);
-  background: var(--stone);
-  color: #14110c;
+  border: 1px solid var(--ivory);
+  background: var(--ivory); /* white pill on the dark result footer */
+  color: var(--noir);
   transition: opacity 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 .mf-btn svg {
@@ -1076,7 +1080,7 @@
   border-color: var(--stone-soft);
 }
 .mf-btn.alt:hover {
-  background: rgba(200, 184, 154, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--stone);
   opacity: 1;
 }
@@ -1139,7 +1143,7 @@
 }
 .media .ph .mono {
   font-family: var(--serif);
-  color: rgba(200, 184, 154, 0.3);
+  color: rgba(255, 255, 255, 0.3);
   font-size: 60px;
 }
 
@@ -1174,7 +1178,7 @@
   animation: gp-weave 1.4s ease-in-out infinite;
 }
 .genprog-weave span:nth-child(3n) {
-  background: linear-gradient(#e7d7ad, var(--stone)); /* faint gold thread */
+  background: linear-gradient(#d0d0d0, var(--stone)); /* faint grey thread */
 }
 @keyframes gp-weave {
   0%, 100% { transform: scaleY(0.3); opacity: 0.4; }
@@ -1216,7 +1220,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(247, 240, 227, 0.7), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
   animation: gp-sheen 1.7s linear infinite;
 }
 @keyframes gp-sheen {
@@ -1236,7 +1240,7 @@
   gap: 7px;
   padding: 16px 18px 18px;
   text-align: left;
-  background: linear-gradient(to top, rgba(15, 14, 12, 0.82), rgba(15, 14, 12, 0));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0));
   backdrop-filter: none;
 }
 .genprog.compact .genprog-line {
@@ -1254,7 +1258,7 @@
   position: absolute;
   inset: 0;
   z-index: 8;
-  background: rgba(15, 14, 12, 0.55);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1262,7 +1266,7 @@
   gap: 22px;
 }
 .mproc {
-  background: rgba(15, 14, 12, 0.66);
+  background: rgba(0, 0, 0, 0.66);
 }
 .mproc .pl {
   position: relative;
@@ -1272,7 +1276,7 @@
   font-weight: 300;
   font-size: 20px;
   color: var(--ivory);
-  text-shadow: 0 1px 18px rgba(15, 14, 12, 0.8);
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.8);
 }
 
 /* "magical" shimmering dot-field that fills the whole frame while composing */
@@ -1282,7 +1286,7 @@
   z-index: 1;
   background-image: radial-gradient(
     circle,
-    rgba(200, 184, 154, 0.55) 1.1px,
+    rgba(255, 255, 255, 0.55) 1.1px,
     transparent 1.7px
   );
   background-size: 16px 16px;
@@ -1295,7 +1299,7 @@
   inset: 0;
   background-image: radial-gradient(
     circle,
-    rgba(232, 226, 212, 0.95) 1.3px,
+    rgba(255, 255, 255, 0.95) 1.3px,
     transparent 1.9px
   );
   background-size: 16px 16px;
@@ -1364,7 +1368,7 @@
   bottom: 0;
   z-index: 6;
   padding: 18px 22px 20px;
-  background: rgba(15, 14, 12, 0.78);
+  background: rgba(0, 0, 0, 0.78);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1389,7 +1393,7 @@
   bottom: 0;
   z-index: 6;
   padding: 18px 22px 20px;
-  background: rgba(15, 14, 12, 0.78);
+  background: rgba(0, 0, 0, 0.78);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -1415,7 +1419,7 @@
 .film-bar {
   flex: 1;
   height: 1px;
-  background: rgba(200, 184, 154, 0.3);
+  background: rgba(255, 255, 255, 0.3);
   position: relative;
 }
 .film-bar i {
@@ -1455,8 +1459,8 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  background: rgba(15, 14, 12, 0.62);
-  border: 1px solid rgba(245, 240, 232, 0.3);
+  background: rgba(0, 0, 0, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: var(--ivory);
   cursor: pointer;
   font-family: var(--sans);
@@ -1468,7 +1472,7 @@
   transition: background 0.25s var(--ease);
 }
 .unmute:hover {
-  background: rgba(15, 14, 12, 0.85);
+  background: rgba(0, 0, 0, 0.85);
 }
 
 /* action rail */
@@ -1482,7 +1486,7 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  border: 1px solid rgba(245, 240, 232, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   background: transparent;
   color: var(--ivory);
   cursor: pointer;
@@ -1493,8 +1497,8 @@
     border-color 0.25s var(--ease);
 }
 .act:hover {
-  background: rgba(245, 240, 232, 0.08);
-  border-color: rgba(245, 240, 232, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 .act:disabled {
   opacity: 0.35;
@@ -1522,17 +1526,57 @@
   min-height: 100vh;
   min-height: 100dvh;
 }
-.closet-page > .closet-wrap {
+/* Wide editorial shell — grows to fill (sticky footer); not the narrow admin-wrap. */
+.closet-shell {
   flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2.4rem 1.5rem 2.5rem;
+}
+.closet-head {
+  margin-bottom: 1.3rem;
+}
+.closet-head .admin-title {
+  margin-top: 0.3rem;
+}
+.closet-head .admin-hint {
+  margin: 0.4rem 0 0;
 }
 
-.closet-grid {
+/* Gallery grid — own class (decoupled from the orphaned creator .closet-grid). */
+.cl-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 18px;
+  margin-top: 6px;
+}
+/* Centered, viewport-filling state for empty/loading/error/signed-out — keeps
+   the footer pinned and the empty screen intentional. */
+.cl-empty {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 16px;
-  margin-top: 8px;
-  padding-bottom: 32px; /* clear gap before the footer */
+  min-height: 40vh;
+  color: var(--taupe);
+  font-family: var(--sans);
+  font-size: 1rem;
+}
+@media (max-width: 640px) {
+  .closet-shell {
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+  }
+  .cl-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
 }
 .closet-card {
   display: block;
@@ -1563,7 +1607,7 @@
   right: 8px;
   font-size: 11px;
   color: var(--ivory);
-  background: rgba(15, 14, 12, 0.6);
+  background: rgba(0, 0, 0, 0.6);
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -1658,7 +1702,7 @@
   border-radius: 50%;
   overflow: hidden;
   background: var(--noir-raise);
-  box-shadow: inset 0 0 0 1px rgba(200, 184, 154, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
   flex: none;
   position: relative;
 }
@@ -1725,7 +1769,7 @@
   position: relative;
 }
 .cref-add {
-  border: 1px dashed rgba(200, 184, 154, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.5);
   background: transparent;
   color: var(--stone);
   cursor: pointer;
@@ -1766,7 +1810,7 @@
   bottom: 0;
   padding: 2px 0;
   text-align: center;
-  background: rgba(15, 14, 12, 0.72);
+  background: rgba(0, 0, 0, 0.72);
   font-family: var(--sans);
   font-size: 7px;
   letter-spacing: 0.12em;
@@ -1829,7 +1873,7 @@
   border-radius: 30px;
   border: 1px solid transparent;
   background: transparent;
-  color: rgba(245, 240, 232, 0.7);
+  color: rgba(255, 255, 255, 0.7);
   font-family: var(--sans);
   font-weight: 500;
   font-size: 10px;
@@ -1844,7 +1888,7 @@
   color: var(--ivory);
 }
 .cmode.on {
-  background: rgba(200, 184, 154, 0.14);
+  background: rgba(255, 255, 255, 0.14);
   color: var(--ivory);
   box-shadow: inset 0 0 0 1px var(--stone-soft);
 }
@@ -1947,7 +1991,7 @@
 }
 .closet-drop {
   aspect-ratio: 4 / 3;
-  border: 1px dashed rgba(200, 184, 154, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.5);
   border-radius: 12px;
   background: transparent;
   color: var(--taupe);
@@ -1966,7 +2010,7 @@
 .closet-drop.drag {
   border-color: var(--stone);
   color: var(--ivory);
-  background: rgba(200, 184, 154, 0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 .closet-drop .dl {
   font-family: var(--sans);
@@ -2019,7 +2063,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(15, 14, 12, 0.7);
+  background: rgba(0, 0, 0, 0.7);
   border: 0;
   color: var(--ivory);
   cursor: pointer;
@@ -2081,7 +2125,7 @@
 }
 .film-fmt.on {
   border-color: var(--stone);
-  background: rgba(200, 184, 154, 0.12);
+  background: rgba(255, 255, 255, 0.12);
 }
 .film-fmt svg {
   color: var(--stone);
@@ -2112,8 +2156,8 @@
   margin-bottom: 7px;
 }
 .filmopts .chip {
-  color: rgba(245, 240, 232, 0.82);
-  border-color: rgba(200, 184, 154, 0.28);
+  color: rgba(255, 255, 255, 0.82);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 .filmopts .chip:hover {
   color: var(--ivory);
@@ -2134,7 +2178,7 @@
   background: transparent;
   border: 1px solid var(--stone-soft);
   border-radius: 30px;
-  color: rgba(245, 240, 232, 0.78);
+  color: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   font-family: var(--sans);
   font-weight: 400;
@@ -2162,7 +2206,7 @@
   margin-left: 8px;
   padding: 2px 8px;
   border-radius: 10px;
-  background: rgba(200, 184, 154, 0.16);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--stone);
   font-family: var(--sans);
   font-weight: 500;
@@ -2422,7 +2466,7 @@
   font-size: 10px;
   line-height: 1.35;
   color: var(--noir);
-  background: rgba(245, 240, 232, 0.94);
+  background: rgba(255, 255, 255, 0.94);
   padding: 5px 7px;
   text-align: center;
 }
@@ -3053,7 +3097,7 @@
 }
 .pricing-card .plan-card.featured {
   border-color: var(--stone);
-  background: rgba(200, 184, 154, 0.05);
+  background: rgba(0, 0, 0, 0.04);
 }
 .pricing-card .plan-price {
   font-family: var(--serif);
@@ -4153,14 +4197,14 @@
    the luxury theme, and the OneTap product theme is untouched.
    ════════════════════════════════════════════════════════════════════ */
 .admin-shell {
-  --ad-bg: #eef1f6;
+  --ad-bg: #f4f4f4;
   --ad-card: #ffffff;
-  --ad-border: #d7dde7;
-  --ad-text: #1f2733;
-  --ad-muted: #5b6675;
-  --ad-accent: #4f46e5;
+  --ad-border: #e2e2e2;
+  --ad-text: #111111;
+  --ad-muted: #6b6b6b;
+  --ad-accent: #111111;
   --ad-accent-ink: #ffffff;
-  --ad-accent-soft: #ececfd;
+  --ad-accent-soft: #f0f0f0;
   --ad-danger: #c0392b;
   --ad-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -4419,7 +4463,7 @@
   left: 0; right: 0; bottom: 0;
   z-index: 5;
   padding: 18px 22px;
-  background: rgba(15, 14, 12, 0.72);
+  background: rgba(0, 0, 0, 0.72);
   display: flex;
   align-items: center;
   gap: 9px;
@@ -4447,14 +4491,14 @@
   gap: 4px;
   padding: 4px;
   border-radius: 999px;
-  background: rgba(15, 14, 12, 0.62);
+  background: rgba(0, 0, 0, 0.62);
   backdrop-filter: blur(4px);
 }
 .result-toggle button {
   border: 0;
   background: transparent;
   cursor: pointer;
-  color: rgba(245, 240, 232, 0.7);
+  color: rgba(255, 255, 255, 0.7);
   font-family: var(--sans);
   font-weight: 500;
   font-size: 10px;
@@ -4519,7 +4563,7 @@
 }
 .stage-replace {
   position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
-  background: rgba(15, 14, 12, 0.62); color: var(--ivory); border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62); color: var(--ivory); border-radius: 999px;
   padding: 6px 14px; font-family: var(--sans); font-size: 10px;
   letter-spacing: 0.12em; text-transform: uppercase; backdrop-filter: blur(4px);
 }
@@ -4584,7 +4628,7 @@
 /* ——— right Refine drawer ——— */
 .refine-scrim {
   position: fixed; inset: 0; z-index: 100;
-  background: rgba(15, 14, 12, 0.42);
+  background: rgba(0, 0, 0, 0.42);
   display: flex; justify-content: flex-end;
   animation: scrimIn 0.3s var(--ease) both;
 }
