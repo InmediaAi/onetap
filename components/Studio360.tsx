@@ -28,7 +28,9 @@ interface Result {
 
 export default function Studio360() {
   const hydrated = useHydrated();
-  const portrait = useAtelier((s) => s.portrait);
+  // Full-length photo is the primary try-on likeness (a face-only selfie breaks
+  // the full-body result), so gate on `body`, not the face-or-body `portrait`.
+  const body = useAtelier((s) => s.body);
   const looks = useAtelier((s) => s.looks);
 
   const [piece, setPiece] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function Studio360() {
   }
 
   async function run() {
-    if (!piece || !portrait || loading) return;
+    if (!piece || !body || loading) return;
     if (!(await ensureCanGenerateVideo())) return; // sign-in / quota gate
     setLoading(true);
     setError(null);
@@ -64,7 +66,7 @@ export default function Studio360() {
     try {
       const res = await composeReel({
         kind: "spin",
-        likeness: portrait,
+        likeness: body,
         pieceImage: piece,
         productId: "tryon-360",
       });
@@ -132,9 +134,9 @@ export default function Studio360() {
 
           {/* likeness note */}
           <p className="solo-likeness">
-            {hydrated && !portrait ? (
+            {hydrated && !body ? (
               <>
-                No likeness yet.{" "}
+                No full-length photo yet.{" "}
                 <Link href="/onboarding" className="sl-link">
                   Add yours →
                 </Link>
@@ -148,7 +150,7 @@ export default function Studio360() {
           <button
             className="studio-go"
             onClick={run}
-            disabled={!piece || !portrait || loading}
+            disabled={!piece || !body || loading}
             title="One tap · 1 video"
           >
             <RotateCw size={15} strokeWidth={1.5} /> Try-On

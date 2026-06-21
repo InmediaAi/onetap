@@ -30,7 +30,9 @@ type Tab = "upload" | "curated";
 
 export default function CreatorBuilder({ products }: { products: Product[] }) {
   const hydrated = useHydrated();
-  const portrait = useAtelier((s) => s.portrait);
+  // Try-on needs the full-length photo as the primary likeness (a face-only
+  // selfie breaks the full-body result) — gate on `body`, not portrait.
+  const body = useAtelier((s) => s.body);
 
   const [format, setFormat] = useState<string | null>(null);
   const [opts, setOpts] = useState<FilmOpts>({});
@@ -59,7 +61,7 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
       : curated
         ? `${curated.brand} ${curated.name}`
         : "the selected garment";
-  const ready = Boolean(format) && hasGarment && Boolean(portrait) && !loading;
+  const ready = Boolean(format) && hasGarment && Boolean(body) && !loading;
 
   function toggleOpt(fieldId: string, val: string, multi: boolean) {
     setOpts((cur) => {
@@ -92,7 +94,7 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
   }
 
   async function create() {
-    if (!ready || !portrait) return;
+    if (!ready || !body) return;
     if (!(await ensureCanGenerateVideo())) return; // sign-in / quota gate
     setLoading(true);
     setError(null);
@@ -101,7 +103,7 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
     try {
       const res = await composeReel({
         kind: "video",
-        likeness: portrait,
+        likeness: body,
         pieceImage,
         prompt: buildFilmPrompt(format, opts, garmentDesc, free),
         productId: curated?.id ?? "creator-upload",
@@ -260,9 +262,9 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
           </>
         )}
 
-        {hydrated && !portrait && (
+        {hydrated && !body && (
           <p className="step-note">
-            You'll need a likeness to appear in the reel.{" "}
+            You'll need a full-length photo to appear in the reel.{" "}
             <Link href="/onboarding" className="sl-link">
               Add yours →
             </Link>

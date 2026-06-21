@@ -29,8 +29,8 @@ function readAsDataURL(file: File): Promise<string> {
 }
 
 const PHOTOS: { kind: IdentityKind; label: string; hint?: string }[] = [
-  { kind: "body", label: "Full length", hint: "Powers try-on" },
-  { kind: "selfie", label: "Face selfie" },
+  { kind: "body", label: "Full length", hint: "Head to toe · powers try-on" },
+  { kind: "selfie", label: "Face selfie", hint: "Head & shoulders" },
   { kind: "left", label: "Left side", hint: "Left look" },
   { kind: "right", label: "Right side", hint: "Right look" },
   { kind: "back", label: "Back", hint: "Optional" },
@@ -68,6 +68,10 @@ export default function ProfilePanel() {
   });
 
   const [status, setStatus] = useState<string | null>(null);
+  // Per-photo inline note (validation/save feedback shown right under each slot).
+  const [imgNote, setImgNote] = useState<
+    Partial<Record<IdentityKind, { type: "error" | "ok" | "checking"; text: string }>>
+  >({});
   const [busy, setBusy] = useState(false);
   const [modelBusy, setModelBusy] = useState(false);
   const [modelMsg, setModelMsg] = useState<string | null>(null);
@@ -97,11 +101,18 @@ export default function ProfilePanel() {
     );
   }
 
+  const note = (kind: IdentityKind, type: "error" | "ok" | "checking", text: string) =>
+    setImgNote((n) => ({ ...n, [kind]: { type, text } }));
+  const clearNote = (kind: IdentityKind) =>
+    setImgNote((n) => ({ ...n, [kind]: undefined }));
+
   async function replaceImage(kind: IdentityKind, file?: File) {
     if (!file) return;
-    const check = await validateImageFile(file);
+    note(kind, "checking", "Checking photo…");
+    const check = await validateImageFile(file, kind);
     if (!check.ok) {
-      setStatus(check.error ?? "That image can’t be used.");
+      // Keep the existing image; show a clear inline warning under this slot.
+      note(kind, "error", check.error ?? "That image can’t be used.");
       return;
     }
     const dataUrl = await readAsDataURL(file);
@@ -109,10 +120,9 @@ export default function ProfilePanel() {
     // Face/body drive the try-on likeness in memory.
     if (kind === "selfie") setIdentity(dataUrl, store.body);
     else if (kind === "body") setIdentity(store.face, dataUrl);
-    setStatus(null);
     try {
       const path = await uploadIdentity(kind, dataUrl);
-      if (!path) return; // Supabase unconfigured — image kept in memory only
+      if (!path) return clearNote(kind); // Supabase unconfigured — kept in memory
       const key = {
         selfie: "selfiePath",
         body: "bodyPath",
@@ -129,9 +139,9 @@ export default function ProfilePanel() {
         const d = await res.json().catch(() => ({}));
         throw new Error(d?.error || "Could not save the photo.");
       }
-      setStatus("Photo saved.");
+      note(kind, "ok", "Photo saved.");
     } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Could not save the photo.");
+      note(kind, "error", e instanceof Error ? e.message : "Could not save the photo.");
     }
   }
 
@@ -278,6 +288,14 @@ export default function ProfilePanel() {
                   <span className="admin-preview-empty">+ Add</span>
                 )}
               </div>
+              {imgNote[kind] && (
+                <p className={"profile-img-note " + imgNote[kind]!.type}>
+                  {imgNote[kind]!.type === "error" && (
+                    <span className="pin-ic" aria-hidden="true">!</span>
+                  )}
+                  {imgNote[kind]!.text}
+                </p>
+              )}
               <input
                 ref={refs[kind]}
                 type="file"

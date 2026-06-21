@@ -53,7 +53,9 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
   const [kitIdx, setKitIdx] = useState(0);
   const [bodyImg, setBodyImg] = useState<string | null>(null);
   const [faceImg, setFaceImg] = useState<string | null>(null);
-  const [upErr, setUpErr] = useState<string | null>(null);
+  // Per-slot upload feedback (validation warning / "checking" under each box).
+  const [upErr, setUpErr] = useState<{ body?: string; face?: string }>({});
+  const [upChecking, setUpChecking] = useState<{ body?: boolean; face?: boolean }>({});
   const [momentId, setMomentId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -77,7 +79,9 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
   const jersey = jerseys[kitIdx];
   const accent = team?.accent || campaign?.accent || "#1F3A93";
   const moment = moments.find((m) => m.id === momentId) ?? null;
-  const photo = bodyImg || faceImg;
+  // The full-length photo is the primary try-on likeness — required (a face-only
+  // shot breaks the full-body result). The face close-up stays optional.
+  const photo = bodyImg;
   const ready = Boolean(country && photo && moment && jersey);
   // Wait for the profile to load before deciding — otherwise a real member is
   // briefly treated as locked while /api/me resolves.
@@ -401,12 +405,17 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
 
   async function pick(kind: "body" | "face", file?: File) {
     if (!file) return;
-    const check = await validateImageFile(file);
+    setUpErr((e) => ({ ...e, [kind]: undefined }));
+    setUpChecking((c) => ({ ...c, [kind]: true }));
+    // Composition is enforced: full-length must be head-to-toe, face must be a
+    // close-up (kind "face" maps to the "selfie" identity kind).
+    const check = await validateImageFile(file, kind === "body" ? "body" : "selfie");
+    setUpChecking((c) => ({ ...c, [kind]: false }));
     if (!check.ok) {
-      setUpErr(check.error ?? "That image can’t be used.");
+      // Keep whatever was there; warn right under this slot.
+      setUpErr((e) => ({ ...e, [kind]: check.error ?? "That image can’t be used." }));
       return;
     }
-    setUpErr(null);
     const url = await readAsDataURL(file);
     if (kind === "body") setBodyImg(url);
     else setFaceImg(url);
@@ -512,7 +521,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
             </p>
             <p className="lede" style={{ marginTop: 12, fontSize: 15 }}>Preview free. Keep it with membership.</p>
             <div className="proofline">
-              <span><b />One photo is enough</span>
+              <span><b />One full-length photo</span>
               <span><b />Ready in under a minute</span>
               <span><b />Vertical, feed-ready</span>
             </div>
@@ -645,6 +654,11 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
                         <span className="u-icon">⤒</span>
                         <span className="u-t">Full-length photo</span>
                         <span className="u-s">Standing, even light</span>
+                        {(upChecking.body || upErr.body) && (
+                          <span className={"up-warn" + (upErr.body ? " bad" : "")}>
+                            {upErr.body ?? "Checking photo…"}
+                          </span>
+                        )}
                       </label>
                       <label className={"up" + (faceImg ? " filled" : "")}>
                         <input type="file" accept="image/*" onChange={(e) => { void pick("face", e.target.files?.[0]); e.target.value = ""; }} />
@@ -652,9 +666,14 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
                         <span className="u-icon">⤒</span>
                         <span className="u-t">Face close-up</span>
                         <span className="u-s">Eyes visible, no sunglasses</span>
+                        {(upChecking.face || upErr.face) && (
+                          <span className={"up-warn" + (upErr.face ? " bad" : "")}>
+                            {upErr.face ?? "Checking photo…"}
+                          </span>
+                        )}
                       </label>
                     </div>
-                    <p className="up-err">{upErr ?? IMAGE_GUIDELINE}</p>
+                    <p className="up-err">{IMAGE_GUIDELINE}</p>
                   </div>
 
                   {/* moment */}
@@ -688,7 +707,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
                         ? "Finishing sign-in — your video is already composing in the background."
                         : ready
                           ? "One tap. Under a minute. Free to preview."
-                          : "Add one photo and pick a moment — the jersey is set."}
+                          : "Add a full-length photo and pick a moment — the jersey is set."}
                   </div>
                 </div>
               </>

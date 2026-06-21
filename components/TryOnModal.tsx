@@ -29,7 +29,9 @@ export default function TryOnModal({
   product: Product | null;
   onClose: () => void;
 }) {
-  const portrait = useAtelier((s) => s.portrait);
+  // Try-on requires the FULL-LENGTH photo as the primary likeness — a face-only
+  // selfie produces a broken full-body result, so we gate on `body`, not portrait.
+  const body = useAtelier((s) => s.body);
   const addLook = useAtelier((s) => s.addLook);
   const wished = useAtelier((s) => (product ? s.wishlist.includes(product.id) : false));
   const toggleWish = useAtelier((s) => s.toggleWish);
@@ -56,12 +58,12 @@ export default function TryOnModal({
 
   // Auto-compose: try-on (free) → 360° (1 video). Runs once per opened product.
   useEffect(() => {
-    if (!product || !portrait) return;
+    if (!product || !body) return;
     if (startedFor.current === product.id) return;
     startedFor.current = product.id;
 
     const pid = product.id;
-    const like = portrait;
+    const like = body;
     const pImg = product.imageUrl;
     // Send every view of the piece so the provider renders it more faithfully.
     const pImgs = product.images?.length ? product.images : [product.imageUrl];
@@ -147,7 +149,7 @@ export default function TryOnModal({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product?.id, portrait]);
+  }, [product?.id, body]);
 
   if (!product) return null;
 
@@ -181,11 +183,11 @@ export default function TryOnModal({
       error={error}
       mono={product.mono}
       emptyState={
-        !portrait ? (
+        !body ? (
           <div className="ph">
             <div className="mono">{product.mono}</div>
             <div className="pm">
-              Add your likeness to see {product.name} on you.{" "}
+              Add a full-length photo to see {product.name} on you.{" "}
               <Link href="/onboarding" className="sl-link">
                 Add yours →
               </Link>

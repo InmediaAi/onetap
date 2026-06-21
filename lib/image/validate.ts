@@ -3,8 +3,11 @@
  * every user-uploaded photo (onboarding, profile, and uploaded pieces):
  *   • file size ≤ 10MB
  *   • width AND height ≥ 300px
+ *   • composition (body/selfie only) — full-length vs face, via pose detection
  * Returns a friendly, specific message when a file doesn't qualify.
  */
+
+import type { IdentityKind } from "@/lib/auth/client";
 
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 export const MIN_IMAGE_DIM = 300; // px, per side
@@ -33,8 +36,15 @@ function readDimensions(file: File): Promise<{ w: number; h: number } | null> {
   });
 }
 
-/** Validate a picked file. Resolves ok=false with a specific message on failure. */
-export async function validateImageFile(file: File): Promise<ImageCheck> {
+/**
+ * Validate a picked file. Resolves ok=false with a specific message on failure.
+ * When `kind` is "body" or "selfie", also checks composition (full-length vs
+ * face) with on-device pose detection — see lib/image/poseCheck.ts.
+ */
+export async function validateImageFile(
+  file: File,
+  kind?: IdentityKind,
+): Promise<ImageCheck> {
   if (!file.type.startsWith("image/")) {
     return { ok: false, error: "That isn’t an image — please choose a JPG or PNG." };
   }
@@ -51,6 +61,12 @@ export async function validateImageFile(file: File): Promise<ImageCheck> {
       ok: false,
       error: `That image is ${dim.w}×${dim.h}px — it must be at least 300×300px.`,
     };
+  }
+  // Composition check (lazy-loads MediaPipe only for the two try-on photos).
+  if (kind === "body" || kind === "selfie") {
+    const { checkComposition } = await import("./poseCheck");
+    const comp = await checkComposition(file, kind);
+    if (!comp.ok) return comp;
   }
   return { ok: true };
 }

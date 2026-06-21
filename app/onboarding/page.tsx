@@ -9,7 +9,7 @@ import { useHydrated } from "@/lib/useHydrated";
 import { BRANDS } from "@/lib/data/brands";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
-import { signInWithProvider, uploadIdentity } from "@/lib/auth/client";
+import { signInWithProvider, uploadIdentity, type IdentityKind } from "@/lib/auth/client";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 
 type Step = "upload" | "brands";
@@ -57,25 +57,30 @@ function UploadCard({
   label,
   hint,
   figure,
+  kind,
 }: {
   value: string | null;
   onChange: (dataUrl: string | null) => void;
   label: string;
   hint: string;
   figure: React.ReactNode;
+  kind: IdentityKind;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
 
   async function pick(file?: File) {
     if (!file) return;
-    const check = await validateImageFile(file);
+    setErr(null);
+    setChecking(true);
+    const check = await validateImageFile(file, kind);
+    setChecking(false);
     if (!check.ok) {
       setErr(check.error ?? "That image can’t be used.");
       return;
     }
-    setErr(null);
     onChange(await readAsDataURL(file));
   }
 
@@ -113,10 +118,16 @@ function UploadCard({
         <>
           {figure}
           <span className="uc-label">+ {label}</span>
-          <span className="uc-hint">{err ?? hint}</span>
+          <span className={"uc-hint" + (err && !checking ? " err" : "")}>
+            {checking ? "Checking photo…" : (err ?? hint)}
+          </span>
         </>
       )}
-      {err && value && <span className="uc-warn">{err}</span>}
+      {value && (checking || err) && (
+        <span className={"uc-warn" + (err && !checking ? " bad" : "")}>
+          {checking ? "Checking photo…" : err}
+        </span>
+      )}
       <input
         ref={inputRef}
         type="file"
@@ -331,6 +342,7 @@ export default function OnboardingPage() {
                 <UploadCard
                   value={f}
                   onChange={handleFace}
+                  kind="selfie"
                   label="Upload Face selfie"
                   hint="Face recognition"
                   figure={<FaceFigure />}
@@ -338,6 +350,7 @@ export default function OnboardingPage() {
                 <UploadCard
                   value={b}
                   onChange={handleBody}
+                  kind="body"
                   label="Upload Full body image"
                   hint="Shape analysis"
                   figure={<BodyFigure />}
