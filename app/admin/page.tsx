@@ -71,6 +71,7 @@ export default function AdminPage() {
   const [hasDraft, setHasDraft] = useState(false);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [recent, setRecent] = useState<Product[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [catFilter, setCatFilter] = useState(""); // "" = all categories
@@ -276,6 +277,49 @@ export default function AdminPage() {
     setDraft((d) => (d.images.length >= MAX_IMAGES ? d : { ...d, images: [...d.images, ""] }));
   const removeImage = (i: number) =>
     setDraft((d) => ({ ...d, images: d.images.filter((_, j) => j !== i) }));
+
+  // Manual upload — the guaranteed fallback for images a retailer CDN blocks.
+  // Reads each file as a data URL, stores it in our bucket, appends the URL.
+  async function uploadImageFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setUploading(true);
+    let slots = MAX_IMAGES - draft.images.filter(Boolean).length;
+    try {
+      for (const file of Array.from(files)) {
+        if (slots <= 0) {
+          toast.error(`Up to ${MAX_IMAGES} images.`);
+          break;
+        }
+        const dataUrl: string = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result as string);
+          r.onerror = rej;
+          r.readAsDataURL(file);
+        });
+        const resp = await fetch("/api/admin/upload-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password, dataUrl }),
+        });
+        const d = await resp.json().catch(() => ({}));
+        if (!resp.ok || !d?.url) {
+          toast.error(d?.error || `Could not upload ${file.name}.`);
+          continue;
+        }
+        // Drop into the first empty slot, else append (respecting the cap).
+        setDraft((dr) => {
+          const imgs = [...dr.images];
+          const empty = imgs.findIndex((x) => !x);
+          if (empty >= 0) imgs[empty] = d.url;
+          else if (imgs.length < MAX_IMAGES) imgs.push(d.url);
+          return { ...dr, images: imgs };
+        });
+        slots--;
+      }
+    } finally {
+      setUploading(false);
+    }
+  }
 
   if (!authed) {
     return (
@@ -594,11 +638,31 @@ export default function AdminPage() {
                   </button>
                 </div>
               ))}
-              {draft.images.length < MAX_IMAGES && (
-                <button type="button" className="admin-inline-btn" onClick={addImage}>
-                  + Add image
-                </button>
-              )}
+              <div className="admin-img-actions">
+                {draft.images.length < MAX_IMAGES && (
+                  <button type="button" className="admin-inline-btn" onClick={addImage}>
+                    + Add image URL
+                  </button>
+                )}
+                <label className="admin-inline-btn admin-upload-btn">
+                  {uploading ? "Uploading…" : "⤒ Upload file"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    style={{ display: "none" }}
+                    disabled={uploading}
+                    onChange={(e) => {
+                      void uploadImageFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="admin-hint" style={{ marginTop: 8 }}>
+                Paste retailer image URLs, or upload files directly if a site blocks
+                our capture.
+              </p>
             </div>
           </div>
 

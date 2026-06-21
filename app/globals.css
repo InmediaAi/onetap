@@ -3877,6 +3877,11 @@
 .admin-btn:disabled { opacity: 0.5; cursor: default; }
 .admin-gate .admin-btn { margin-top: 1rem; width: 100%; }
 
+/* admin image actions (add URL / upload file) */
+.admin-img-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.admin-upload-btn { cursor: pointer; display: inline-flex; align-items: center; }
+.admin-upload-btn input { display: none; }
+
 /* admin generation-prompt editor */
 .prompt-edit { margin-bottom: 1.5rem; }
 .prompt-textarea {
