@@ -88,7 +88,7 @@ export default function ProfilePanel() {
 
   if (hydrated && !email) {
     return (
-      <div className="admin-card">
+      <div className="admin-card admin-gate profile-gate">
         <p className="admin-hint">You’re not signed in.</p>
         <Link href="/onboarding" className="btn-line admin-btn">
           Sign in

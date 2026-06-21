@@ -1526,6 +1526,19 @@
   min-height: 100vh;
   min-height: 100dvh;
 }
+
+/* Generic sticky-footer shell for short/empty pages (profile, 360 try-on, etc.).
+   The <main> fills the viewport and the footer is pushed to the bottom even when
+   the middle content is empty (e.g. signed-out / no-history states). */
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.page-shell > .foot {
+  margin-top: auto;
+}
 /* Wide editorial shell — grows to fill (sticky footer); not the narrow admin-wrap. */
 .closet-shell {
   flex: 1 0 auto;
@@ -3878,7 +3891,9 @@
   padding: 1.5rem;
   margin-bottom: 1.25rem;
 }
-.admin-gate { max-width: 360px; }
+.admin-gate { max-width: 360px; margin: 0 auto; }
+/* Signed-out profile empty-state — a tidy, centred gate (not a wide empty panel). */
+.profile-gate { margin-top: 2.5rem; text-align: center; }
 
 .admin-label {
   display: block;

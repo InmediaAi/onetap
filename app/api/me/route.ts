@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { type PlanId } from "@/lib/pricing/plans";
 import { getPlans, videoLimitOf, freeTrialLimit, planNameOf } from "@/lib/pricing/getPlans";
+import { reconcileCreated, type SubRow } from "@/lib/billing/reconcile";
 
 export const runtime = "nodejs";
 
@@ -27,11 +28,17 @@ export async function GET() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const { data: sub } = await sb
+  const subRes = await sb
     .from("subscriptions")
-    .select("plan, status, videos_used, current_period_end, topup_balance, cancel_at_period_end")
+    .select(
+      "plan, status, videos_used, current_period_end, topup_balance, cancel_at_period_end, razorpay_subscription_id, updated_at",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
+  let sub = subRes.data as SubRow | null;
+
+  // R1: if stuck in `created` (activation webhook missed), self-heal from Razorpay.
+  if (sub) sub = await reconcileCreated(user.id, sub);
 
   // Short-lived signed URLs for the two identity images (private bucket).
   async function sign(path: string | null | undefined) {

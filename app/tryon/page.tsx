@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 
 export default function TryOnPage() {
   return (
-    <main>
+    <main className="page-shell">
       <Header />
       <Studio360 />
       <SiteFooter />

@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 
 export default function ProfilePage() {
   return (
-    <main>
+    <main className="page-shell">
       <Header />
       <div className="admin-wrap">
         <p className="eyebrow">OneTap Atelier</p>

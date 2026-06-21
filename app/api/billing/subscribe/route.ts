@@ -41,6 +41,38 @@ export async function POST(req: Request) {
   }
 
   const rzp = getRazorpay()!;
+
+  // R2: prevent double mandates. If the user already has a live Razorpay
+  // subscription (plan switch, or a re-subscribe), cancel it IMMEDIATELY before
+  // creating the new one — cancel before create so we never leave two active
+  // subscriptions charging in parallel. For a billable prior sub (active/halted)
+  // a cancel failure aborts the switch (old sub stays, no double charge); a
+  // never-charged `created` leftover is best-effort cleanup only.
+  const { data: existing } = await sb
+    .from("subscriptions")
+    .select("razorpay_subscription_id, status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (existing?.razorpay_subscription_id && existing.status !== "cancelled") {
+    const billable = existing.status === "active" || existing.status === "halted";
+    try {
+      await rzp.subscriptions.cancel(existing.razorpay_subscription_id, false); // immediate
+    } catch (err) {
+      const e = err as { statusCode?: number; error?: { description?: string } };
+      const desc = e?.error?.description?.toLowerCase() ?? "";
+      const alreadyCancelled = e?.statusCode === 400 && desc.includes("cancel");
+      if (!alreadyCancelled) {
+        console.error("[billing/subscribe] could not cancel previous subscription:", err);
+        if (billable) {
+          return NextResponse.json(
+            { error: "Could not switch plans — please try again." },
+            { status: 502 },
+          );
+        }
+      }
+    }
+  }
+
   const sub = await rzp.subscriptions.create({
     plan_id,
     total_count: 12,
