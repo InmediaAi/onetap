@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { SlidersHorizontal, X, Search } from "lucide-react";
 import { isNewIn, priceBracketId, type Product } from "@/lib/data/products";
 import {
-  PRODUCT_CATEGORIES,
   PRODUCT_STYLES,
   OCCASIONS,
   COLOURS,
@@ -102,11 +101,12 @@ export default function ProductGrid({
       return set;
     };
     const brandSet = withSel(present("brand", (p) => p.brand), brands);
+    // Categories are free-form (admin can add new ones), so build the facet from
+    // every present value — same as brands — not a fixed whitelist.
+    const categorySet = withSel(present("category", (p) => p.category), categories);
     return {
       brands: [...brandSet].sort((a, b) => a.localeCompare(b)),
-      categories: PRODUCT_CATEGORIES.filter((c) =>
-        withSel(present("category", (p) => p.category), categories).has(c),
-      ),
+      categories: [...categorySet].sort((a, b) => a.localeCompare(b)),
       styles: PRODUCT_STYLES.filter((s) =>
         withSel(present("style", (p) => p.style), styles).has(s),
       ),

@@ -82,7 +82,8 @@ export class GeminiImageProvider implements TryOnProvider {
     // Optional aspect/size control. The docs show string values, but some
     // v1beta deployments reject them (enum mismatch) — so if the API 400s on
     // these fields we transparently retry WITHOUT them rather than fail.
-    const aspect = process.env.GEMINI_IMAGE_ASPECT;
+    // Default 9:16 to MATCH the video aspect (avoids the image-to-video stretch).
+    const aspect = process.env.GEMINI_IMAGE_ASPECT || "9:16";
     const size = process.env.GEMINI_IMAGE_SIZE;
     const responseFormat =
       aspect || size

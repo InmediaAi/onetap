@@ -14,7 +14,6 @@ import {
 import { formatPrice } from "@/lib/data/products";
 import {
   CURRENCIES,
-  PRODUCT_CATEGORIES,
   PRODUCT_STYLES,
   COLOUR_NAMES,
   OCCASIONS,
@@ -131,7 +130,9 @@ export async function POST(req: Request) {
 
     const amount = Number(body.priceAmount);
     const currency = CURRENCIES.includes(body.currency) ? body.currency : "USD";
-    const category = PRODUCT_CATEGORIES.includes(body.category) ? body.category : "";
+    // Free-form: admin may type a brand-new category (the form's datalist just
+    // suggests known ones). Trim + length-cap; no whitelist.
+    const category = clean(body.category, 60);
     const style = only(body.style, PRODUCT_STYLES);
     const colours = only(body.colours, COLOUR_NAMES);
     const occasions = only(body.occasions, OCCASIONS);

@@ -61,7 +61,9 @@ export class OpenAIImageProvider implements TryOnProvider {
       input.prompt?.trim() ||
       "Place the garment from the reference image(s) onto the person in the first image, " +
         "preserving their face and identity. Produce a single photorealistic image.";
-    const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
+    // 9:16 (864x1536) to MATCH the video aspect — a mismatched still (e.g. 2:3
+    // 1024x1536) makes the image-to-video step stretch the person.
+    const size = process.env.OPENAI_IMAGE_SIZE || "864x1536";
     const quality = process.env.OPENAI_IMAGE_QUALITY || "auto";
 
     const [person, ...garments] = await Promise.all([

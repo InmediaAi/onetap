@@ -349,6 +349,16 @@ export default function AdminPage() {
   for (const p of curatorItems) {
     if (p.category) catCounts[p.category] = (catCounts[p.category] ?? 0) + 1;
   }
+  // Combobox suggestions: the seed list + every category already in use, so a
+  // newly-added one (e.g. "Coats & Jackets") becomes reusable next time.
+  const categoryOptions = [
+    ...new Set([
+      ...PRODUCT_CATEGORIES,
+      ...recent.map((p) => p.category).filter((c): c is string => Boolean(c)),
+    ]),
+  ].sort((a, b) => a.localeCompare(b));
+  // Filter options for the Curator-pieces list — only categories actually present.
+  const catOptions = Object.keys(catCounts).sort((a, b) => a.localeCompare(b));
   const shownCurator = catFilter
     ? curatorItems.filter((p) => p.category === catFilter)
     : curatorItems;
@@ -502,12 +512,19 @@ export default function AdminPage() {
 
             <label className="admin-field">
               <span className="admin-label">Category</span>
-              <select className="admin-input" value={draft.category} onChange={set("category")}>
-                <option value="">Select a category…</option>
-                {PRODUCT_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+              {/* Combobox: pick a suggested category or type a brand-new one. */}
+              <input
+                className="admin-input"
+                list="cat-options"
+                value={draft.category}
+                onChange={set("category")}
+                placeholder="Pick or type a new category…"
+              />
+              <datalist id="cat-options">
+                {categoryOptions.map((c) => (
+                  <option key={c} value={c} />
                 ))}
-              </select>
+              </datalist>
             </label>
 
             <div className="admin-field">
@@ -703,7 +720,7 @@ export default function AdminPage() {
                   aria-label="Filter by category"
                 >
                   <option value="">All ({curatorItems.length})</option>
-                  {PRODUCT_CATEGORIES.map((c) => (
+                  {catOptions.map((c) => (
                     <option key={c} value={c}>
                       {c} ({catCounts[c] ?? 0})
                     </option>

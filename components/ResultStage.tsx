@@ -55,7 +55,6 @@ export default function ResultStage({
   poster,
   phase = null,
   turnLabel = "360°",
-  turnSub = "The Turn",
   caption,
   buyUrl,
   imageLookId,
@@ -160,16 +159,7 @@ export default function ResultStage({
           phase={phase}
           showInset
           sound={kind === "video"}
-          videoOverlay={
-            videoOverlay ?? (
-              <div className="turn-ctl">
-                <div className="deg">
-                  <span className="d">{turnLabel}</span>
-                  <span className="label">{turnSub}</span>
-                </div>
-              </div>
-            )
-          }
+          videoOverlay={videoOverlay}
           caption={
             caption ? (
               <div className="media-cap">

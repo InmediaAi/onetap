@@ -752,7 +752,7 @@
   color: var(--noir);
   margin-top: 2px;
 }
-.meta .tryon-link {
+.card .tryon-link {
   margin-top: 9px;
   display: inline-flex;
   align-items: center;
@@ -770,10 +770,10 @@
   transition: color 0.25s var(--ease);
   align-self: flex-start;
 }
-.meta .tryon-link:hover {
+.card .tryon-link:hover {
   color: var(--noir);
 }
-.meta .tryon-link .mk {
+.card .tryon-link .mk {
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -782,7 +782,7 @@
 
 /* show persistent CTA only where hover is unavailable */
 @media (hover: hover) {
-  .meta .tryon-link {
+  .card .tryon-link {
     display: none;
   }
 }
@@ -792,7 +792,7 @@
   }
   /* On touch there's no hover overlay — give the card a clear, tappable
      try-on action directly below the item (full-width outlined button). */
-  .meta .tryon-link {
+  .card .tryon-link {
     align-self: stretch;
     justify-content: center;
     margin-top: 12px;
@@ -802,11 +802,11 @@
     font-size: 11px;
     letter-spacing: 0.13em;
   }
-  .meta .tryon-link:active {
+  .card .tryon-link:active {
     background: var(--noir);
     color: var(--ivory);
   }
-  .meta .tryon-link:active .mk {
+  .card .tryon-link:active .mk {
     background: var(--ivory);
   }
 }
