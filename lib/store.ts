@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { Product } from "@/lib/data/products";
 import type { GenerationKind } from "@/lib/ai/types";
 import type { PlanId } from "@/lib/pricing/plans";
 import { SEED_CONFIG } from "@/lib/pricing/plans";
@@ -10,8 +11,9 @@ export interface GeneratedLook {
   id: string;
   productId: string;
   kind: GenerationKind;
-  /** The portrait used as input (data/hosted URL). */
-  inputImage: string;
+  /** The portrait used as input (data/hosted URL). In-memory only — stripped
+   *  from the persisted shape (a full-body data URL would bloat localStorage). */
+  inputImage?: string;
   /** Result — image for try-on, video URL for spin/video. */
   assetUrl: string;
   posterUrl?: string;
@@ -122,6 +124,8 @@ interface AtelierState {
   // ── Transient UI ──
   pricingOpen: boolean;
   signInOpen: boolean;
+  /** The product whose Curator try-on is currently generating (global island). */
+  activeTryOn: Product | null;
 
   // ── Setters ──
   setPortrait: (url: string) => void;
@@ -149,6 +153,10 @@ interface AtelierState {
   closePricing: () => void;
   openSignIn: () => void;
   closeSignIn: () => void;
+  /** Start a Curator try-on. Returns false if one is already in progress
+   *  (single-session — the island enforces one try-on at a time). */
+  startTryOn: (product: Product) => boolean;
+  closeTryOn: () => void;
 }
 
 export const useAtelier = create<AtelierState>()(
@@ -179,6 +187,7 @@ export const useAtelier = create<AtelierState>()(
       closetSeen: 0,
       pricingOpen: false,
       signInOpen: false,
+      activeTryOn: null,
 
       setPortrait: (url) => set({ portrait: url }),
       clearPortrait: () => set({ portrait: null }),
@@ -272,6 +281,7 @@ export const useAtelier = create<AtelierState>()(
           onboarded: false,
           usage: EMPTY_USAGE,
           profileLoaded: true,
+          activeTryOn: null, // cancel any in-progress try-on on sign-out
         }),
 
       addLook: (look) => {
@@ -312,13 +322,26 @@ export const useAtelier = create<AtelierState>()(
         track(EVENTS.SIGN_IN_REQUIRED);
       },
       closeSignIn: () => set({ signInOpen: false }),
+      startTryOn: (product) => {
+        if (get().activeTryOn) return false; // one try-on at a time
+        set({ activeTryOn: product });
+        return true;
+      },
+      closeTryOn: () => set({ activeTryOn: null }),
     }),
     {
       name: "onetap-atelier",
       // Persist only device-local UX. Identity + usage are server-owned and
       // hydrated after login (SessionLoader → /api/me).
       partialize: (s) => ({
-        looks: s.looks,
+        // Drop each look's `inputImage` (a full-body data URL) before persisting
+        // — it's never read back and would blow past the localStorage quota over
+        // many try-ons, silently failing the whole persist write.
+        looks: s.looks.map((l) => {
+          const persisted = { ...l };
+          delete persisted.inputImage;
+          return persisted;
+        }),
         wishlist: s.wishlist,
         closet: s.closet,
         closetSeen: s.closetSeen,

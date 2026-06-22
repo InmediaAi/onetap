@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import ProductGrid from "@/components/ProductGrid";
-import TryOnModal from "@/components/TryOnModal";
 import { type Product } from "@/lib/data/products";
 import { useAtelier } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 import { ensureCanGenerateVideo } from "@/lib/billing/gate";
 
-/** Client island: holds the active-product / try-on state for the catalog. */
+/** Curator grid + the trigger for the global try-on island (TryOnProvider). */
 export default function CatalogClient({ products }: { products: Product[] }) {
-  const [active, setActive] = useState<Product | null>(null);
   const profileLoaded = useAtelier((s) => s.profileLoaded);
+  const toast = useToast();
   const autoOpened = useRef(false);
 
   async function openTryOn(product: Product) {
@@ -22,10 +22,15 @@ export default function CatalogClient({ products }: { products: Product[] }) {
       price: product.price.amount,
       currency: product.price.currency,
     });
+    // One try-on at a time — the island stays alive until the current run ends.
+    if (useAtelier.getState().activeTryOn) {
+      toast.error("Let your current try-on finish first.");
+      return;
+    }
     // Gate before opening: must be signed in and have a video left (the curator
     // produces a 360°). The gate opens the sign-in or pricing modal as needed.
     if (!(await ensureCanGenerateVideo())) return;
-    setActive(product);
+    useAtelier.getState().startTryOn(product);
   }
 
   // Campaign deeplink: /try/<id> redirects to /?try=<id>. Once the session has
@@ -42,10 +47,5 @@ export default function CatalogClient({ products }: { products: Product[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileLoaded, products]);
 
-  return (
-    <>
-      <ProductGrid products={products} onTry={openTryOn} />
-      <TryOnModal product={active} onClose={() => setActive(null)} />
-    </>
-  );
+  return <ProductGrid products={products} onTry={openTryOn} />;
 }

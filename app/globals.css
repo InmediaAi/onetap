@@ -904,6 +904,164 @@
   }
 }
 
+/* ——— Curator try-on "Dynamic Island" (framer-motion morph) ——— */
+/* Portal layer: clicks pass through except on the scrim/modal/island itself, so
+   the grid stays scrollable while the island is up. */
+.tryon-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+}
+.tryon-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--rs-scrim-strong);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+/* The expanded modal — same column layout as .modal-scrim (top bar + stage). */
+.tryon-modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none; /* the stage/top-bar children re-enable it */
+  transform-origin: center top;
+}
+.tryon-modal > * {
+  pointer-events: auto;
+}
+/* Island anchor — centred just below the header (height measured at runtime
+   into --otp-header-h); only the pill is interactive. */
+.tryon-island-wrap {
+  position: absolute;
+  top: calc(var(--otp-header-h, 150px) + 14px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.tryon-island {
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 8px 16px 8px 8px;
+  border-radius: 30px;
+  background: #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-tap-highlight-color: transparent;
+}
+.tryon-island:active {
+  transform: scale(0.985);
+}
+/* The piece being fitted, inside a rotating "processing" ring. */
+.ti-ring {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 2.5px;
+  background: conic-gradient(from 0deg, #7b3ff2, #e0429f, #ff8fc7, #7b3ff2);
+  animation: tiSpin 1.5s linear infinite;
+  box-shadow: 0 0 14px rgba(224, 66, 159, 0.35);
+}
+.ti-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #1a1a1a;
+  border: 1.5px solid #0b0b0b; /* gap between thumb and the ring */
+}
+.ti-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* counter-rotate so the garment stays upright while the ring spins */
+  animation: tiSpinRev 1.5s linear infinite;
+}
+@keyframes tiSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes tiSpinRev {
+  to { transform: rotate(-360deg); }
+}
+.ti-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.ti-text {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+  background: linear-gradient(90deg, #ffffff 30%, #9a9a9a 50%, #ffffff 70%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: tiShimmer 2.6s linear infinite;
+}
+@keyframes tiShimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.ti-sub {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+.ti-x {
+  flex: none;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.ti-x:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ti-ring,
+  .ti-thumb img { animation: none; }
+  .ti-text {
+    animation: none;
+    -webkit-text-fill-color: #fff;
+    background: none;
+  }
+}
+@media (max-width: 640px) {
+  .ti-ring { width: 40px; height: 40px; }
+  .ti-text { font-size: 12.5px; }
+}
+
 .modal-top {
   flex: none;
   display: flex;

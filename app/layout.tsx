@@ -5,6 +5,7 @@ import AnalyticsProvider from "@/components/AnalyticsProvider";
 import SessionLoader from "@/components/SessionLoader";
 import MetaPixel from "@/components/MetaPixel";
 import GoogleTags from "@/components/GoogleTags";
+import TryOnProvider from "@/components/TryOnProvider";
 import { ToastProvider } from "@/components/Toast";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -63,7 +64,10 @@ export default function RootLayout({
         <MetaPixel />
         <AnalyticsProvider />
         <SessionLoader />
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          {children}
+          <TryOnProvider />
+        </ToastProvider>
       </body>
     </html>
   );
