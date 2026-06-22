@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, User, Images } from "lucide-react";
+import { User, Images } from "lucide-react";
 import PricingModal from "@/components/PricingModal";
 import SignInModal from "@/components/SignInModal";
+import { useAtelier } from "@/lib/store";
+import { useHydrated } from "@/lib/useHydrated";
 
 const NAV: { href: string; label: string; accent?: boolean }[] = [
   { href: "/curator", label: "OneTap Curator" },
@@ -16,6 +18,11 @@ const NAV: { href: string; label: string; accent?: boolean }[] = [
 
 export default function Header() {
   const pathname = usePathname();
+  const hydrated = useHydrated();
+  const lookCount = useAtelier((s) => s.looks.length);
+  const closetSeen = useAtelier((s) => s.closetSeen);
+  // Unseen looks since the last closet visit — nudges new users to their looks.
+  const unseen = hydrated ? Math.max(0, lookCount - closetSeen) : 0;
 
   return (
     <header className="topbar">
@@ -27,12 +34,20 @@ export default function Header() {
         </Link>
 
         <div className="tb-right">
-          <span className="ic label" role="button" aria-label="Search">
-            <Search size={16} strokeWidth={1.4} />
-            <span className="label ut-label">Search</span>
-          </span>
-          <Link href="/closet" className="ic" aria-label="My closet">
-            <Images size={17} strokeWidth={1.4} />
+          <Link
+            href="/closet"
+            className={"ic ic-closet" + (unseen > 0 ? " has-new" : "")}
+            aria-label={unseen > 0 ? `My closet — ${unseen} new` : "My closet"}
+          >
+            <span className="ic-closet-ic">
+              <Images size={17} strokeWidth={1.4} />
+              {unseen > 0 && (
+                <span className="ic-badge" aria-hidden="true">
+                  {unseen > 9 ? "9+" : unseen}
+                </span>
+              )}
+            </span>
+            <span className="label ut-label">Closet</span>
           </Link>
           <Link href="/profile" className="ic" aria-label="Profile">
             <User size={17} strokeWidth={1.4} />

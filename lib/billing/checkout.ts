@@ -3,6 +3,7 @@
 import { track, metaTrack } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 import { getPlan, type PlanId } from "@/lib/pricing/plans";
+import { useAtelier } from "@/lib/store";
 
 /**
  * Client-side subscription start: ask the server to create a Razorpay
@@ -21,6 +22,25 @@ function loadScript(): Promise<boolean> {
     s.onerror = () => resolve(false);
     document.body.appendChild(s);
   });
+}
+
+/**
+ * After a captured payment, poll the (no-store) profile until the expected change
+ * lands — the webhook is async and `/api/me` self-heals a stuck `created` sub via
+ * Razorpay. Each refresh hydrates the store, so the UI unlocks reactively with no
+ * page reload. Falls back to a hard reload if the webhook is unusually slow.
+ */
+async function settleAfterPayment(isDone: () => boolean): Promise<void> {
+  const refresh = useAtelier.getState().refreshProfile;
+  for (let i = 0; i < 8; i++) {
+    await refresh(); // no-store /api/me → hydrate usage/profile
+    if (isDone()) {
+      useAtelier.getState().closePricing();
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  window.location.reload(); // fallback — webhook still not reflected
 }
 
 export async function startSubscription(planId: PlanId): Promise<void> {
@@ -49,15 +69,17 @@ export async function startSubscription(planId: PlanId): Promise<void> {
     name: "OneTap Atelier",
     description: `${planId} plan`,
     theme: { color: "#1a1814" },
+    // Closing the sheet without paying → re-sync (no-op if nothing changed).
+    modal: { ondismiss: () => void useAtelier.getState().refreshProfile() },
     handler: () => {
       // Payment captured; webhook will activate. Fire the Meta conversion (with
-      // the plan value) before refreshing to pick up status.
+      // the plan value), then poll until the subscription reads active.
       const plan = getPlan(planId);
       const value = plan?.monthlyPrice;
       const currency = plan?.currency || "USD";
       metaTrack("Subscribe", { value, currency, predicted_ltv: value, content_name: `${planId} plan` });
       metaTrack("Purchase", { value, currency, content_name: `${planId} plan`, content_type: "subscription" });
-      setTimeout(() => window.location.reload(), 1500);
+      void settleAfterPayment(() => useAtelier.getState().usage.status === "active");
     },
   });
   rzp.open();
@@ -87,6 +109,9 @@ export async function startTopup(quantity: number): Promise<void> {
   const RZP = (window as any).Razorpay;
   if (!ok || !RZP) throw new Error("Razorpay failed to load");
 
+  // Balance before payment — poll until the webhook credits the top-up.
+  const startBalance = useAtelier.getState().usage.topupBalance;
+
   const rzp = new RZP({
     key: data.keyId,
     order_id: data.orderId,
@@ -95,15 +120,18 @@ export async function startTopup(quantity: number): Promise<void> {
     name: "OneTap Atelier",
     description: `${data.quantity} extra try-on${data.quantity === 1 ? "" : "s"}`,
     theme: { color: "#1a1814" },
+    modal: { ondismiss: () => void useAtelier.getState().refreshProfile() },
     handler: () => {
       // Payment captured; webhook credits the balance. Fire the Meta Purchase
-      // (Razorpay amount is in the smallest unit) before refreshing.
+      // (Razorpay amount is in the smallest unit), then poll for the new balance.
       metaTrack("Purchase", {
         value: typeof data.amount === "number" ? data.amount / 100 : undefined,
         currency: data.currency || "USD",
         content_name: "video top-up",
       });
-      setTimeout(() => window.location.reload(), 1500);
+      void settleAfterPayment(
+        () => useAtelier.getState().usage.topupBalance > startBalance,
+      );
     },
   });
   rzp.open();

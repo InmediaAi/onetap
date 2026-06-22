@@ -39,5 +39,32 @@ export default function SessionLoader() {
     };
   }, [pathname, refreshProfile]);
 
+  // Re-hydrate when the app regains focus / is restored — covers pull-to-refresh,
+  // returning from the Razorpay tab, and bfcache restores (none of which change
+  // the pathname, so the effect above wouldn't fire).
+  useEffect(() => {
+    let last = Date.now();
+    const resync = () => {
+      const now = Date.now();
+      if (now - last < 3000) return; // throttle the overlapping events
+      last = now;
+      void refreshProfile();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") resync();
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) resync(); // restored from bfcache
+    };
+    window.addEventListener("focus", resync);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.removeEventListener("focus", resync);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [refreshProfile]);
+
   return null;
 }

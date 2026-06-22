@@ -32,9 +32,15 @@ type Tab = "clips" | "images";
  */
 export default function ClosetGallery() {
   const openSignIn = useAtelier((s) => s.openSignIn);
+  const markClosetSeen = useAtelier((s) => s.markClosetSeen);
   const [state, setState] = useState<State>("loading");
   const [looks, setLooks] = useState<ClosetLook[]>([]);
   const [tab, setTab] = useState<Tab>("clips"); // clips first, by default
+
+  // Visiting the closet clears the unseen-looks badge in the header.
+  useEffect(() => {
+    markClosetSeen();
+  }, [markClosetSeen]);
 
   useEffect(() => {
     let active = true;

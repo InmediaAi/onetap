@@ -5,6 +5,17 @@ import { getPlans, videoLimitOf, freeTrialLimit, planNameOf } from "@/lib/pricin
 import { reconcileCreated, type SubRow } from "@/lib/billing/reconcile";
 
 export const runtime = "nodejs";
+// Session snapshot — must never be HTTP-cached. A cached response makes a normal
+// reload (e.g. window.location.reload() after subscribing, or pull-to-refresh)
+// serve stale usage/profile, so only a HARD refresh would pick up changes.
+export const dynamic = "force-dynamic";
+
+/** JSON response that is always served fresh (no browser/proxy caching). */
+function json(payload: unknown) {
+  return NextResponse.json(payload, {
+    headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+  });
+}
 
 /**
  * The signed-in user's profile + subscription/usage snapshot.
@@ -13,12 +24,12 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   const sb = await createServerSupabase();
-  if (!sb) return NextResponse.json({ authed: false });
+  if (!sb) return json({ authed: false });
 
   const {
     data: { user },
   } = await sb.auth.getUser();
-  if (!user) return NextResponse.json({ authed: false });
+  if (!user) return json({ authed: false });
 
   const { data: profile } = await sb
     .from("profiles")
@@ -82,7 +93,7 @@ export async function GET() {
         ? Math.max(0, freeTrialLimit(plans) - (profile?.free_trial_used ?? 0))
         : 0;
 
-  return NextResponse.json({
+  return json({
     authed: true,
     onboarded: Boolean(profile?.onboarded),
     username: profile?.username ?? null,

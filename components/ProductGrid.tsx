@@ -134,6 +134,16 @@ export default function ProductGrid({
   const toggleColour = toggle(setColours, "colour");
   const toggleBracket = toggle(setBrackets, "price");
 
+  // Quick filters beside "New in" — one tap maps to an existing facet value
+  // (occasion vocab, or the Dresses category). Active state mirrors that facet.
+  const quickFilters: { label: string; active: boolean; toggle: () => void }[] = [
+    { label: "Party Wear", active: occasions.includes("Party Wear"), toggle: () => toggleOccasion("Party Wear") },
+    { label: "Vacation", active: occasions.includes("Vacation"), toggle: () => toggleOccasion("Vacation") },
+    { label: "Work", active: occasions.includes("Work"), toggle: () => toggleOccasion("Work") },
+    { label: "Dresses", active: categories.includes("Dresses"), toggle: () => toggleCategory("Dresses") },
+    { label: "Fashion Week", active: occasions.includes("Fashion Week"), toggle: () => toggleOccasion("Fashion Week") },
+  ];
+
   // Active filters → removable tiles (price shows its label, not its id).
   const bracketLabel = (id: string) => PRICE_BRACKETS.find((b) => b.id === id)?.label ?? id;
   const active: { key: string; label: string; clear: () => void }[] = [
@@ -170,6 +180,15 @@ export default function ProductGrid({
           >
             New in
           </button>
+          {quickFilters.map((q) => (
+            <button
+              key={q.label}
+              className={"f-chip" + (q.active ? " on" : "")}
+              onClick={q.toggle}
+            >
+              {q.label}
+            </button>
+          ))}
         </div>
         <button className="refine-btn" onClick={() => setRefineOpen(true)}>
           <SlidersHorizontal size={15} strokeWidth={1.4} /> Refine

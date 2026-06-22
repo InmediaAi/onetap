@@ -30,7 +30,9 @@
       "Bash(grep -n \"margin: 0\\\\|^html\\\\|^body\\\\|html,\\\\|body {\\\\|html {\\\\|box-sizing\\\\|\\\\* {\" app/globals.css)",
       "Bash(curl -s -o /dev/null http://localhost:3000/profile)",
       "Bash(break)",
-      "Bash(curl -s http://localhost:3000/profile)"
+      "Bash(curl -s http://localhost:3000/profile)",
+      "Bash(curl -s http://localhost:3000/curator)",
+      "Bash(awk '/<\\\\/footer>/{f=1} f')"
     ]
   }
 }

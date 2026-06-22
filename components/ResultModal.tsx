@@ -72,7 +72,8 @@ export default function ResultModal({
           {price && <span className="price">{price}</span>}
           {stage.buyUrl && hasResult && (
             <button className="shop-cta" onClick={shop}>
-              <ShoppingBag size={14} strokeWidth={1.5} /> Shop this piece
+              <ShoppingBag size={14} strokeWidth={1.5} /> Shop
+              <span className="sc-rest">&nbsp;this piece</span>
             </button>
           )}
           <button className="mclose" onClick={onClose} aria-label="Close">

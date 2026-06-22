@@ -116,6 +116,8 @@ interface AtelierState {
   looks: GeneratedLook[];
   wishlist: string[];
   closet: string[];
+  /** looks.length at the user's last closet visit — drives the unseen badge. */
+  closetSeen: number;
 
   // ── Transient UI ──
   pricingOpen: boolean;
@@ -138,6 +140,8 @@ interface AtelierState {
   resetSession: () => void;
   addLook: (look: GeneratedLook) => void;
   getLook: (id: string) => GeneratedLook | undefined;
+  /** Mark the closet as seen (clears the unseen-looks badge in the header). */
+  markClosetSeen: () => void;
   toggleWish: (productId: string) => void;
   addCloset: (dataUrl: string) => void;
   removeCloset: (dataUrl: string) => void;
@@ -172,6 +176,7 @@ export const useAtelier = create<AtelierState>()(
       looks: [],
       wishlist: [],
       closet: [],
+      closetSeen: 0,
       pricingOpen: false,
       signInOpen: false,
 
@@ -214,7 +219,9 @@ export const useAtelier = create<AtelierState>()(
         }),
       refreshProfile: async () => {
         try {
-          const r = await fetch("/api/me");
+          // no-store: never reuse a cached session snapshot (else a soft reload
+          // after subscribe/sign-in serves stale usage/profile).
+          const r = await fetch("/api/me", { cache: "no-store" });
           const d = r.ok ? await r.json() : null;
           if (!d) return;
           if (d.authed) {
@@ -276,6 +283,7 @@ export const useAtelier = create<AtelierState>()(
         });
       },
       getLook: (id) => get().looks.find((l) => l.id === id),
+      markClosetSeen: () => set({ closetSeen: get().looks.length }),
       toggleWish: (productId) => {
         const wasWished = get().wishlist.includes(productId);
         set((s) => ({
@@ -313,6 +321,7 @@ export const useAtelier = create<AtelierState>()(
         looks: s.looks,
         wishlist: s.wishlist,
         closet: s.closet,
+        closetSeen: s.closetSeen,
       }),
     },
   ),

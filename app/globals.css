@@ -52,6 +52,10 @@
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* The root background paints the viewport canvas — the area below the
+       document and the overscroll bounce. Match the dark footer so no light/
+       tinted strip ever shows beneath it (body stays ivory over the content). */
+    background-color: var(--noir);
   }
 
   body {
@@ -169,6 +173,40 @@
 }
 .tb-right .ic .label {
   color: var(--ivory);
+}
+/* Closet icon — red unseen-looks badge to pull new users to their looks. */
+.ic-closet-ic {
+  position: relative;
+  display: inline-flex;
+}
+.ic-badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #e0231a;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+  box-shadow: 0 0 0 2px var(--noir); /* ring against the dark topbar */
+  animation: icBadgePulse 1.8s ease-in-out infinite;
+}
+@keyframes icBadgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+.ic-closet.has-new { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .ic-badge { animation: none; }
 }
 .pill-count {
   position: relative;
@@ -1586,6 +1624,12 @@
     padding-left: 1.1rem;
     padding-right: 1.1rem;
   }
+  .closet-head {
+    margin-bottom: 1rem;
+  }
+  .closet-head .admin-title {
+    font-size: 1.9rem;
+  }
   .cl-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
@@ -1950,11 +1994,9 @@
     transform: none;
   }
 }
-.closet-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+/* (Removed an orphaned `.closet-head { display:flex }` from an old design that
+   forced the eyebrow/title/hint into a cramped row. The live .closet-head above
+   stacks them. The leftover .ttl/.cnt/.closet-* helpers below are unused.) */
 .closet-head .ttl {
   font-family: var(--sans);
   font-weight: 500;
@@ -3385,13 +3427,38 @@
 
   /* ——— try-on modal ——— */
   .modal-top {
-    padding: 14px 16px;
+    padding: 11px 14px;
+    gap: 10px;
+  }
+  .modal-top .mt-info {
+    flex: 1 1 auto;
   }
   .modal-top .mt-info .n {
-    font-size: 18px;
+    font-size: 15px;
+  }
+  .modal-top .mt-info .h {
+    font-size: 9px;
+    letter-spacing: 0.14em;
   }
   .modal-top .mt-right {
-    gap: 14px;
+    gap: 9px;
+  }
+  .modal-top .price {
+    font-size: 12.5px;
+  }
+  .shop-cta {
+    padding: 8px 11px;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    gap: 5px;
+  }
+  .shop-cta .sc-rest {
+    display: none; /* "Shop this piece" → "Shop" on narrow screens */
+  }
+  .mclose {
+    width: 34px;
+    height: 34px;
+    flex: none;
   }
   /* stack the stage and move the thumbnail rail to the BOTTOM (horizontal) */
   .modal-stage {
