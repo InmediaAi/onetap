@@ -11,6 +11,7 @@ import {
 } from "@/lib/data/facets";
 import ProductCard from "./ProductCard";
 import Pagination from "./Pagination";
+import { useAtelier } from "@/lib/store";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
@@ -37,6 +38,11 @@ export default function ProductGrid({
   const [brandQuery, setBrandQuery] = useState("");
   const [refineOpen, setRefineOpen] = useState(false);
 
+  // The user's onboarding brand preferences (hydrated from /api/me).
+  const preferredBrands = useAtelier((s) => s.brands);
+  const profileLoaded = useAtelier((s) => s.profileLoaded);
+  const autoBrandsApplied = useRef(false);
+
   // Server-driven page + facets (seeded from SSR so first paint is populated).
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [total, setTotal] = useState(initialTotal);
@@ -54,6 +60,21 @@ export default function ProductGrid({
   const filterKey = useMemo(() => filtersToParams(filters).toString(), [filters]);
 
   const didMount = useRef(false);
+
+  // Pre-select the user's preferred brands on entry, once the profile resolves.
+  // Runs once per mount and only when the brand filter is empty, so it never
+  // clobbers a manual selection made during the visit. Brands not in the catalog
+  // are intersected out so the grid is never left empty.
+  useEffect(() => {
+    if (autoBrandsApplied.current || !profileLoaded) return;
+    autoBrandsApplied.current = true;
+    if (preferredBrands.length === 0 || brands.length > 0) return;
+    const available = new Set(facets.brands);
+    const toSelect = preferredBrands.filter((b) => available.has(b));
+    if (toSelect.length === 0) return;
+    setBrands(toSelect);
+    setPage(1);
+  }, [profileLoaded, preferredBrands, facets.brands, brands.length]);
 
   // Products: fetch the current filters + page (debounced; cancels stale requests).
   // Seeded from SSR, so the first run is skipped.

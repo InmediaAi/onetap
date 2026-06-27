@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import ReelsWall from "@/components/onboarding/ReelsWall";
+import PoseFigure from "@/components/PoseFigure";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { BRANDS } from "@/lib/data/brands";
@@ -35,21 +36,6 @@ const AppleMark = () => (
   </svg>
 );
 
-/* ——— Vector placeholders that show what to upload ——— */
-const FaceFigure = () => (
-  <svg className="uc-fig" viewBox="0 0 64 72" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="32" cy="26" r="13" />
-    <path d="M12 66c0-11 9-18 20-18s20 7 20 18" strokeLinecap="round" />
-  </svg>
-);
-const BodyFigure = () => (
-  <svg className="uc-fig" viewBox="0 0 64 80" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="32" cy="12" r="7" />
-    <path d="M32 19v26" />
-    <path d="M32 25 19 37M32 25l13 12" />
-    <path d="M32 45 23 74M32 45l9 29" />
-  </svg>
-);
 
 function UploadCard({
   value,
@@ -345,7 +331,7 @@ export default function OnboardingPage() {
                   kind="selfie"
                   label="Upload Face selfie"
                   hint="Face recognition"
-                  figure={<FaceFigure />}
+                  figure={<PoseFigure kind="selfie" />}
                 />
                 <UploadCard
                   value={b}
@@ -353,7 +339,7 @@ export default function OnboardingPage() {
                   kind="body"
                   label="Upload Full body image"
                   hint="Shape analysis"
-                  figure={<BodyFigure />}
+                  figure={<PoseFigure kind="body" />}
                 />
               </div>
               <button

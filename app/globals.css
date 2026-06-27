@@ -1890,37 +1890,27 @@
   height: 100%;
   object-fit: cover;
 }
+/* Glassy circular play badge — crisp SVG triangle, consistent across browsers
+   (the old ▶ glyph rendered as an emoji on iOS Chrome). */
 .closet-card .cc-play {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  font-size: 11px;
-  color: var(--ivory);
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  bottom: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #fff;
+  background: rgba(20, 18, 16, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.28);
 }
-.closet-card .cc-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 11px;
-}
-.closet-card .cc-kind {
-  font-family: var(--sans);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--stone);
-}
-.closet-card .cc-date {
-  font-family: var(--sans);
-  font-size: 11px;
-  color: var(--taupe);
+.closet-card .cc-play svg {
+  margin-left: 1px; /* optical-centre the triangle in the circle */
 }
 
 /* Clips / Images section tabs */
@@ -4420,11 +4410,64 @@
 .profile-imgs { display: flex; gap: 1.25rem; margin-top: 1.25rem; }
 .profile-img { display: flex; flex-direction: column; gap: 0.4rem; }
 .profile-img-box {
+  position: relative;
   width: 120px; aspect-ratio: 3 / 4; border: 1px solid var(--stone-hair);
   background: var(--ivory-deep); overflow: hidden; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
 .profile-img-box img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ——— Loading shimmer (skeleton) — reusable ——— */
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--ivory-deep) 30%,
+    var(--ivory-panel) 50%,
+    var(--ivory-deep) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.profile-img-shimmer { position: absolute; inset: 0; display: block; }
+/* Empty photo slot — pose silhouette + add cue (guides what to upload). */
+.img-ph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--stone);
+}
+.img-ph .pose-fig {
+  width: 40px;
+  height: 50px;
+}
+.img-ph-add {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--taupe);
+}
+/* Session-resolving placeholder for the profile panel. */
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0.5rem 0;
+}
+.profile-load-line {
+  display: block;
+  border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none; }
+}
 /* Inline per-photo validation/save note, shown directly under the slot. */
 .profile-img-note {
   margin: 0;

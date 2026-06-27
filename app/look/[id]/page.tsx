@@ -155,7 +155,7 @@ export default function LookPage() {
     <main>
       <Header />
 
-      <section className="mx-auto flex max-w-editorial flex-col items-center overflow-x-hidden px-6 py-16 text-center md:py-24">
+      <section className="mx-auto flex max-w-editorial flex-col items-center overflow-x-hidden px-6 py-6 text-center md:py-14">
         <button
           onClick={goBack}
           className="mb-6 inline-flex items-center gap-2 self-start text-sm text-muted transition-colors hover:text-ink"
@@ -165,7 +165,7 @@ export default function LookPage() {
         </button>
 
         {!hydrated || (!look && !notFound) ? (
-          <div className="shimmer h-[28rem] w-80" />
+          <div className="shimmer mt-4 aspect-[9/16] h-[56svh] max-h-[600px] w-auto md:h-[64svh]" />
         ) : !look ? (
           <div className="flex flex-col items-center gap-6 py-20">
             <p className="font-display text-3xl">This look isn’t here</p>
@@ -181,23 +181,25 @@ export default function LookPage() {
           <>
             <p className="eyebrow">OneTap Atelier</p>
             {product && (
-              <h1 className="mt-4 max-w-full font-display text-3xl leading-tight md:max-w-2xl md:text-4xl">
+              <h1 className="mt-3 max-w-full font-display text-2xl leading-tight md:max-w-2xl md:text-4xl">
                 {product.brand} — {product.name}
               </h1>
             )}
 
+            {/* Height-driven so the full clip/image fits the viewport (no scroll);
+                width follows the 9:16 ratio. svh excludes mobile browser chrome. */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="relative mt-10 aspect-[9/16] w-full max-w-sm overflow-hidden bg-ivoryPanel"
+              className="relative mt-4 aspect-[9/16] h-[56svh] max-h-[600px] w-auto max-w-full overflow-hidden bg-ivoryPanel md:mt-6 md:h-[64svh]"
             >
               {look.kind === "tryon" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={look.assetUrl}
                   alt="Generated look"
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-contain"
                 />
               ) : (
                 <>
@@ -212,7 +214,7 @@ export default function LookPage() {
                     loop
                     playsInline
                     preload="metadata"
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full object-contain"
                   />
                   {needsUnmute && (
                     <button type="button" className="unmute" onClick={enableSound}>
@@ -223,7 +225,7 @@ export default function LookPage() {
               )}
             </motion.div>
 
-            <div className="mt-7 flex items-center justify-center gap-3">
+            <div className="mt-5 flex items-center justify-center gap-3">
               <button
                 onClick={downloadLook}
                 className="btn-line inline-flex items-center gap-2"
@@ -239,7 +241,7 @@ export default function LookPage() {
               </button>
             </div>
 
-            <div className="mt-12 flex flex-col items-center gap-4">
+            <div className="mt-8 flex flex-col items-center gap-4">
               {look.campaign === "fifa-worldcup" ? (
                 <>
                   <p className="text-sm text-muted">Made with Viral Fan · by OneTap.</p>

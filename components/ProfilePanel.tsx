@@ -16,6 +16,7 @@ import {
 import { startTopup } from "@/lib/billing/checkout";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 import { uploadIdentity, signOut, type IdentityKind } from "@/lib/auth/client";
+import PoseFigure from "@/components/PoseFigure";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
@@ -39,6 +40,7 @@ const PHOTOS: { kind: IdentityKind; label: string; hint?: string }[] = [
 export default function ProfilePanel() {
   const hydrated = useHydrated();
   const email = useAtelier((s) => s.email);
+  const profileLoaded = useAtelier((s) => s.profileLoaded);
   const username = useAtelier((s) => s.username);
   const brands = useAtelier((s) => s.brands);
   const usage = useAtelier((s) => s.usage);
@@ -58,14 +60,19 @@ export default function ProfilePanel() {
   const [goals, setGoals] = useState<string[]>(store.goals);
   const [mood, setMood] = useState<string[]>(store.sceneMood);
   const [setting, setSetting] = useState<string[]>(store.sceneSetting);
-  // Local previews for the four photos (initialised from the hydrated store).
-  const [imgs, setImgs] = useState<Record<IdentityKind, string | null>>({
+  // Locally-picked previews ONLY (data: URLs). Server (signed) URLs are read live
+  // from the store via srcFor() — the store often hydrates from /api/me AFTER this
+  // mounts (fresh load / refocus), and re-signs on refresh, so reading it live is
+  // what keeps the images from intermittently never appearing (or going stale).
+  const [imgs, setImgs] = useState<Partial<Record<IdentityKind, string>>>({});
+  const storeImg: Record<IdentityKind, string | null> = {
     body: store.body,
     selfie: store.face,
     left: store.left,
     right: store.right,
     back: store.back,
-  });
+  };
+  const srcFor = (kind: IdentityKind): string | null => imgs[kind] ?? storeImg[kind];
 
   const [status, setStatus] = useState<string | null>(null);
   // Per-photo inline note (validation/save feedback shown right under each slot).
@@ -79,7 +86,13 @@ export default function ProfilePanel() {
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   // How many angles are on file — gates the composite generation.
-  const photoCount = [imgs.body, imgs.selfie, imgs.left, imgs.right, imgs.back].filter(
+  const photoCount = [
+    srcFor("body"),
+    srcFor("selfie"),
+    srcFor("left"),
+    srcFor("right"),
+    srcFor("back"),
+  ].filter(
     Boolean,
   ).length;
   const refs = {
@@ -90,7 +103,20 @@ export default function ProfilePanel() {
     back: useRef<HTMLInputElement>(null),
   };
 
-  if (hydrated && !email) {
+  // Until the session resolves (/api/me), we don't yet know if the user is signed
+  // in — show a loading shimmer rather than flashing the signed-out gate (which
+  // made the profile/images appear to "not show" right after opening the app).
+  if (!hydrated || !profileLoaded) {
+    return (
+      <div className="profile-loading" aria-busy="true">
+        <span className="shimmer profile-load-line" style={{ width: "40%", height: 14 }} />
+        <span className="shimmer profile-load-line" style={{ width: "70%", height: 36 }} />
+        <span className="shimmer profile-load-line" style={{ width: "100%", height: 220 }} />
+      </div>
+    );
+  }
+
+  if (!email) {
     return (
       <div className="admin-card admin-gate profile-gate">
         <p className="admin-hint">You’re not signed in.</p>
@@ -281,12 +307,13 @@ export default function ProfilePanel() {
                 {hint && <em className="profile-img-hint"> · {hint}</em>}
               </span>
               <div className="profile-img-box" onClick={() => refs[kind].current?.click()}>
-                {imgs[kind] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imgs[kind] as string} alt={label} />
-                ) : (
-                  <span className="admin-preview-empty">+ Add</span>
-                )}
+                <ProfilePhoto
+                  key={srcFor(kind) ?? "none"}
+                  src={srcFor(kind)}
+                  label={label}
+                  kind={kind}
+                  pending={!profileLoaded}
+                />
               </div>
               {imgNote[kind] && (
                 <p className={"profile-img-note " + imgNote[kind]!.type}>
@@ -451,6 +478,53 @@ export default function ProfilePanel() {
         Sign out
       </button>
     </div>
+  );
+}
+
+/** A profile photo slot: shimmer while loading, the image once ready, "+ Add"
+ *  when empty or the (signed) URL fails. Keyed by src so state resets on change. */
+function ProfilePhoto({
+  src,
+  label,
+  kind,
+  pending,
+}: {
+  src: string | null;
+  label: string;
+  kind: IdentityKind;
+  pending: boolean;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const placeholder = (
+    <span className="img-ph">
+      <PoseFigure kind={kind} className="pose-fig" />
+      <span className="img-ph-add">+ Add</span>
+    </span>
+  );
+
+  if (!src) {
+    return pending ? (
+      <span className="shimmer profile-img-shimmer" aria-hidden="true" />
+    ) : (
+      placeholder
+    );
+  }
+  if (failed) return placeholder;
+
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={label}
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+        style={loaded ? undefined : { opacity: 0 }}
+      />
+      {!loaded && <span className="shimmer profile-img-shimmer" aria-hidden="true" />}
+    </>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Play } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import Pagination from "@/components/Pagination";
 
@@ -149,7 +150,6 @@ export default function ClosetGallery() {
         <div className="cl-grid" ref={gridRef}>
           {looks.map((l) => {
             const isVideo = l.kind !== "tryon";
-            const isFifa = l.campaign === "fifa-worldcup";
             return (
               <Link
                 key={l.id}
@@ -164,16 +164,11 @@ export default function ClosetGallery() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={(isVideo ? l.posterUrl : l.assetUrl) ?? undefined} alt="" loading="lazy" />
                   )}
-                  {isVideo && <span className="cc-play" aria-hidden="true">▶</span>}
-                </div>
-                <div className="cc-meta">
-                  <span className="cc-kind">{isFifa ? "FIFA" : KIND_LABEL[l.kind]}</span>
-                  <span className="cc-date">
-                    {new Date(l.createdAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
+                  {isVideo && (
+                    <span className="cc-play" aria-hidden="true">
+                      <Play size={12} fill="currentColor" strokeWidth={0} />
+                    </span>
+                  )}
                 </div>
               </Link>
             );
