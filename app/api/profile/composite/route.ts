@@ -102,7 +102,11 @@ export async function POST() {
     const path = `${user.id}/${MODEL_PATH}`;
     const up = await svc.storage
       .from("avatars")
-      .upload(path, got.bytes, { contentType: got.contentType, upsert: true });
+      .upload(path, got.bytes, {
+        contentType: got.contentType,
+        upsert: true,
+        cacheControl: "3600",
+      });
     if (up.error) throw new Error(up.error.message);
 
     await sb

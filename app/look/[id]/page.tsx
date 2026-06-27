@@ -211,6 +211,7 @@ export default function LookPage() {
                     onContextMenu={(e) => e.preventDefault()}
                     loop
                     playsInline
+                    preload="metadata"
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                   {needsUnmute && (

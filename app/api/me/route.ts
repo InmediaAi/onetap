@@ -17,6 +17,13 @@ function json(payload: unknown) {
   });
 }
 
+// Reuse a still-valid signed URL across /api/me calls instead of minting a new
+// token each time. New tokens defeat the browser cache, so the focus/visibility
+// re-hydrations were re-downloading the identity photos from Storage on every
+// call (egress). Per warm serverless instance; reuse while > 10 min remains.
+const SIGN_TTL = 3600;
+const signCache = new Map<string, { url: string; exp: number }>();
+
 /**
  * The signed-in user's profile + subscription/usage snapshot.
  * Returns { authed:false } when not signed in (or Supabase unconfigured),
@@ -30,6 +37,7 @@ export async function GET() {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return json({ authed: false });
+  const uid = user.id; // stable id for the signed-URL cache key (closure-safe)
 
   const { data: profile } = await sb
     .from("profiles")
@@ -54,8 +62,14 @@ export async function GET() {
   // Short-lived signed URLs for the two identity images (private bucket).
   async function sign(path: string | null | undefined) {
     if (!path) return null;
-    const { data } = await sb!.storage.from("avatars").createSignedUrl(path, 3600);
-    return data?.signedUrl ?? null;
+    const key = `${uid}/${path}`;
+    const now = Math.floor(Date.now() / 1000);
+    const hit = signCache.get(key);
+    if (hit && hit.exp - now > 600) return hit.url; // reuse while > 10 min left
+    const { data } = await sb!.storage.from("avatars").createSignedUrl(path, SIGN_TTL);
+    if (!data?.signedUrl) return null;
+    signCache.set(key, { url: data.signedUrl, exp: now + SIGN_TTL });
+    return data.signedUrl;
   }
   const [selfieUrl, bodyUrl, leftUrl, rightUrl, backUrl, modelUrl] =
     await Promise.all([

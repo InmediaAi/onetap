@@ -36,6 +36,35 @@ function readAsDataURL(file: File): Promise<string> {
 type Stage = "form" | "gen" | "result";
 interface Result { videoUrl: string; posterUrl?: string; lookId: string }
 
+/**
+ * Showcase clip that only downloads + plays while it's actually on screen — the
+ * reel duplicates its track and would otherwise autoplay/buffer every clip at
+ * once (heavy egress). Source is attached lazily on first intersection.
+ */
+function ShowcaseVideo({ src, poster }: { src: string; poster?: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            if (!el.getAttribute("src")) el.setAttribute("src", src); // lazy-load
+            el.play().catch(() => {});
+          } else {
+            el.pause();
+          }
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [src]);
+  return <video ref={ref} poster={poster} loop muted playsInline preload="none" />;
+}
+
 const WELCOME_FLAG = "vf_welcome"; // sessionStorage: set on OAuth start, read on return
 
 export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | null }) {
@@ -536,7 +565,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
                       const dup = i >= showcase.length;
                       const card = (
                         <span className="tia-poster">
-                          <video src={s.videoUrl} poster={s.poster} autoPlay loop muted playsInline preload="metadata" />
+                          <ShowcaseVideo src={s.videoUrl} poster={s.poster} />
                           {(s.caption || s.views) && (
                             <span className="tia-meta">
                               {s.caption && <span className="tia-caption">{s.caption}</span>}

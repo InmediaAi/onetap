@@ -108,7 +108,11 @@ export async function uploadIdentity(
   const path = `${user.id}/${kind}`;
   const { error } = await sb.storage
     .from("avatars")
-    .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
+    .upload(path, blob, {
+      upsert: true,
+      contentType: blob.type || "image/jpeg",
+      cacheControl: "3600", // signed-URL responses cacheable for their lifetime
+    });
   if (error) {
     throw new Error(`Could not upload your ${kind} photo: ${error.message}`);
   }

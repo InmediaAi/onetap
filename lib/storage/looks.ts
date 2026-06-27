@@ -92,6 +92,7 @@ export async function persistLook(args: PersistArgs): Promise<PersistResult> {
       .upload(path, got.bytes, {
         contentType: got.contentType || undefined,
         upsert: true,
+        cacheControl: "31536000", // immutable (unique id) — cache a year
       });
     if (up.error) return fallback;
     const url = db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
@@ -107,6 +108,7 @@ export async function persistLook(args: PersistArgs): Promise<PersistResult> {
           .upload(ppath, pg.bytes, {
             contentType: pg.contentType || undefined,
             upsert: true,
+            cacheControl: "31536000",
           });
         if (!pu.error) posterUrl = db.storage.from(BUCKET).getPublicUrl(ppath).data.publicUrl;
       }

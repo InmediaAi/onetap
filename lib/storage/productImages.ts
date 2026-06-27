@@ -1,5 +1,5 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/server";
 
 /**
@@ -122,10 +122,18 @@ export async function persistProductImages(
         failed.push(url);
         return url;
       }
-      const path = `${id}/${idx}.${extFor(got.contentType)}`;
+      // Content-address the path so a year-long immutable cache is safe: an
+      // admin re-edit with a different image yields a new URL (no stale CDN/
+      // browser copy); an identical re-save reuses the same path (idempotent).
+      const hash = createHash("sha1").update(got.bytes).digest("hex").slice(0, 10);
+      const path = `${id}/${idx}-${hash}.${extFor(got.contentType)}`;
       const up = await db.storage
         .from(BUCKET)
-        .upload(path, got.bytes, { contentType: got.contentType, upsert: true });
+        .upload(path, got.bytes, {
+          contentType: got.contentType,
+          upsert: true,
+          cacheControl: "31536000",
+        });
       if (up.error) {
         failed.push(url);
         return url;
@@ -150,7 +158,11 @@ export async function uploadProductImageBytes(
   const path = `manual/${randomUUID()}.${extFor(contentType)}`;
   const up = await db.storage
     .from(BUCKET)
-    .upload(path, bytes, { contentType: contentType || "image/jpeg", upsert: true });
+    .upload(path, bytes, {
+      contentType: contentType || "image/jpeg",
+      upsert: true,
+      cacheControl: "31536000", // unique UUID path — immutable
+    });
   if (up.error) return null;
   return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }

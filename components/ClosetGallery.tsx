@@ -145,7 +145,7 @@ export default function ClosetGallery() {
               >
                 <div className="cc-media">
                   {isVideo && !l.posterUrl ? (
-                    <video src={l.assetUrl ?? undefined} muted playsInline preload="metadata" />
+                    <video src={l.assetUrl ?? undefined} muted playsInline preload="none" />
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={(isVideo ? l.posterUrl : l.assetUrl) ?? undefined} alt="" loading="lazy" />
