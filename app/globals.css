@@ -604,6 +604,80 @@
   gap: 14px 22px;
   padding: 28px 0 90px;
 }
+
+/* ——— Pagination (Curator / Closet / Creator picker) ——— */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 72px;
+}
+.pg-nums {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pg-btn,
+.pg-num {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  background: transparent;
+  border: 1px solid var(--stone-soft);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+.pg-btn {
+  padding: 9px 16px;
+}
+.pg-num {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pg-btn:hover:not(:disabled),
+.pg-num:hover {
+  color: var(--noir);
+  border-color: var(--stone);
+}
+.pg-num.on {
+  color: var(--ivory);
+  background: var(--noir);
+  border-color: var(--noir);
+}
+.pg-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pg-ellipsis {
+  color: var(--taupe);
+  font-size: 12px;
+  padding: 0 2px;
+  user-select: none;
+}
+.pg-compact {
+  display: none;
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--taupe);
+}
+@media (max-width: 480px) {
+  .pg-nums {
+    display: none; /* numbered window → compact "x / y" on small screens */
+  }
+  .pg-compact {
+    display: inline;
+  }
+}
 .card {
   display: flex;
   flex-direction: column;

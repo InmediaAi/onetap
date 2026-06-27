@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Upload, LayoutGrid, Check, Wand2 } from "lucide-react";
 import { useAtelier } from "@/lib/store";
@@ -16,6 +16,9 @@ import {
 import { type Product } from "@/lib/data/products";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
 import ResultModal from "@/components/ResultModal";
+import Pagination from "@/components/Pagination";
+
+const PICKER_PAGE_SIZE = 12;
 
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -28,7 +31,13 @@ function readAsDataURL(file: File): Promise<string> {
 
 type Tab = "upload" | "curated";
 
-export default function CreatorBuilder({ products }: { products: Product[] }) {
+export default function CreatorBuilder({
+  initialProducts,
+  initialTotal,
+}: {
+  initialProducts: Product[];
+  initialTotal: number;
+}) {
   const hydrated = useHydrated();
   // Try-on needs the full-length photo as the primary likeness (a face-only
   // selfie breaks the full-body result) — gate on `body`, not portrait.
@@ -51,6 +60,32 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
   } | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // The "choose from Curator" picker is paginated server-side (page at a time).
+  const pickRef = useRef<HTMLDivElement>(null);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [total, setTotal] = useState(initialTotal);
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(total / PICKER_PAGE_SIZE));
+  const didMount = useRef(false);
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+    const ctl = new AbortController();
+    fetch(`/api/products?page=${page}&pageSize=${PICKER_PAGE_SIZE}`, {
+      signal: ctl.signal,
+      cache: "no-store",
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        setProducts(d.products ?? []);
+        setTotal(d.total ?? 0);
+      })
+      .catch(() => {});
+    return () => ctl.abort();
+  }, [page]);
 
   // Both tabs give a real garment image → compose the on-you try-on first.
   const hasGarment = tab === "upload" ? Boolean(upload) : Boolean(curated);
@@ -204,7 +239,7 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
             )}
           </div>
         ) : (
-          <div className="cprod-grid">
+          <div className="cprod-grid" ref={pickRef}>
             {products.map((p) => (
               <button
                 key={p.id}
@@ -228,6 +263,9 @@ export default function CreatorBuilder({ products }: { products: Product[] }) {
               </button>
             ))}
           </div>
+        )}
+        {tab === "curated" && (
+          <Pagination page={page} pageCount={pageCount} onPage={setPage} topRef={pickRef} />
         )}
 
         {/* Step 3 — options */}

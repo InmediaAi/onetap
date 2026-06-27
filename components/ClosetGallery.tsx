@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAtelier } from "@/lib/store";
+import Pagination from "@/components/Pagination";
 
 /** One row from GET /api/me/looks. */
 interface ClosetLook {
@@ -21,32 +22,41 @@ const KIND_LABEL: Record<ClosetLook["kind"], string> = {
   video: "Film",
 };
 
+const PAGE_SIZE = 4; // must match the server route (latest 4 per tab)
+
 type State = "loading" | "ready" | "signedout" | "error";
 type Tab = "clips" | "images";
 
 /**
- * The signed-in user's generated looks — their closet/history. Server-fetched
- * (authoritative + cross-device) from /api/me/looks. Split into Clips (360°/film)
- * and Images (try-on stills); each card opens /look/[id], where download + share
- * live.
+ * The signed-in user's generated looks — their closet/history. Paged
+ * server-side per tab from /api/me/looks (authoritative + cross-device). Clips
+ * (360°/film) and Images (try-on stills) paginate independently; each card opens
+ * /look/[id], where download + share live.
  */
 export default function ClosetGallery() {
   const openSignIn = useAtelier((s) => s.openSignIn);
   const markClosetSeen = useAtelier((s) => s.markClosetSeen);
-  const [state, setState] = useState<State>("loading");
-  const [looks, setLooks] = useState<ClosetLook[]>([]);
+
   const [tab, setTab] = useState<Tab>("clips"); // clips first, by default
+  const [page, setPage] = useState(1);
+  const [looks, setLooks] = useState<ClosetLook[]>([]);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState({ clips: 0, images: 0 });
+  const [state, setState] = useState<State>("loading");
+  const gridRef = useRef<HTMLDivElement>(null);
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // Visiting the closet clears the unseen-looks badge in the header.
   useEffect(() => {
     markClosetSeen();
   }, [markClosetSeen]);
 
+  // Fetch the current tab + page server-side.
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const res = await fetch("/api/me/looks");
+        const res = await fetch(`/api/me/looks?tab=${tab}&page=${page}`, { cache: "no-store" });
         if (res.status === 401) {
           if (active) setState("signedout");
           return;
@@ -58,6 +68,8 @@ export default function ClosetGallery() {
           return;
         }
         setLooks((d.looks ?? []).filter((l: ClosetLook) => l.assetUrl));
+        setTotal(d.total ?? 0);
+        setCounts(d.counts ?? { clips: 0, images: 0 });
         setState("ready");
       } catch {
         if (active) setState("error");
@@ -66,11 +78,13 @@ export default function ClosetGallery() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [tab, page]);
 
-  const clips = useMemo(() => looks.filter((l) => l.kind !== "tryon"), [looks]);
-  const images = useMemo(() => looks.filter((l) => l.kind === "tryon"), [looks]);
-  const shown = tab === "clips" ? clips : images;
+  const switchTab = (t: Tab) => {
+    if (t === tab) return;
+    setTab(t);
+    setPage(1);
+  };
 
   if (state === "loading") {
     return (
@@ -99,7 +113,7 @@ export default function ClosetGallery() {
     );
   }
 
-  if (!looks.length) {
+  if (counts.clips + counts.images === 0) {
     return (
       <div className="cl-empty">
         <p>Nothing here yet — make your first look.</p>
@@ -115,25 +129,25 @@ export default function ClosetGallery() {
       <div className="closet-tabs">
         <button
           className={"closet-tab" + (tab === "clips" ? " on" : "")}
-          onClick={() => setTab("clips")}
+          onClick={() => switchTab("clips")}
         >
-          Clips <span className="ct-count">{clips.length}</span>
+          Clips <span className="ct-count">{counts.clips}</span>
         </button>
         <button
           className={"closet-tab" + (tab === "images" ? " on" : "")}
-          onClick={() => setTab("images")}
+          onClick={() => switchTab("images")}
         >
-          Images <span className="ct-count">{images.length}</span>
+          Images <span className="ct-count">{counts.images}</span>
         </button>
       </div>
 
-      {shown.length === 0 ? (
+      {total === 0 ? (
         <div className="cl-empty">
           <p>{tab === "clips" ? "No clips yet — create a 360° or film." : "No try-on images yet."}</p>
         </div>
       ) : (
-        <div className="cl-grid">
-          {shown.map((l) => {
+        <div className="cl-grid" ref={gridRef}>
+          {looks.map((l) => {
             const isVideo = l.kind !== "tryon";
             const isFifa = l.campaign === "fifa-worldcup";
             return (
@@ -166,6 +180,8 @@ export default function ClosetGallery() {
           })}
         </div>
       )}
+
+      <Pagination page={page} pageCount={pageCount} onPage={setPage} topRef={gridRef} />
     </>
   );
 }

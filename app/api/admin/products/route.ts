@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkAdmin } from "@/lib/admin/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { persistProductImages } from "@/lib/storage/productImages";
+import { bustFacetCache } from "@/lib/data/facetSource";
 import {
   slugify,
   deriveMono,
@@ -93,6 +94,7 @@ export async function DELETE(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Refresh the catalog pages that read products (same set as create/update).
+  bustFacetCache();
   revalidatePath("/");
   revalidatePath("/curator");
   revalidatePath("/creator");
@@ -215,6 +217,7 @@ export async function POST(req: Request) {
 
     // Refresh every statically-prerendered page that reads the catalog, so a new
     // or edited piece appears immediately (not just the home page).
+    bustFacetCache();
     revalidatePath("/");
     revalidatePath("/curator");
     revalidatePath("/creator");

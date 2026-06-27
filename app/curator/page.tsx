@@ -1,10 +1,20 @@
 import Header from "@/components/Header";
 import CatalogClient from "@/components/CatalogClient";
 import SiteFooter from "@/components/SiteFooter";
-import { fetchProducts } from "@/lib/data/getProducts";
+import { queryProducts } from "@/lib/data/productQuery";
+import { getFacetRows } from "@/lib/data/facetSource";
+import { computeFacets, EMPTY_FILTERS } from "@/lib/data/facets";
+
+const PAGE_SIZE = 16;
 
 export default async function CuratorPage() {
-  const products = await fetchProducts();
+  // First page + facets computed server-side (no filters) — the client takes
+  // over for subsequent pages/filters. Never ships the whole catalog.
+  const [{ products, total }, facetRows] = await Promise.all([
+    queryProducts(EMPTY_FILTERS, 1, PAGE_SIZE),
+    getFacetRows(),
+  ]);
+  const facets = computeFacets(facetRows, EMPTY_FILTERS);
 
   return (
     <main>
@@ -18,7 +28,7 @@ export default async function CuratorPage() {
         </p>
       </section>
 
-      <CatalogClient products={products} />
+      <CatalogClient initialProducts={products} initialTotal={total} initialFacets={facets} />
 
       <SiteFooter />
     </main>

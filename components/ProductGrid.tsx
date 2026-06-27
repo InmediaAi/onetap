@@ -1,26 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SlidersHorizontal, X, Search } from "lucide-react";
-import { isNewIn, priceBracketId, type Product } from "@/lib/data/products";
+import { type Product } from "@/lib/data/products";
+import { PRICE_BRACKETS } from "@/lib/data/vocab";
 import {
-  PRODUCT_STYLES,
-  OCCASIONS,
-  COLOURS,
-  PRICE_BRACKETS,
-} from "@/lib/data/vocab";
+  filtersToParams,
+  type FilterState,
+  type FacetOptions,
+} from "@/lib/data/facets";
 import ProductCard from "./ProductCard";
+import Pagination from "./Pagination";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
-/** Facet keys (the quick "New in" toggle is applied separately, always). */
-type Facet = "brand" | "category" | "style" | "occasion" | "colour" | "price";
+const PAGE_SIZE = 16;
 
 export default function ProductGrid({
-  products,
+  initialProducts,
+  initialTotal,
+  initialFacets,
   onTry,
 }: {
-  products: Product[];
+  initialProducts: Product[];
+  initialTotal: number;
+  initialFacets: FacetOptions;
   onTry: (product: Product) => void;
 }) {
   const [brands, setBrands] = useState<string[]>([]);
@@ -32,6 +36,74 @@ export default function ProductGrid({
   const [newIn, setNewIn] = useState(false);
   const [brandQuery, setBrandQuery] = useState("");
   const [refineOpen, setRefineOpen] = useState(false);
+
+  // Server-driven page + facets (seeded from SSR so first paint is populated).
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [total, setTotal] = useState(initialTotal);
+  const [facets, setFacets] = useState<FacetOptions>(initialFacets);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const filters = useMemo<FilterState>(
+    () => ({ brands, categories, styles, occasions, colours, brackets, newIn }),
+    [brands, categories, styles, occasions, colours, brackets, newIn],
+  );
+  const filterKey = useMemo(() => filtersToParams(filters).toString(), [filters]);
+
+  const didMount = useRef(false);
+
+  // Products: fetch the current filters + page (debounced; cancels stale requests).
+  // Seeded from SSR, so the first run is skipped.
+  const prodCtl = useRef<AbortController | null>(null);
+  useEffect(() => {
+    if (!didMount.current) return;
+    const t = setTimeout(() => {
+      prodCtl.current?.abort();
+      const ctl = new AbortController();
+      prodCtl.current = ctl;
+      setLoading(true);
+      const sp = filtersToParams(filters);
+      sp.set("page", String(page));
+      sp.set("pageSize", String(PAGE_SIZE));
+      fetch(`/api/products?${sp}`, { signal: ctl.signal, cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => {
+          setProducts(d.products ?? []);
+          setTotal(d.total ?? 0);
+          setLoading(false);
+        })
+        .catch((e) => {
+          if (e?.name !== "AbortError") setLoading(false);
+        });
+    }, 180);
+    return () => clearTimeout(t);
+  }, [filterKey, page, filters]);
+
+  // Facets: refetch only when the filters change (not on page change).
+  const facetCtl = useRef<AbortController | null>(null);
+  useEffect(() => {
+    if (!didMount.current) return;
+    const t = setTimeout(() => {
+      facetCtl.current?.abort();
+      const ctl = new AbortController();
+      facetCtl.current = ctl;
+      fetch(`/api/products/facets?${filtersToParams(filters)}`, {
+        signal: ctl.signal,
+        cache: "no-store",
+      })
+        .then((r) => r.json())
+        .then((d) => d.facets && setFacets(d.facets))
+        .catch(() => {});
+    }, 180);
+    return () => clearTimeout(t);
+  }, [filterKey, filters]);
+
+  useEffect(() => {
+    didMount.current = true;
+  }, []);
 
   // Scroll-lock + escape while the Refine drawer is open.
   useEffect(() => {
@@ -45,86 +117,11 @@ export default function ProductGrid({
     };
   }, [refineOpen]);
 
-  // A product passes every selected facet EXCEPT `exclude` (+ the New-in toggle,
-  // always applied). Used both for the visible list (exclude=null) and for
-  // computing each facet's still-available options (cross-filtered / faceted).
-  const passes = useMemo(() => {
-    return (p: Product, exclude: Facet | null) => {
-      if (exclude !== "brand" && brands.length && !brands.includes(p.brand)) return false;
-      if (
-        exclude !== "category" &&
-        categories.length &&
-        !(p.category && categories.includes(p.category))
-      )
-        return false;
-      if (exclude !== "style" && styles.length && !styles.some((s) => p.style?.includes(s)))
-        return false;
-      if (
-        exclude !== "occasion" &&
-        occasions.length &&
-        !occasions.some((o) => p.occasions?.includes(o))
-      )
-        return false;
-      if (exclude !== "colour" && colours.length && !colours.some((c) => p.colours?.includes(c)))
-        return false;
-      if (
-        exclude !== "price" &&
-        brackets.length &&
-        !brackets.includes(priceBracketId(p.price.amount) ?? "")
-      )
-        return false;
-      if (newIn && !isNewIn(p.droppedAt)) return false;
-      return true;
-    };
-  }, [brands, categories, styles, occasions, colours, brackets, newIn]);
-
-  const visible = useMemo(() => {
-    const list = products.filter((p) => passes(p, null));
-    return [...list].sort((a, b) => (b.oneTapScore ?? 0) - (a.oneTapScore ?? 0));
-  }, [products, passes]);
-
-  // Available option sets per facet (values present once the OTHER facets apply).
-  const opts = useMemo(() => {
-    const present = (exclude: Facet, get: (p: Product) => string | string[] | null | undefined) => {
-      const set = new Set<string>();
-      for (const p of products) {
-        if (!passes(p, exclude)) continue;
-        const v = get(p);
-        if (Array.isArray(v)) v.forEach((x) => x && set.add(x));
-        else if (v) set.add(v);
-      }
-      return set;
-    };
-    // Keep already-selected values visible (so they stay deselectable).
-    const withSel = (set: Set<string>, sel: string[]) => {
-      sel.forEach((s) => set.add(s));
-      return set;
-    };
-    const brandSet = withSel(present("brand", (p) => p.brand), brands);
-    // Categories are free-form (admin can add new ones), so build the facet from
-    // every present value — same as brands — not a fixed whitelist.
-    const categorySet = withSel(present("category", (p) => p.category), categories);
-    return {
-      brands: [...brandSet].sort((a, b) => a.localeCompare(b)),
-      categories: [...categorySet].sort((a, b) => a.localeCompare(b)),
-      styles: PRODUCT_STYLES.filter((s) =>
-        withSel(present("style", (p) => p.style), styles).has(s),
-      ),
-      occasions: OCCASIONS.filter((o) =>
-        withSel(present("occasion", (p) => p.occasions), occasions).has(o),
-      ),
-      colours: COLOURS.filter((c) =>
-        withSel(present("colour", (p) => p.colours), colours).has(c.name),
-      ),
-      brackets: PRICE_BRACKETS.filter((b) =>
-        withSel(present("price", (p) => priceBracketId(p.price.amount)), brackets).has(b.id),
-      ),
-    };
-  }, [products, passes, brands, categories, styles, occasions, colours, brackets]);
-
+  // Any filter change returns to page 1 (synchronously, so the page fetch is correct).
   const toggle =
     (setter: React.Dispatch<React.SetStateAction<string[]>>, key: string) => (v: string) => {
       setter((arr) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]));
+      setPage(1);
       track(EVENTS.CATALOG_FILTERED, { [key]: v });
     };
   const toggleBrand = toggle(setBrands, "brand");
@@ -133,9 +130,12 @@ export default function ProductGrid({
   const toggleOccasion = toggle(setOccasions, "occasion");
   const toggleColour = toggle(setColours, "colour");
   const toggleBracket = toggle(setBrackets, "price");
+  const toggleNewIn = () => {
+    setNewIn((v) => !v);
+    setPage(1);
+  };
 
-  // Quick filters beside "New in" — one tap maps to an existing facet value
-  // (occasion vocab, or the Dresses category). Active state mirrors that facet.
+  // Quick filters beside "New in" — one tap maps to an existing facet value.
   const quickFilters: { label: string; active: boolean; toggle: () => void }[] = [
     { label: "Party Wear", active: occasions.includes("Party Wear"), toggle: () => toggleOccasion("Party Wear") },
     { label: "Vacation", active: occasions.includes("Vacation"), toggle: () => toggleOccasion("Vacation") },
@@ -147,7 +147,7 @@ export default function ProductGrid({
   // Active filters → removable tiles (price shows its label, not its id).
   const bracketLabel = (id: string) => PRICE_BRACKETS.find((b) => b.id === id)?.label ?? id;
   const active: { key: string; label: string; clear: () => void }[] = [
-    ...(newIn ? [{ key: "newin", label: "New in", clear: () => setNewIn(false) }] : []),
+    ...(newIn ? [{ key: "newin", label: "New in", clear: toggleNewIn }] : []),
     ...brands.map((v) => ({ key: `b-${v}`, label: v, clear: () => toggleBrand(v) })),
     ...categories.map((v) => ({ key: `c-${v}`, label: v, clear: () => toggleCategory(v) })),
     ...styles.map((v) => ({ key: `s-${v}`, label: v, clear: () => toggleStyle(v) })),
@@ -163,9 +163,10 @@ export default function ProductGrid({
     setColours([]);
     setBrackets([]);
     setNewIn(false);
+    setPage(1);
   };
 
-  const visibleBrands = opts.brands.filter((b) =>
+  const visibleBrands = facets.brands.filter((b) =>
     b.toLowerCase().includes(brandQuery.trim().toLowerCase()),
   );
 
@@ -174,10 +175,7 @@ export default function ProductGrid({
       {/* quick filters + refine */}
       <div className="curator-filterbar">
         <div className="quickbar">
-          <button
-            className={"f-chip" + (newIn ? " on" : "")}
-            onClick={() => setNewIn((v) => !v)}
-          >
+          <button className={"f-chip" + (newIn ? " on" : "")} onClick={toggleNewIn}>
             New in
           </button>
           {quickFilters.map((q) => (
@@ -211,15 +209,20 @@ export default function ProductGrid({
 
       <p className="eyebrow pieces-lbl">The Pieces</p>
 
-      {visible.length > 0 ? (
-        <div className="grid-list">
-          {visible.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} onTry={onTry} />
-          ))}
-        </div>
+      {products.length > 0 ? (
+        <>
+          <div className={"grid-list" + (loading ? " is-loading" : "")} ref={gridRef}>
+            {products.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} onTry={onTry} />
+            ))}
+          </div>
+          <Pagination page={page} pageCount={pageCount} onPage={setPage} topRef={gridRef} />
+        </>
       ) : (
         <p className="empty-state">
-          Few pieces answer this. Loosen a thread, and the pieces fill again.
+          {loading
+            ? "Finding the pieces…"
+            : "Few pieces answer this. Loosen a thread, and the pieces fill again."}
         </p>
       )}
 
@@ -241,7 +244,7 @@ export default function ProductGrid({
 
             <div className="refine-body">
               {/* Brand — searchable */}
-              {opts.brands.length > 0 && (
+              {facets.brands.length > 0 && (
                 <section className="refine-sec">
                   <div className="refine-sec-head">
                     <span className="rsh-lbl">Brand</span>
@@ -265,45 +268,43 @@ export default function ProductGrid({
                         {b}
                       </button>
                     ))}
-                    {visibleBrands.length === 0 && (
-                      <p className="refine-none">No brands match.</p>
-                    )}
+                    {visibleBrands.length === 0 && <p className="refine-none">No brands match.</p>}
                   </div>
                 </section>
               )}
 
               {/* Occasion */}
-              {opts.occasions.length > 0 && (
+              {facets.occasions.length > 0 && (
                 <Facets
                   label="Occasion"
-                  options={opts.occasions as readonly string[]}
+                  options={facets.occasions}
                   selected={occasions}
                   onToggle={toggleOccasion}
                 />
               )}
 
               {/* Category */}
-              {opts.categories.length > 0 && (
+              {facets.categories.length > 0 && (
                 <Facets
                   label="Category"
-                  options={opts.categories as readonly string[]}
+                  options={facets.categories}
                   selected={categories}
                   onToggle={toggleCategory}
                 />
               )}
 
               {/* Style */}
-              {opts.styles.length > 0 && (
+              {facets.styles.length > 0 && (
                 <Facets
                   label="Style"
-                  options={opts.styles as readonly string[]}
+                  options={facets.styles}
                   selected={styles}
                   onToggle={toggleStyle}
                 />
               )}
 
               {/* Price */}
-              {opts.brackets.length > 0 && (
+              {facets.brackets.length > 0 && (
                 <section className="refine-sec">
                   <div className="refine-sec-head">
                     <span className="rsh-lbl">Price</span>
@@ -312,7 +313,7 @@ export default function ProductGrid({
                     )}
                   </div>
                   <div className="chips-inline">
-                    {opts.brackets.map((b) => (
+                    {facets.brackets.map((b) => (
                       <button
                         key={b.id}
                         className={"f-chip" + (brackets.includes(b.id) ? " on" : "")}
@@ -326,24 +327,20 @@ export default function ProductGrid({
               )}
 
               {/* Colour */}
-              {opts.colours.length > 0 && (
+              {facets.colours.length > 0 && (
                 <section className="refine-sec">
                   <div className="refine-sec-head">
                     <span className="rsh-lbl">Colour</span>
                     {colours.length > 0 && <span className="rsh-sum">{colours.join(", ")}</span>}
                   </div>
                   <div className="rswatch-grid">
-                    {opts.colours.map((c) => (
+                    {facets.colours.map((c) => (
                       <button
                         key={c.name}
                         className={"rswatch" + (colours.includes(c.name) ? " on" : "")}
                         onClick={() => toggleColour(c.name)}
                       >
-                        <span
-                          className="rswatch-dot"
-                          data-print={c.hex === null ? "" : undefined}
-                          style={c.hex ? { background: c.hex } : undefined}
-                        />
+                        <span className="rswatch-dot" style={c.hex ? { background: c.hex } : undefined} />
                         <span className="rswatch-name">{c.name}</span>
                       </button>
                     ))}

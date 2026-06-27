@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import ProductGrid from "@/components/ProductGrid";
 import { type Product } from "@/lib/data/products";
+import { type FacetOptions } from "@/lib/data/facets";
 import { useAtelier } from "@/lib/store";
 import { useToast } from "@/components/Toast";
 import { track } from "@/lib/analytics";
@@ -10,7 +11,15 @@ import { EVENTS } from "@/lib/analytics/events";
 import { ensureCanGenerateVideo } from "@/lib/billing/gate";
 
 /** Curator grid + the trigger for the global try-on island (TryOnProvider). */
-export default function CatalogClient({ products }: { products: Product[] }) {
+export default function CatalogClient({
+  initialProducts,
+  initialTotal,
+  initialFacets,
+}: {
+  initialProducts: Product[];
+  initialTotal: number;
+  initialFacets: FacetOptions;
+}) {
   const profileLoaded = useAtelier((s) => s.profileLoaded);
   const toast = useToast();
   const autoOpened = useRef(false);
@@ -34,18 +43,32 @@ export default function CatalogClient({ products }: { products: Product[] }) {
   }
 
   // Campaign deeplink: /try/<id> redirects to /?try=<id>. Once the session has
-  // resolved, auto-open that product's try-on (running the same gate). Read from
-  // the URL directly to avoid a useSearchParams Suspense boundary.
+  // resolved, fetch that product by id (it may not be on the first page) and
+  // auto-open its try-on (running the same gate).
   useEffect(() => {
     if (autoOpened.current || !profileLoaded) return;
     const id = new URLSearchParams(window.location.search).get("try");
     if (!id) return;
-    const product = products.find((p) => p.id === id);
-    if (!product) return;
     autoOpened.current = true;
-    void openTryOn(product);
+    (async () => {
+      try {
+        const res = await fetch(`/api/products/${id}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const { product } = await res.json();
+        if (product) void openTryOn(product);
+      } catch {
+        /* deeplink lookup failed — ignore */
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileLoaded, products]);
+  }, [profileLoaded]);
 
-  return <ProductGrid products={products} onTry={openTryOn} />;
+  return (
+    <ProductGrid
+      initialProducts={initialProducts}
+      initialTotal={initialTotal}
+      initialFacets={initialFacets}
+      onTry={openTryOn}
+    />
+  );
 }

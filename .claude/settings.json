@@ -32,7 +32,8 @@
       "Bash(break)",
       "Bash(curl -s http://localhost:3000/profile)",
       "Bash(curl -s http://localhost:3000/curator)",
-      "Bash(awk '/<\\\\/footer>/{f=1} f')"
+      "Bash(awk '/<\\\\/footer>/{f=1} f')",
+      "Read(//Users/ashley/Documents/AMJ26/onetapai/app/**)"
     ]
   }
 }
