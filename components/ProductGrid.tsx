@@ -15,7 +15,28 @@ import { useAtelier } from "@/lib/store";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
-const PAGE_SIZE = 16;
+const PAGE_SIZE = 20;
+
+/** Normalize a brand for matching (lowercase + strip accents + trim). Brand
+ *  strings are free-form on both the product and the user-preference side. */
+const normBrand = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip combining diacritical marks
+    .toLowerCase()
+    .trim();
+
+/** Single-select quick-filter "themes" (incl. New In). Each maps to one facet;
+ *  `values` may list several (e.g. "Party & Cocktail" = Party Wear OR Cocktail). */
+type ThemeDef = { id: string; label: string; facet?: "occasion" | "category"; values?: string[] };
+const THEMES: ThemeDef[] = [
+  { id: "newin", label: "New In" },
+  { id: "dresses", label: "Dresses", facet: "category", values: ["Dresses"] },
+  { id: "date-night", label: "Date Night", facet: "occasion", values: ["Date Night"] },
+  { id: "vacation", label: "Vacation", facet: "occasion", values: ["Vacation"] },
+  { id: "party-cocktail", label: "Party & Cocktail", facet: "occasion", values: ["Party Wear", "Cocktail"] },
+  { id: "wedding-guest", label: "Wedding Guest", facet: "occasion", values: ["Wedding Guest"] },
+];
 
 export default function ProductGrid({
   initialProducts,
@@ -34,14 +55,15 @@ export default function ProductGrid({
   const [occasions, setOccasions] = useState<string[]>([]);
   const [colours, setColours] = useState<string[]>([]);
   const [brackets, setBrackets] = useState<string[]>([]);
-  const [newIn, setNewIn] = useState(false);
   const [brandQuery, setBrandQuery] = useState("");
   const [refineOpen, setRefineOpen] = useState(false);
 
-  // The user's onboarding brand preferences (hydrated from /api/me).
+  // Single-select quick filters — one theme + one brand at a time, kept separate
+  // from the Refine multi-select arrays and merged into the query (effFilters).
+  const [quickTheme, setQuickTheme] = useState<string | null>(null);
+  const [quickBrand, setQuickBrand] = useState<string | null>(null);
+  // The user's onboarding brand preferences → the brand quick-filter row.
   const preferredBrands = useAtelier((s) => s.brands);
-  const profileLoaded = useAtelier((s) => s.profileLoaded);
-  const autoBrandsApplied = useRef(false);
 
   // Server-driven page + facets (seeded from SSR so first paint is populated).
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -53,28 +75,55 @@ export default function ProductGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const filters = useMemo<FilterState>(
-    () => ({ brands, categories, styles, occasions, colours, brackets, newIn }),
-    [brands, categories, styles, occasions, colours, brackets, newIn],
-  );
-  const filterKey = useMemo(() => filtersToParams(filters).toString(), [filters]);
+  // Refine multi-select arrays + the single-select quick selections, merged into
+  // the effective filter set sent to the server.
+  const effFilters = useMemo<FilterState>(() => {
+    const t = THEMES.find((x) => x.id === quickTheme);
+    const occ =
+      t?.facet === "occasion" && t.values
+        ? [...new Set([...occasions, ...t.values])]
+        : occasions;
+    const cat =
+      t?.facet === "category" && t.values
+        ? [...new Set([...categories, ...t.values])]
+        : categories;
+    const brandsEff =
+      quickBrand && !brands.includes(quickBrand) ? [...brands, quickBrand] : brands;
+    return {
+      brands: brandsEff,
+      categories: cat,
+      styles,
+      occasions: occ,
+      colours,
+      brackets,
+      newIn: quickTheme === "newin",
+    };
+  }, [brands, categories, styles, occasions, colours, brackets, quickTheme, quickBrand]);
+  const filterKey = useMemo(() => filtersToParams(effFilters).toString(), [effFilters]);
 
   const didMount = useRef(false);
 
-  // Pre-select the user's preferred brands on entry, once the profile resolves.
-  // Runs once per mount and only when the brand filter is empty, so it never
-  // clobbers a manual selection made during the visit. Brands not in the catalog
-  // are intersected out so the grid is never left empty.
-  useEffect(() => {
-    if (autoBrandsApplied.current || !profileLoaded) return;
-    autoBrandsApplied.current = true;
-    if (preferredBrands.length === 0 || brands.length > 0) return;
-    const available = new Set(facets.brands);
-    const toSelect = preferredBrands.filter((b) => available.has(b));
-    if (toSelect.length === 0) return;
-    setBrands(toSelect);
-    setPage(1);
-  }, [profileLoaded, preferredBrands, facets.brands, brands.length]);
+  // The user's preferred brands that exist in the catalog — matched case/accent-
+  // insensitively (brand strings are free-form on both sides) and displayed in the
+  // catalog's exact spelling so selecting one filters correctly. Uses the
+  // unfiltered SSR brand set so the row is stable, not narrowed by other filters.
+  const brandQuickList = useMemo(() => {
+    const canon = new Map<string, string>(); // normalized key → catalog spelling
+    for (const b of initialFacets.brands) {
+      const k = normBrand(b);
+      if (k && !canon.has(k)) canon.set(k, b);
+    }
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const pref of preferredBrands) {
+      const c = canon.get(normBrand(pref));
+      if (c && !seen.has(c)) {
+        seen.add(c);
+        out.push(c);
+      }
+    }
+    return out;
+  }, [preferredBrands, initialFacets.brands]);
 
   // Products: fetch the current filters + page (debounced; cancels stale requests).
   // Seeded from SSR, so the first run is skipped.
@@ -86,7 +135,7 @@ export default function ProductGrid({
       const ctl = new AbortController();
       prodCtl.current = ctl;
       setLoading(true);
-      const sp = filtersToParams(filters);
+      const sp = filtersToParams(effFilters);
       sp.set("page", String(page));
       sp.set("pageSize", String(PAGE_SIZE));
       fetch(`/api/products?${sp}`, { signal: ctl.signal, cache: "no-store" })
@@ -101,7 +150,7 @@ export default function ProductGrid({
         });
     }, 180);
     return () => clearTimeout(t);
-  }, [filterKey, page, filters]);
+  }, [filterKey, page, effFilters]);
 
   // Facets: refetch only when the filters change (not on page change).
   const facetCtl = useRef<AbortController | null>(null);
@@ -111,7 +160,7 @@ export default function ProductGrid({
       facetCtl.current?.abort();
       const ctl = new AbortController();
       facetCtl.current = ctl;
-      fetch(`/api/products/facets?${filtersToParams(filters)}`, {
+      fetch(`/api/products/facets?${filtersToParams(effFilters)}`, {
         signal: ctl.signal,
         cache: "no-store",
       })
@@ -120,7 +169,7 @@ export default function ProductGrid({
         .catch(() => {});
     }, 180);
     return () => clearTimeout(t);
-  }, [filterKey, filters]);
+  }, [filterKey, effFilters]);
 
   useEffect(() => {
     didMount.current = true;
@@ -151,24 +200,25 @@ export default function ProductGrid({
   const toggleOccasion = toggle(setOccasions, "occasion");
   const toggleColour = toggle(setColours, "colour");
   const toggleBracket = toggle(setBrackets, "price");
-  const toggleNewIn = () => {
-    setNewIn((v) => !v);
-    setPage(1);
-  };
 
-  // Quick filters beside "New in" — one tap maps to an existing facet value.
-  const quickFilters: { label: string; active: boolean; toggle: () => void }[] = [
-    { label: "Party Wear", active: occasions.includes("Party Wear"), toggle: () => toggleOccasion("Party Wear") },
-    { label: "Vacation", active: occasions.includes("Vacation"), toggle: () => toggleOccasion("Vacation") },
-    { label: "Work", active: occasions.includes("Work"), toggle: () => toggleOccasion("Work") },
-    { label: "Dresses", active: categories.includes("Dresses"), toggle: () => toggleCategory("Dresses") },
-    { label: "Fashion Week", active: occasions.includes("Fashion Week"), toggle: () => toggleOccasion("Fashion Week") },
-  ];
+  // One global single-select across BOTH quick rows — selecting a theme clears
+  // any brand and vice versa; re-tapping the active chip clears it.
+  const selectTheme = (id: string) => {
+    setQuickBrand(null);
+    setQuickTheme((cur) => (cur === id ? null : id));
+    setPage(1);
+    track(EVENTS.CATALOG_FILTERED, { quickTheme: id });
+  };
+  const selectBrand = (b: string) => {
+    setQuickTheme(null);
+    setQuickBrand((cur) => (cur === b ? null : b));
+    setPage(1);
+    track(EVENTS.CATALOG_FILTERED, { quickBrand: b });
+  };
 
   // Active filters → removable tiles (price shows its label, not its id).
   const bracketLabel = (id: string) => PRICE_BRACKETS.find((b) => b.id === id)?.label ?? id;
   const active: { key: string; label: string; clear: () => void }[] = [
-    ...(newIn ? [{ key: "newin", label: "New in", clear: toggleNewIn }] : []),
     ...brands.map((v) => ({ key: `b-${v}`, label: v, clear: () => toggleBrand(v) })),
     ...categories.map((v) => ({ key: `c-${v}`, label: v, clear: () => toggleCategory(v) })),
     ...styles.map((v) => ({ key: `s-${v}`, label: v, clear: () => toggleStyle(v) })),
@@ -183,7 +233,8 @@ export default function ProductGrid({
     setOccasions([]);
     setColours([]);
     setBrackets([]);
-    setNewIn(false);
+    setQuickTheme(null);
+    setQuickBrand(null);
     setPage(1);
   };
 
@@ -193,19 +244,16 @@ export default function ProductGrid({
 
   return (
     <div className="wrap">
-      {/* quick filters + refine */}
+      {/* quick filters (single-select, horizontally scrollable) + refine */}
       <div className="curator-filterbar">
         <div className="quickbar">
-          <button className={"f-chip" + (newIn ? " on" : "")} onClick={toggleNewIn}>
-            New in
-          </button>
-          {quickFilters.map((q) => (
+          {THEMES.map((t) => (
             <button
-              key={q.label}
-              className={"f-chip" + (q.active ? " on" : "")}
-              onClick={q.toggle}
+              key={t.id}
+              className={"f-chip" + (quickTheme === t.id ? " on" : "")}
+              onClick={() => selectTheme(t.id)}
             >
-              {q.label}
+              {t.label}
             </button>
           ))}
         </div>
@@ -213,6 +261,21 @@ export default function ProductGrid({
           <SlidersHorizontal size={15} strokeWidth={1.4} /> Refine
         </button>
       </div>
+
+      {/* preferred-brands quick row (single-select) */}
+      {brandQuickList.length > 0 && (
+        <div className="quickbar-brands">
+          {brandQuickList.map((b) => (
+            <button
+              key={b}
+              className={"f-chip" + (quickBrand === b ? " on" : "")}
+              onClick={() => selectBrand(b)}
+            >
+              {b}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* active filters as a sequence of tiles */}
       {active.length > 0 && (

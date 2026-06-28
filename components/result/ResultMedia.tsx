@@ -49,7 +49,7 @@ export default function ResultMedia({
   showVideo,
   phase = null,
   progressCopy,
-  showInset = true,
+  showInset = false,
   videoOverlay,
   caption,
   error,

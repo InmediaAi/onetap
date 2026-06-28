@@ -157,7 +157,6 @@ export default function ResultStage({
           image={image}
           showVideo={showingTurn}
           phase={phase}
-          showInset
           sound={kind === "video"}
           videoOverlay={videoOverlay}
           caption={

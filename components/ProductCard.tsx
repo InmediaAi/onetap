@@ -66,7 +66,6 @@ export default function ProductCard({
         {hoverImage && (
           <PImg className="pimg pimg-alt" src={hoverImage} alt="" hidden />
         )}
-        <div className="inset" />
 
         <button
           className={"heart" + (wished ? " on" : "")}

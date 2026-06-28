@@ -5,7 +5,7 @@ import { queryProducts } from "@/lib/data/productQuery";
 import { getFacetRows } from "@/lib/data/facetSource";
 import { computeFacets, EMPTY_FILTERS } from "@/lib/data/facets";
 
-const PAGE_SIZE = 16;
+const PAGE_SIZE = 20;
 
 export default async function CuratorPage() {
   // First page + facets computed server-side (no filters) — the client takes
