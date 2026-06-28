@@ -36,7 +36,11 @@
       "Read(//Users/ashley/Documents/AMJ26/onetapai/app/**)",
       "Read(//tmp/**)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/look/test-id\")",
-      "Bash(curl -s \"http://localhost:3000/look/test-id\")"
+      "Bash(curl -s \"http://localhost:3000/look/test-id\")",
+      "Bash(cd /Users/ashish/Documents/AMJ26/onetapai *)"
+    ],
+    "additionalDirectories": [
+      "/Users/ashish/Documents/AMJ26/onetapai/app/try/[productId]"
     ]
   }
 }

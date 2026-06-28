@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, Link as LinkIcon } from "lucide-react";
 import PackagesAdmin from "@/components/admin/PackagesAdmin";
 import PromptsAdmin from "@/components/admin/PromptsAdmin";
 import CampaignLinks from "@/components/admin/CampaignLinks";
 import CampaignManager from "@/components/admin/CampaignManager";
 import { useToast } from "@/components/admin/Toast";
 import { formatPrice, type Product } from "@/lib/data/products";
+import { campaignUrl } from "@/lib/data/links";
 import {
   CURRENCIES,
   PRODUCT_CATEGORIES,
@@ -61,6 +62,16 @@ const EMPTY: Draft = {
 
 export default function AdminPage() {
   const toast = useToast();
+
+  // Copy a product's shareable campaign landing-page URL (for marketing emails).
+  const copyCampaignLink = (p: Product) => {
+    const url = campaignUrl(p, typeof window !== "undefined" ? window.location.origin : undefined);
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success("Campaign link copied"))
+      .catch(() => toast.error("Couldn’t copy — copy it manually."));
+  };
+
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
@@ -386,14 +397,24 @@ export default function AdminPage() {
             </button>
           </>
         ) : (
-          <button
-            className="admin-recent-del"
-            onClick={() => setPendingDelete(p.id)}
-            aria-label="Delete piece"
-            title="Delete"
-          >
-            <Trash2 size={15} strokeWidth={1.6} />
-          </button>
+          <>
+            <button
+              className="admin-recent-copy"
+              onClick={() => copyCampaignLink(p)}
+              aria-label="Copy campaign link"
+              title="Copy campaign link"
+            >
+              <LinkIcon size={14} strokeWidth={1.6} /> Copy link
+            </button>
+            <button
+              className="admin-recent-del"
+              onClick={() => setPendingDelete(p.id)}
+              aria-label="Delete piece"
+              title="Delete"
+            >
+              <Trash2 size={15} strokeWidth={1.6} />
+            </button>
+          </>
         )}
       </span>
     </li>

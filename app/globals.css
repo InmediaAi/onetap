@@ -712,7 +712,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* whole piece fits inside the frame (no crop, no padding) */
+  object-fit: cover; /* fill the frame, zoom-crop the excess (no stretch, no grey bars) */
   background: #fff;
   transition: transform 0.7s var(--ease);
 }
@@ -5404,3 +5404,157 @@
 .campaign-link-url {
   font-size: 0.72rem; color: var(--taupe); word-break: break-all; line-height: 1.35;
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   Campaign product landing page (PDP) — /try/{brand}/{slug}/{id}
+   ════════════════════════════════════════════════════════════════════ */
+.pdp {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.2rem 1.5rem 3.5rem;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .pdp { grid-template-columns: 1fr; gap: 1.4rem; padding: 1rem 1.1rem 2.5rem; }
+}
+
+/* Gallery */
+.pdp-gallery { display: flex; flex-direction: column; gap: 12px; }
+.pdp-main {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: #fff;
+  border: 1px solid var(--stone-soft);
+  overflow: hidden;
+}
+.pdp-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.pdp-mono {
+  position: absolute; inset: 0; z-index: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-weight: 300; font-size: 72px;
+  color: color-mix(in srgb, var(--taupe) 28%, transparent); user-select: none;
+}
+.pdp-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9); border: 1px solid var(--stone-soft);
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--noir);
+  transition: background 0.2s var(--ease);
+}
+.pdp-nav:hover { background: #fff; }
+.pdp-nav.prev { left: 10px; }
+.pdp-nav.next { right: 10px; }
+.pdp-thumbs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.pdp-thumbs::-webkit-scrollbar { display: none; }
+.pdp-thumb {
+  position: relative; flex: none; width: 64px; aspect-ratio: 4 / 5; padding: 0;
+  border: 1px solid var(--stone-soft); background: #fff; cursor: pointer; overflow: hidden;
+  transition: border-color 0.2s var(--ease);
+}
+.pdp-thumb.on { border-color: var(--noir); }
+
+/* Details */
+.pdp-details { display: flex; flex-direction: column; }
+.pdp-brand {
+  margin: 0; font-family: var(--sans); font-size: 12px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--taupe);
+}
+.pdp-name {
+  font-family: var(--serif); font-size: 2rem; line-height: 1.15;
+  margin: 0.5rem 0 0.7rem; color: var(--noir);
+}
+.pdp-price {
+  margin: 0 0 1.25rem; font-family: var(--sans); font-weight: 300;
+  font-size: 1.1rem; color: var(--noir); letter-spacing: 0.02em;
+}
+/* OneTap Score — minimal inline label (matches the admin field), primary colour */
+.pdp-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  margin: 0 0 1.5rem;
+}
+.pdp-score-lbl {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--taupe);
+}
+.pdp-score-num {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--noir);
+}
+.pdp-score-sub {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--taupe);
+}
+
+.pdp-colours { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1.5rem; }
+.pdp-swatch {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--sans); font-size: 11px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--taupe);
+}
+.pdp-dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--stone-hair); }
+.pdp-cta { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.75rem; }
+.pdp-try {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  padding: 16px 20px; cursor: pointer; border: 1px solid var(--noir);
+  background: var(--noir); color: var(--ivory);
+  font-family: var(--sans); font-size: 12px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
+  transition: opacity 0.2s var(--ease);
+}
+.pdp-try:hover { opacity: 0.88; }
+.pdp-try .mk { width: 7px; height: 7px; border-radius: 50%; background: var(--ivory); }
+.pdp-shop {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  padding: 14px 20px; cursor: pointer; border: 1px solid var(--noir);
+  background: transparent; color: var(--noir);
+  font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.pdp-shop:hover { background: var(--noir); color: var(--ivory); }
+.pdp-notes { border-top: 1px solid var(--stone-soft); padding-top: 1.25rem; }
+.pdp-notes-h {
+  margin: 0 0 0.6rem; font-family: var(--sans); font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--taupe);
+}
+.pdp-note-lead {
+  margin: 0 0 0.6rem; font-family: var(--serif); font-style: italic; font-size: 1rem; color: var(--noir);
+}
+.pdp-note-body {
+  margin: 0; font-family: var(--sans); font-weight: 300; font-size: 0.92rem;
+  line-height: 1.6; color: var(--taupe);
+}
+.pdp-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1.25rem; }
+.pdp-tag {
+  font-family: var(--sans); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--taupe); border: 1px solid var(--stone-soft); padding: 6px 12px;
+}
+.pdp-missing {
+  flex: 1 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; text-align: center; padding: 4rem 1.5rem; min-height: 50vh;
+}
+.pdp-missing h1 { font-family: var(--serif); font-size: 2rem; margin: 0; }
+.pdp-missing-sub { color: var(--taupe); max-width: 420px; margin: 0; }
+
+/* Admin: copy campaign link button on each product row */
+.admin-recent-copy {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--sans); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--taupe); background: transparent; border: 1px solid var(--stone-soft);
+  padding: 6px 10px; cursor: pointer; white-space: nowrap;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.admin-recent-copy:hover { color: var(--noir); border-color: var(--stone); }

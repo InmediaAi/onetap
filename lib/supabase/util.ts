@@ -1,7 +1,7 @@
 import type { Product } from "@/lib/data/products";
 
 /** Strip diacritics and lowercase-kebab a string ("Totême" → "toteme"). */
-function kebab(input: string) {
+export function kebab(input: string) {
   return input
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
