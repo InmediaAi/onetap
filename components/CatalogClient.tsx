@@ -12,10 +12,13 @@ export default function CatalogClient({
   initialProducts,
   initialTotal,
   initialFacets,
+  initialBrand,
 }: {
   initialProducts: Product[];
   initialTotal: number;
   initialFacets: FacetOptions;
+  /** Brand pre-selected from the URL (?brands=) — e.g. a /brands landing CTA. */
+  initialBrand?: string | null;
 }) {
   const profileLoaded = useAtelier((s) => s.profileLoaded);
   const openTryOn = useStartTryOn();
@@ -47,6 +50,7 @@ export default function CatalogClient({
       initialProducts={initialProducts}
       initialTotal={initialTotal}
       initialFacets={initialFacets}
+      initialBrand={initialBrand}
       onTry={openTryOn}
     />
   );

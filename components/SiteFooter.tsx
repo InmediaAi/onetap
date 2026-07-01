@@ -6,6 +6,7 @@ export default function SiteFooter() {
       <div className="foot-inner">
         <span className="wordmark">OneTap Atelier</span>
         <div className="fmeta">
+          <Link href="/brands" className="label flink">Brands</Link>
           <Link href="/privacy" className="label flink">Privacy</Link>
           <Link href="/terms" className="label flink">Terms</Link>
           <span className="label">Confidential — By Invitation</span>

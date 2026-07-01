@@ -42,7 +42,10 @@
       "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp OK', require\\('sharp/package.json'\\).version\\)\")",
       "Bash(node \"/private/tmp/claude-501/-Users-ashish-Documents-AMJ26-onetapai/1e2c6978-41c8-4d2f-92ae-30be918c3430/scratchpad/gen-favicons.mjs\")",
       "Bash(node ./.gen-favicons.mjs)",
-      "Bash(rm -f /tmp/onetap-devcheck.log; echo \"cleaned up temp log\")"
+      "Bash(rm -f /tmp/onetap-devcheck.log; echo \"cleaned up temp log\")",
+      "Bash(grep -nE \"^main |^main\\\\{|^main,\" app/globals.css)",
+      "Bash(rm -f /tmp/brand-devcheck.log; echo \"cleaned up\")",
+      "Bash(rm -f /tmp/na-devcheck.log; echo \"cleaned up\")"
     ],
     "additionalDirectories": [
       "/Users/ashish/Documents/AMJ26/onetapai/app/try/[productId]",

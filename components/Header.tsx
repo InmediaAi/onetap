@@ -10,6 +10,7 @@ import { useHydrated } from "@/lib/useHydrated";
 
 const NAV: { href: string; label: string; accent?: boolean }[] = [
   { href: "/curator", label: "OneTap Curator" },
+  { href: "/brands", label: "Brands" },
   { href: "/tryon", label: "OneTap 360° TryOn" },
   { href: "/creator", label: "OneTap Creator" },
   { href: "/pricing", label: "Pricing" },

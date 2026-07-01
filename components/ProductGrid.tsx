@@ -42,11 +42,14 @@ export default function ProductGrid({
   initialProducts,
   initialTotal,
   initialFacets,
+  initialBrand,
   onTry,
 }: {
   initialProducts: Product[];
   initialTotal: number;
   initialFacets: FacetOptions;
+  /** Brand pre-selected from the URL (?brands=) — seeds the quick-brand chip. */
+  initialBrand?: string | null;
   onTry: (product: Product) => void;
 }) {
   const [brands, setBrands] = useState<string[]>([]);
@@ -61,7 +64,8 @@ export default function ProductGrid({
   // Single-select quick filters — one theme + one brand at a time, kept separate
   // from the Refine multi-select arrays and merged into the query (effFilters).
   const [quickTheme, setQuickTheme] = useState<string | null>(null);
-  const [quickBrand, setQuickBrand] = useState<string | null>(null);
+  // Seeded from ?brands= (a /brands landing CTA) so the deep-link lands filtered.
+  const [quickBrand, setQuickBrand] = useState<string | null>(initialBrand ?? null);
   // The user's onboarding brand preferences → the brand quick-filter row.
   const preferredBrands = useAtelier((s) => s.brands);
 

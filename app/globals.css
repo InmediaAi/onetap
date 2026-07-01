@@ -5647,3 +5647,157 @@
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 .admin-recent-copy:hover { color: var(--noir); border-color: var(--stone); }
+
+/* ═══════════════════════════ Brand SEO pages ═══════════════════════════ */
+/* A–Z index + per-brand landing. B&W editorial; imagery stays in colour. */
+
+.brand-index {
+  padding-bottom: 60px;
+}
+.brand-sec {
+  margin-top: 30px;
+  scroll-margin-top: 90px;
+}
+.brand-sec-h {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: var(--noir);
+  margin: 0 0 16px;
+}
+
+/* Alphabet filter bar */
+.brand-alpha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 34px 0 8px;
+  padding-top: 26px;
+  border-top: 1px solid var(--stone-soft);
+}
+.brand-alpha-btn {
+  min-width: 34px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ivory-panel);
+  color: var(--noir);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+.brand-alpha-btn:hover:not(:disabled) {
+  background: var(--ivory-deep);
+}
+.brand-alpha-btn.on {
+  background: var(--noir);
+  color: var(--ivory);
+}
+.brand-alpha-btn:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+/* Tile grid */
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.brand-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--noir);
+  text-decoration: none;
+  transition: transform 0.3s var(--ease);
+}
+.brand-tile:hover {
+  transform: translateY(-2px);
+}
+.brand-tile-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.brand-tile-mono {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.45);
+}
+.brand-tile-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 30%, rgba(0, 0, 0, 0.5) 100%);
+}
+.brand-tile-name {
+  position: relative;
+  z-index: 1;
+  padding: 0 10px;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+}
+.brand-empty {
+  font-family: var(--sans);
+  color: var(--taupe);
+  padding: 20px 0 60px;
+}
+
+/* Per-brand landing */
+.brand-crumb {
+  color: var(--taupe);
+  text-decoration: none;
+  transition: color 0.2s var(--ease);
+}
+.brand-crumb:hover {
+  color: var(--noir);
+}
+.brand-hero-cta {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+}
+.brand-piece {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+@media (max-width: 1100px) {
+  .brand-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 820px) {
+  .brand-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .brand-tile-name {
+    font-size: 13px;
+  }
+}
+@media (max-width: 560px) {
+  .brand-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
