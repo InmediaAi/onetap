@@ -523,7 +523,9 @@ insert into billing_plans (id, name, tagline, monthly_price, video_limit, featur
   ('starter', 'Starter', 'For creators getting started with AI video.',  20, 10,
      array['10 try-ons (360° or film) / month', 'Standard generation queue'], false, true, 1),
   ('pro',     'Pro',     'For creators publishing at a steady pace.',     49, 30,
-     array['30 try-ons (360° or film) / month', 'Priority generation queue', 'Early access to new formats'], true, true, 2)
+     array['30 try-ons (360° or film) / month', 'Priority generation queue', 'Early access to new formats'], true, true, 2),
+  ('maison',  'Maison',  'For studios and brands producing at scale.',    129, 100,
+     array['100 try-ons (360° or film) / month', 'Priority generation queue', 'Early access to new formats', 'Commercial usage rights', 'Concierge onboarding'], false, true, 3)
 on conflict (id) do nothing;
 
 -- Global billing settings (singleton row).

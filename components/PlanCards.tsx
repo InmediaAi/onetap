@@ -1,21 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus, X } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import {
   SEED_PLANS,
   type BillingPlan,
   type PlanId,
 } from "@/lib/pricing/plans";
+import { PLAN_FEATURES, type ComparableTier } from "@/lib/pricing/features";
 import { startSubscription, startTopup } from "@/lib/billing/checkout";
 
 /** Subscription tiers (from the admin-editable DB, seed fallback) + top-ups. */
 export default function PlanCards() {
   const usage = useAtelier((s) => s.usage);
-  // Only public (active) tiers — hidden ones like the campaign `fan` membership
-  // are reachable by direct link, never shown on the pricing page.
-  const [plans, setPlans] = useState<BillingPlan[]>(SEED_PLANS.filter((p) => p.active));
+  const profileLoaded = useAtelier((s) => s.profileLoaded);
+  // Only public paid tiers. Hidden ones (the campaign `fan` membership) are
+  // reachable by direct link; the `free` tier is intentionally not shown here
+  // (it lives in the data model / free-trial logic, just no card).
+  const [plans, setPlans] = useState<BillingPlan[]>(
+    SEED_PLANS.filter((p) => p.active && p.id !== "free"),
+  );
+  // Gate the real cards until BOTH the live plans AND the user's subscription
+  // are loaded — otherwise seed prices / an empty "Subscribe" state flash first
+  // and jump when the fetches resolve. Show shimmer cards until then.
+  const [plansLoaded, setPlansLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -24,8 +33,16 @@ export default function PlanCards() {
     let active = true;
     fetch("/api/plans")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => active && d?.plans?.length && setPlans(d.plans))
-      .catch(() => {});
+      .then((d) => {
+        if (!active) return;
+        if (d?.plans?.length) {
+          setPlans(
+            (d.plans as BillingPlan[]).filter((p) => p.active && p.id !== "free"),
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => active && setPlansLoaded(true));
     return () => {
       active = false;
     };
@@ -44,13 +61,16 @@ export default function PlanCards() {
   }
 
   const activePlan = usage.status === "active" ? usage.planId : null;
+  const ready = plansLoaded && profileLoaded;
+
+  if (!ready) return <PlanCardsSkeleton />;
 
   return (
     <>
       <div className="plan-cards">
         {plans.map((p) => {
-          const isFree = p.id === "free";
-          const isCurrent = isFree ? !activePlan : activePlan === p.id;
+          const isCurrent = activePlan === p.id;
+          const tier = p.id as ComparableTier;
           return (
             <div key={p.id} className={"plan-card" + (p.mostPopular ? " featured" : "")}>
               <div className="plan-top">
@@ -59,33 +79,35 @@ export default function PlanCards() {
               </div>
               <div className="plan-price">
                 ${p.monthlyPrice}
-                <span>{isFree ? "" : "/mo"}</span>
+                <span>/mo</span>
               </div>
               <p className="plan-tag">{p.tagline}</p>
               <ul className="plan-feats">
-                {p.features.map((f) => (
-                  <li key={f}>
-                    <Check size={13} strokeWidth={2} /> {f}
-                  </li>
-                ))}
+                {PLAN_FEATURES.map((f) => {
+                  const on = f.tiers[tier];
+                  return (
+                    <li key={f.label} className={on ? undefined : "no"}>
+                      {on ? (
+                        <Check size={13} strokeWidth={2} />
+                      ) : (
+                        <X size={13} strokeWidth={2} />
+                      )}{" "}
+                      {f.label}
+                    </li>
+                  );
+                })}
               </ul>
-              {isFree ? (
-                <button className="plan-cta current" disabled>
-                  {isCurrent ? "Current plan" : "Included"}
-                </button>
-              ) : (
-                <button
-                  className={"plan-cta" + (isCurrent ? " current" : "")}
-                  disabled={isCurrent || busy !== null}
-                  onClick={() => subscribe(p.id as PlanId)}
-                >
-                  {isCurrent
-                    ? "Current plan"
-                    : busy === p.id
-                      ? "Opening…"
-                      : `Subscribe · $${p.monthlyPrice}/mo`}
-                </button>
-              )}
+              <button
+                className={"plan-cta" + (isCurrent ? " current" : "")}
+                disabled={isCurrent || busy !== null}
+                onClick={() => subscribe(p.id as PlanId)}
+              >
+                {isCurrent
+                  ? "Current plan"
+                  : busy === p.id
+                    ? "Opening…"
+                    : `Subscribe · $${p.monthlyPrice}/mo`}
+              </button>
             </div>
           );
         })}
@@ -112,6 +134,27 @@ export default function PlanCards() {
 
       {err && <p className="studio-err">{err}</p>}
     </>
+  );
+}
+
+/** Shimmer placeholder shown while plans + subscription load (no seed-data flash). */
+function PlanCardsSkeleton() {
+  return (
+    <div className="plan-cards" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="plan-card plan-card-skel">
+          <span className="shimmer skel-line skel-name" />
+          <span className="shimmer skel-line skel-price" />
+          <span className="shimmer skel-line skel-tag" />
+          <div className="skel-feats">
+            {Array.from({ length: 8 }).map((_, r) => (
+              <span key={r} className="shimmer skel-line skel-feat" />
+            ))}
+          </div>
+          <span className="shimmer skel-line skel-cta" />
+        </div>
+      ))}
+    </div>
   );
 }
 
