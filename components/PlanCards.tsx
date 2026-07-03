@@ -8,8 +8,26 @@ import {
   type BillingPlan,
   type PlanId,
 } from "@/lib/pricing/plans";
-import { PLAN_FEATURES, type ComparableTier } from "@/lib/pricing/features";
 import { startSubscription, startTopup } from "@/lib/billing/checkout";
+
+/**
+ * The comparison rows = every feature any visible plan lists, in first-seen order
+ * across the tiers (base features first, higher-tier additions after). Fully
+ * admin-driven — each plan's `features` (billing_plans.features) decides ✓ / ✗.
+ */
+function featureUnion(plans: BillingPlan[]): string[] {
+  const seen = new Set<string>();
+  const rows: string[] = [];
+  for (const p of plans) {
+    for (const f of p.features) {
+      if (!seen.has(f)) {
+        seen.add(f);
+        rows.push(f);
+      }
+    }
+  }
+  return rows;
+}
 
 /** Subscription tiers (from the admin-editable DB, seed fallback) + top-ups. */
 export default function PlanCards() {
@@ -62,6 +80,8 @@ export default function PlanCards() {
 
   const activePlan = usage.status === "active" ? usage.planId : null;
   const ready = plansLoaded && profileLoaded;
+  // Every feature across the visible plans → the shared ✓/✗ comparison rows.
+  const featureRows = featureUnion(plans);
 
   if (!ready) return <PlanCardsSkeleton />;
 
@@ -70,7 +90,7 @@ export default function PlanCards() {
       <div className="plan-cards">
         {plans.map((p) => {
           const isCurrent = activePlan === p.id;
-          const tier = p.id as ComparableTier;
+          const owned = new Set(p.features);
           return (
             <div key={p.id} className={"plan-card" + (p.mostPopular ? " featured" : "")}>
               <div className="plan-top">
@@ -83,16 +103,16 @@ export default function PlanCards() {
               </div>
               <p className="plan-tag">{p.tagline}</p>
               <ul className="plan-feats">
-                {PLAN_FEATURES.map((f) => {
-                  const on = f.tiers[tier];
+                {featureRows.map((f) => {
+                  const on = owned.has(f);
                   return (
-                    <li key={f.label} className={on ? undefined : "no"}>
+                    <li key={f} className={on ? undefined : "no"}>
                       {on ? (
                         <Check size={13} strokeWidth={2} />
                       ) : (
                         <X size={13} strokeWidth={2} />
                       )}{" "}
-                      {f.label}
+                      {f}
                     </li>
                   );
                 })}
