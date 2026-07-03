@@ -2,6 +2,7 @@
 
 import { useAtelier } from "@/lib/store";
 import PlanCards from "@/components/PlanCards";
+import PricingUrgency from "@/components/PricingUrgency";
 
 export default function PricingPlans() {
   const usage = useAtelier((s) => s.usage);
@@ -14,13 +15,6 @@ export default function PricingPlans() {
 
   return (
     <div className="pricing-page">
-      <div className="price-urgency" role="note">
-        <span className="price-urgency-tag">Founding offer</span>
-        <span className="price-urgency-txt">
-          Launch pricing, reserved for the first 1,000 members.
-        </span>
-      </div>
-
       <section className="sec-hero">
         <p className="eyebrow">Pricing</p>
         <h1>A plan for every creator.</h1>
@@ -38,6 +32,8 @@ export default function PricingPlans() {
           <span className="shimmer skel-line plan-save-skel" aria-hidden="true" />
         )}
       </section>
+
+      <PricingUrgency />
 
       <PlanCards />
 

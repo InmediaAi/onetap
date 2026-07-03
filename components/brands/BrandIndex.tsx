@@ -30,21 +30,21 @@ const TILE_SIZES = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw";
 function BrandTile({ brand, priority }: { brand: BrandSummary; priority?: boolean }) {
   const hero = brand.heroImage;
   return (
-    <Link href={brandPath(brand.name)} className="brand-tile" aria-label={brand.name}>
+    <Link href={brandPath(brand.name)} className="bx-tile" aria-label={brand.name}>
       {hero ? (
         optimizable(hero) ? (
-          <Image className="brand-tile-img" src={hero} alt="" fill sizes={TILE_SIZES} priority={priority} />
+          <Image className="bx-tile-img" src={hero} alt="" fill sizes={TILE_SIZES} priority={priority} />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="brand-tile-img" src={hero} alt="" loading="lazy" />
+          <img className="bx-tile-img" src={hero} alt="" loading="lazy" />
         )
       ) : (
-        <span className="brand-tile-mono" aria-hidden="true">
+        <span className="bx-tile-mono" aria-hidden="true">
           {deriveMono(brand.name)}
         </span>
       )}
-      <span className="brand-tile-scrim" aria-hidden="true" />
-      <span className="brand-tile-name">{brand.name}</span>
+      <span className="bx-tile-scrim" aria-hidden="true" />
+      <span className="bx-tile-name">{brand.name}</span>
     </Link>
   );
 }
@@ -86,7 +86,7 @@ export default function BrandIndex({ brands }: { brands: BrandSummary[] }) {
       {!letter && featured.length > 0 && (
         <section className="brand-sec">
           <h2 className="brand-sec-h">Brands you may like</h2>
-          <div className="brand-grid brand-grid--feat">
+          <div className="bx-grid bx-grid--feat">
             {featured.map((b, i) => (
               <BrandTile key={b.slug} brand={b} priority={i < 5} />
             ))}
@@ -120,7 +120,7 @@ export default function BrandIndex({ brands }: { brands: BrandSummary[] }) {
       {groups.map((g) => (
         <section key={g.letter} className="brand-sec" id={`brand-${g.letter}`}>
           <h2 className="brand-sec-h">{g.letter}</h2>
-          <div className="brand-grid">
+          <div className="bx-grid">
             {g.items.map((b) => (
               <BrandTile key={b.slug} brand={b} />
             ))}

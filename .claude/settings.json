@@ -45,7 +45,11 @@
       "Bash(rm -f /tmp/onetap-devcheck.log; echo \"cleaned up temp log\")",
       "Bash(grep -nE \"^main |^main\\\\{|^main,\" app/globals.css)",
       "Bash(rm -f /tmp/brand-devcheck.log; echo \"cleaned up\")",
-      "Bash(rm -f /tmp/na-devcheck.log; echo \"cleaned up\")"
+      "Bash(rm -f /tmp/na-devcheck.log; echo \"cleaned up\")",
+      "Bash(rm -f /tmp/fix-devcheck.log; echo \"cleaned up\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/pricing)",
+      "Bash(echo \"/pricing -> $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/pricing\\)\")",
+      "Bash(curl -s http://localhost:3000/pricing)"
     ],
     "additionalDirectories": [
       "/Users/ashish/Documents/AMJ26/onetapai/app/try/[productId]",

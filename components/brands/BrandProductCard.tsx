@@ -16,22 +16,31 @@ function optimizable(url?: string): boolean {
   }
 }
 
+/** Product image — next/image when the host allows, else a plain lazy <img>. */
+function PImg({ src, alt, className, hidden }: { src: string; alt: string; className: string; hidden?: boolean }) {
+  if (optimizable(src)) {
+    return (
+      <Image className={className} src={src} alt={alt} fill sizes={IMG_SIZES} aria-hidden={hidden || undefined} />
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className={className} src={src} alt={alt} loading="lazy" aria-hidden={hidden || undefined} />;
+}
+
 /**
  * Server-rendered product tile for the brand landing grid — a crawlable link to
  * the piece's PDP (no client JS / try-on interaction; that lives in the Curator).
  */
 export default function BrandProductCard({ product }: { product: Product }) {
   const alt = `${product.brand} — ${product.name}`;
+  // Second variant (if any) reveals on hover — same as the Curator card.
+  const hoverImage = product.images?.find((u) => u && u !== product.imageUrl);
   return (
     <Link href={campaignPath(product)} className="card brand-piece">
-      <div className="ptile">
+      <div className={"ptile" + (hoverImage ? " has-alt" : "")}>
         <div className="mono">{product.mono}</div>
-        {optimizable(product.imageUrl) ? (
-          <Image className="pimg" src={product.imageUrl} alt={alt} fill sizes={IMG_SIZES} />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img className="pimg" src={product.imageUrl} alt={alt} loading="lazy" />
-        )}
+        <PImg className="pimg" src={product.imageUrl} alt={alt} />
+        {hoverImage && <PImg className="pimg pimg-alt" src={hoverImage} alt="" hidden />}
       </div>
       <div className="meta">
         <span className="house">{product.brand}</span>
