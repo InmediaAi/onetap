@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { registerBrands } from "@/lib/external/mailchimp";
+import { syncRegisteredBrands } from "@/lib/external/mailchimp";
 import {
   STYLES,
   CATEGORIES,
@@ -57,6 +57,18 @@ export async function PATCH(req: Request) {
   }
   if (body.onboarded === true) patch.onboarded = true;
 
+  // When brands are changing, read the previous set first so we can reconcile
+  // Mailchimp tags (deactivate the ones the user deselected).
+  let prevBrands: string[] = [];
+  if (Array.isArray(patch.favorite_brands)) {
+    const { data: prev } = await sb
+      .from("profiles")
+      .select("favorite_brands")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    prevBrands = (prev?.favorite_brands as string[] | null) ?? [];
+  }
+
   // Persist the editable fields. RLS allows a user to UPDATE (not INSERT) their
   // own row — the signup trigger seeds it. Update + check the error (the old
   // upsert silently failed RLS, so nothing was ever saved).
@@ -102,11 +114,13 @@ export async function PATCH(req: Request) {
     }
   }
 
-  // Onboarding complete → tag the registered Mailchimp contact with the selected
-  // brands (upserts the member first, so it's fine even if the sign-in add didn't
-  // run). Non-blocking: never fails the profile save.
-  if (body.onboarded === true && Array.isArray(patch.favorite_brands)) {
-    await registerBrands(user.email, patch.favorite_brands as string[]);
+  // Brands changed (onboarding OR a later profile edit) → reconcile the registered
+  // Mailchimp contact's brand tags: newly-selected active, deselected inactive.
+  // Non-blocking: never fails the profile save.
+  if (Array.isArray(patch.favorite_brands)) {
+    const selected = patch.favorite_brands as string[];
+    const removed = prevBrands.filter((b) => !selected.includes(b));
+    await syncRegisteredBrands(user.email, selected, removed);
   }
 
   return NextResponse.json({ ok: true });

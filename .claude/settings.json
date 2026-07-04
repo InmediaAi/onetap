@@ -53,7 +53,17 @@
       "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/)",
       "Bash(echo \"/ -> $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/\\)\")",
       "Bash(rm -f /tmp/home-dev.log; echo \"cleaned up\")",
-      "Bash(grep -E \"\\\\.\\(tsx?|sql\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx?|sql\\)$\")",
+      "Bash(echo \"---EXIT $?---\")",
+      "Bash(curl -s http://localhost:3000/sitemap.xml)",
+      "Bash(awk '/\\\\.bx-tile-name/{p=1} p{print} /\\\\}/{if\\(p\\)c++} c>=1&&p&&/\\\\}/{exit}' app/globals.css)",
+      "Bash(echo \"---TSC EXIT $?---\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/tryon)",
+      "Bash(echo \"/tryon   -> $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/tryon\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/creator)",
+      "Bash(echo \"/creator -> $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/creator\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/curator)",
+      "Bash(curl -s http://localhost:3000/creator)"
     ],
     "additionalDirectories": [
       "/Users/ashish/Documents/AMJ26/onetapai/app/try/[productId]",

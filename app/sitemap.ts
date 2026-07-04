@@ -1,6 +1,10 @@
 import type { MetadataRoute } from "next";
 import { fetchBrands } from "@/lib/data/getBrands";
-import { brandPath, brandNewArrivalsPath } from "@/lib/data/links";
+import { fetchProducts } from "@/lib/data/getProducts";
+import { brandPath, brandNewArrivalsPath, campaignPath } from "@/lib/data/links";
+
+// Regenerate daily so newly-added pieces appear without a redeploy.
+export const revalidate = 86400;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -27,9 +31,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority,
   }));
 
+  // Catalog read once; brands are derived from it, so both stay in sync and only
+  // live/visible pieces (campaign-only excluded by fetchProducts) are emitted.
+  const [brands, products] = await Promise.all([fetchBrands(), fetchProducts()]);
+
   // Per served brand (auto-discovered from the catalog): the landing page + its
   // keyword "new arrivals" page.
-  const brands = await fetchBrands();
   const brandEntries: MetadataRoute.Sitemap = brands.flatMap((b) => [
     {
       url: `${SITE_URL}${brandPath(b.name)}`,
@@ -40,10 +47,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${SITE_URL}${brandNewArrivalsPath(b.name)}`,
       lastModified: now,
-      changeFrequency: "weekly" as const,
+      changeFrequency: "daily" as const,
       priority: 0.6,
     },
   ]);
 
-  return [...staticEntries, ...brandEntries];
+  // Per-product try-on page (PDP). campaignPath() builds the exact live URL
+  // (/try/{brand}/{name}/{id}); the id segment is the route's lookup key.
+  const productEntries: MetadataRoute.Sitemap = products.map((p) => ({
+    url: `${SITE_URL}${campaignPath(p)}`,
+    lastModified: p.droppedAt ? new Date(p.droppedAt) : now,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticEntries, ...brandEntries, ...productEntries];
 }

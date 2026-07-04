@@ -13,7 +13,7 @@ export default function TryOnIsland({
   onExpand,
   onDismiss,
 }: {
-  phase: "tryon" | "spin" | null;
+  phase: "tryon" | "spin" | "video" | null;
   image?: string | null;
   onExpand: () => void;
   onDismiss: () => void;
@@ -23,7 +23,9 @@ export default function TryOnIsland({
       ? "Fitting the piece…"
       : phase === "spin"
         ? "Filming your 360°…"
-        : "Piece fitting in progress…";
+        : phase === "video"
+          ? "Directing your film…"
+          : "Piece fitting in progress…";
 
   return (
     <div

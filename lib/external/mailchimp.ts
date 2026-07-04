@@ -79,25 +79,37 @@ export async function registerEmail(email: string | null | undefined): Promise<v
   }
 }
 
-/** Onboarding complete: ensure the member exists + tag with the selected brands. */
-export async function registerBrands(
-  email: string | null | undefined,
-  brands: string[] | null | undefined,
-): Promise<void> {
-  if (!isMailchimpConfigured() || !REGISTERED_LIST || !email) return;
-  const clean = (brands ?? [])
+const cleanList = (arr: string[] | null | undefined): string[] =>
+  (arr ?? [])
     .map((b) => (typeof b === "string" ? b.trim() : ""))
     .filter(Boolean)
     .slice(0, 60);
+
+/**
+ * Reconcile a member's brand tags to match their current selection (at onboarding
+ * or on a later profile edit): the `selected` brands are set `active`, the
+ * `removed` (deselected) ones `inactive`, so Mailchimp always mirrors the user's
+ * brands. Upserts the member first (self-sufficient if the sign-in add hadn't run).
+ */
+export async function syncRegisteredBrands(
+  email: string | null | undefined,
+  selected: string[] | null | undefined,
+  removed: string[] | null | undefined,
+): Promise<void> {
+  if (!isMailchimpConfigured() || !REGISTERED_LIST || !email) return;
+  const sel = cleanList(selected);
+  const selSet = new Set(sel);
+  const rem = cleanList(removed).filter((b) => !selSet.has(b)); // don't deactivate re-selected
+  const tags = [
+    ...sel.map((name) => ({ name, status: "active" as const })),
+    ...rem.map((name) => ({ name, status: "inactive" as const })),
+  ];
+  if (!tags.length) return;
   try {
     await upsertMember(REGISTERED_LIST, email);
-    await addTags(
-      REGISTERED_LIST,
-      email,
-      clean.map((name) => ({ name, status: "active" as const })),
-    );
+    await addTags(REGISTERED_LIST, email, tags);
   } catch (err) {
-    console.warn("[mailchimp] registerBrands failed (non-blocking):", err);
+    console.warn("[mailchimp] syncRegisteredBrands failed (non-blocking):", err);
   }
 }
 

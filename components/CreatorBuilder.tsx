@@ -5,8 +5,7 @@ import Link from "next/link";
 import { Upload, LayoutGrid, Check, Wand2 } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { composeReel, VideoLimitError, SignInRequiredError } from "@/lib/generate";
-import { ensureCanGenerateVideo } from "@/lib/billing/gate";
+import { useStartReel } from "@/lib/billing/useStartTryOn";
 import {
   FILM_FORMATS,
   getFilmFormat,
@@ -15,7 +14,6 @@ import {
 } from "@/lib/film/formats";
 import { type Product } from "@/lib/data/products";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
-import ResultModal from "@/components/ResultModal";
 import Pagination from "@/components/Pagination";
 
 const PICKER_PAGE_SIZE = 12;
@@ -42,6 +40,7 @@ export default function CreatorBuilder({
   // Try-on needs the full-length photo as the primary likeness (a face-only
   // selfie breaks the full-body result) — gate on `body`, not portrait.
   const body = useAtelier((s) => s.body);
+  const startReel = useStartReel();
 
   const [format, setFormat] = useState<string | null>(null);
   const [opts, setOpts] = useState<FilmOpts>({});
@@ -50,15 +49,7 @@ export default function CreatorBuilder({
   const [curated, setCurated] = useState<Product | null>(null);
   const [free, setFree] = useState("");
   const [drag, setDrag] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [film, setFilm] = useState<{
-    image?: string;
-    videoUrl: string;
-    posterUrl?: string;
-    lookId: string;
-  } | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // The "choose from Curator" picker is paginated server-side (page at a time).
@@ -96,7 +87,9 @@ export default function CreatorBuilder({
       : curated
         ? `${curated.brand} ${curated.name}`
         : "the selected garment";
-  const ready = Boolean(format) && hasGarment && Boolean(body) && !loading;
+  // The island handles the full-length-photo requirement + gate, so the button is
+  // ready once a format + garment are chosen (matches the Curator behavior).
+  const ready = Boolean(format) && hasGarment;
 
   function toggleOpt(fieldId: string, val: string, multi: boolean) {
     setOpts((cur) => {
@@ -125,37 +118,29 @@ export default function CreatorBuilder({
     }
     setError(null);
     setUpload(await readAsDataURL(file));
-    setFilm(null);
   }
 
-  async function create() {
-    if (!ready || !body) return;
-    if (!(await ensureCanGenerateVideo())) return; // sign-in / quota gate
-    setLoading(true);
+  // Hand off to the global try-on island (same experience as the Curator): it
+  // gates sign-in/quota + full-length photo, then composes the still → the film.
+  function create() {
+    if (!ready || !pieceImage) return;
     setError(null);
-    setFilm(null);
-    setModalOpen(true);
-    try {
-      const res = await composeReel({
-        kind: "video",
-        likeness: body,
-        pieceImage,
-        prompt: buildFilmPrompt(format, opts, garmentDesc, free),
-        productId: curated?.id ?? "creator-upload",
-      });
-      setFilm({
-        image: res.imageUrl,
-        videoUrl: res.videoUrl,
-        posterUrl: res.posterUrl,
-        lookId: res.lookId,
-      });
-    } catch (e) {
-      if (!(e instanceof VideoLimitError) && !(e instanceof SignInRequiredError)) {
-        setError(e instanceof Error ? e.message : "Generation failed");
-      }
-    } finally {
-      setLoading(false);
-    }
+    void startReel({
+      id: `video-${Date.now()}`,
+      kind: "video",
+      garmentImage: pieceImage,
+      prompt: buildFilmPrompt(format, opts, garmentDesc, free),
+      thumbImage: pieceImage,
+      brand: curated ? curated.brand : "Your Film",
+      name: curated?.name,
+      price: curated?.price,
+      buyUrl: curated?.buyUrl,
+      mono: curated?.mono,
+      turnLabel: "Film",
+      turnSub: "The Reel",
+      productId: curated?.id ?? "creator-upload",
+      wishable: Boolean(curated),
+    });
   }
 
   const fmt = getFilmFormat(format);
@@ -189,7 +174,6 @@ export default function CreatorBuilder({
               onClick={() => {
                 setFormat(id);
                 setOpts({});
-                setFilm(null);
               }}
             >
               {trending && <span className="hot">Trending</span>}
@@ -246,7 +230,6 @@ export default function CreatorBuilder({
                 className={"cprod" + (curated?.id === p.id ? " on" : "")}
                 onClick={() => {
                   setCurated(p);
-                  setFilm(null);
                 }}
               >
                 <span className="cprod-img">
@@ -326,26 +309,6 @@ export default function CreatorBuilder({
           }}
         />
       </div>
-
-      <ResultModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setFilm(null);
-        }}
-        brand={tab === "curated" && curated ? curated.brand : "Your Film"}
-        name={tab === "curated" && curated ? curated.name : undefined}
-        image={film?.image}
-        video={film?.videoUrl}
-        poster={film?.posterUrl}
-        phase={loading ? "video" : null}
-        turnLabel="Film"
-        turnSub="The Reel"
-        caption={tab === "curated" && curated ? { brand: curated.brand, name: curated.name } : null}
-        buyUrl={tab === "curated" ? curated?.buyUrl : undefined}
-        videoLookId={film?.lookId}
-        productId={curated?.id ?? "creator-upload"}
-      />
     </div>
   );
 }

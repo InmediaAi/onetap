@@ -26,7 +26,7 @@ export interface ResultStageProps {
   /** Badge + thumb label for the moving result. */
   turnLabel?: string; // "360°" | "Film"
   turnSub?: string; // "The Turn" | "The Reel"
-  caption?: { brand: string; name: string } | null;
+  caption?: { brand: string; name?: string } | null;
   buyUrl?: string | null;
   /** Per-asset look ids (share/download target the shown asset). */
   imageLookId?: string | null;
@@ -163,7 +163,7 @@ export default function ResultStage({
             caption ? (
               <div className="media-cap">
                 <div className="label h">{caption.brand}</div>
-                <div className="n">{caption.name}</div>
+                {caption.name && <div className="n">{caption.name}</div>}
               </div>
             ) : null
           }

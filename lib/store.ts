@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Product } from "@/lib/data/products";
+import type { Price } from "@/lib/data/products";
 import type { GenerationKind } from "@/lib/ai/types";
 import type { PlanId } from "@/lib/pricing/plans";
 import { SEED_CONFIG } from "@/lib/pricing/plans";
@@ -18,6 +18,38 @@ export interface GeneratedLook {
   assetUrl: string;
   posterUrl?: string;
   createdAt: number;
+}
+
+/**
+ * A generation the global island is running (Curator 360°, 360 module, or a
+ * Creator film). Generalizes the old catalog-Product-only try-on so all three
+ * modules share the same island. `kind` picks the video endpoint.
+ */
+export interface TryOnJob {
+  /** Unique per run (curator: product.id; modules: `${kind}-${Date.now()}`). */
+  id: string;
+  kind: "spin" | "video";
+  /** Garment/piece to wear — a data or hosted URL (product image OR an upload). */
+  garmentImage: string;
+  /** Extra reference views of the same garment (curator product.images). */
+  garmentImages?: string[];
+  /** Directive for the VIDEO step (Creator film brief); undefined for a spin. */
+  prompt?: string;
+  /** Image shown in the island pill + as the modal placeholder. */
+  thumbImage: string;
+  // ── Display metadata for the modal/island ──
+  brand: string;
+  name?: string;
+  price?: Price;
+  mono?: string;
+  buyUrl?: string;
+  /** "360°" / "Film"  and  "The Turn" / "The Reel". */
+  turnLabel: string;
+  turnSub: string;
+  /** Attached to the saved look + generation logs. */
+  productId: string;
+  /** True only for real catalog products (enables the save/heart). */
+  wishable?: boolean;
 }
 
 /** Display-only snapshot of the user's subscription + usage (server is authoritative). */
@@ -124,8 +156,8 @@ interface AtelierState {
   // ── Transient UI ──
   pricingOpen: boolean;
   signInOpen: boolean;
-  /** The product whose Curator try-on is currently generating (global island). */
-  activeTryOn: Product | null;
+  /** The generation the global island is currently running (Curator/360/Creator). */
+  activeTryOn: TryOnJob | null;
 
   // ── Setters ──
   setPortrait: (url: string) => void;
@@ -153,9 +185,9 @@ interface AtelierState {
   closePricing: () => void;
   openSignIn: () => void;
   closeSignIn: () => void;
-  /** Start a Curator try-on. Returns false if one is already in progress
-   *  (single-session — the island enforces one try-on at a time). */
-  startTryOn: (product: Product) => boolean;
+  /** Start a generation on the global island. Returns false if one is already in
+   *  progress (single-session — the island enforces one try-on at a time). */
+  startTryOn: (job: TryOnJob) => boolean;
   closeTryOn: () => void;
 }
 
@@ -322,9 +354,9 @@ export const useAtelier = create<AtelierState>()(
         track(EVENTS.SIGN_IN_REQUIRED);
       },
       closeSignIn: () => set({ signInOpen: false }),
-      startTryOn: (product) => {
+      startTryOn: (job) => {
         if (get().activeTryOn) return false; // one try-on at a time
-        set({ activeTryOn: product });
+        set({ activeTryOn: job });
         return true;
       },
       closeTryOn: () => set({ activeTryOn: null }),

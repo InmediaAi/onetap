@@ -14,14 +14,18 @@ import ResultStage from "@/components/ResultStage";
 import TryOnIsland from "@/components/TryOnIsland";
 
 /**
- * Global Curator try-on controller. Mounted once in the root layout so the
- * generation + its "Dynamic Island" survive page navigation. One tap on a card
- * (via store.startTryOn) auto-composes the on-you image (free) then the 360°
- * turn (consumes a video). 5s after opening the modal collapses into a floating
+ * Global try-on controller — shared by the Curator (360°), the 360 module and
+ * the Creator (film). Mounted once in the root layout so the generation + its
+ * "Dynamic Island" survive page navigation. One tap (via store.startTryOn(job))
+ * auto-composes the on-you image (free) then the video (spin or film, consumes a
+ * video). ISLAND_COLLAPSE_MS after opening, the modal collapses into a floating
  * island (the user keeps browsing — even on other pages) and auto-expands back
  * into the result when the clip is ready. Single-session: store.startTryOn
  * refuses a second run while one is active.
  */
+
+/** How long the expanded modal stays before collapsing to the floating island. */
+const ISLAND_COLLAPSE_MS = 2000;
 
 interface Asset {
   imageUrl?: string;
@@ -31,13 +35,15 @@ interface Asset {
 }
 
 export default function TryOnProvider() {
-  const product = useAtelier((s) => s.activeTryOn);
+  const job = useAtelier((s) => s.activeTryOn);
   const closeTryOn = useAtelier((s) => s.closeTryOn);
   // Try-on requires the FULL-LENGTH photo as the primary likeness — a face-only
   // selfie produces a broken full-body result, so we gate on `body`, not portrait.
   const body = useAtelier((s) => s.body);
   const addLook = useAtelier((s) => s.addLook);
-  const wished = useAtelier((s) => (product ? s.wishlist.includes(product.id) : false));
+  const wished = useAtelier((s) =>
+    job?.wishable ? s.wishlist.includes(job.productId) : false,
+  );
   const toggleWish = useAtelier((s) => s.toggleWish);
 
   const [tryon, setTryon] = useState<Asset | null>(null);
@@ -54,7 +60,7 @@ export default function TryOnProvider() {
 
   const startedFor = useRef<string | null>(null);
   const curId = useRef<string | null>(null);
-  curId.current = product?.id ?? null;
+  curId.current = job?.id ?? null;
 
   const onClose = () => closeTryOn();
 
@@ -69,32 +75,36 @@ export default function TryOnProvider() {
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
     // re-measure when a session opens (header may differ per page/breakpoint)
-  }, [product?.id]);
+  }, [job?.id]);
 
-  // Reset outputs whenever the product changes (and forget the start guard on close).
+  // Reset outputs whenever the job changes (and forget the start guard on close).
   useEffect(() => {
     setTryon(null);
     setTurn(null);
     setError(null);
     setTryonLoading(false);
     setTurnLoading(false);
-    if (!product) startedFor.current = null;
-  }, [product?.id]);
+    if (!job) startedFor.current = null;
+  }, [job?.id]);
 
-  // Auto-compose: try-on (free) → 360° (1 video). Runs once per opened product.
+  // Auto-compose: try-on image (free) → video (spin/film, 1 video). Once per job.
   useEffect(() => {
-    if (!product || !body) return;
-    if (startedFor.current === product.id) return;
-    startedFor.current = product.id;
+    if (!job || !body) return;
+    if (startedFor.current === job.id) return;
+    startedFor.current = job.id;
 
-    const pid = product.id;
+    const jid = job.id;
+    const pid = job.productId;
+    const kind = job.kind; // "spin" → /api/generate-360, "video" → /api/generate-video
+    const videoUrl = kind === "spin" ? "/api/generate-360" : "/api/generate-video";
     const like = body;
-    const pImg = product.imageUrl;
+    const pImg = job.garmentImage;
     // Send every view of the piece so the provider renders it more faithfully.
-    const pImgs = product.images?.length ? product.images : [product.imageUrl];
+    const pImgs = job.garmentImages?.length ? job.garmentImages : [job.garmentImage];
+    const prompt = job.prompt;
 
     (async () => {
-      // 1) Try-on image — always free.
+      // 1) Try-on image — always free. (Plain still; the prompt applies to the film.)
       setTryonLoading(true);
       const t0 = Date.now();
       track(EVENTS.GENERATION_STARTED, { kind: "tryon", productId: pid });
@@ -114,67 +124,68 @@ export default function TryOnProvider() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Generation failed");
         img = data.imageUrl; // our durable URL
-        if (curId.current !== pid) return;
+        if (curId.current !== jid) return;
         const lookId: string = data.lookId;
         setTryon({ imageUrl: img, lookId });
         addLook({ id: lookId, productId: pid, kind: "tryon", inputImage: like, assetUrl: img!, createdAt: Date.now() });
         track(EVENTS.GENERATION_COMPLETED, { kind: "tryon", productId: pid, lookId, durationMs: Date.now() - t0 });
       } catch (e) {
-        if (curId.current !== pid) return;
+        if (curId.current !== jid) return;
         track(EVENTS.GENERATION_FAILED, { kind: "tryon", productId: pid, error: e instanceof Error ? e.message : "unknown" });
         setError(e instanceof Error ? e.message : "Generation failed");
         setTryonLoading(false);
         return;
       }
       setTryonLoading(false);
-      if (curId.current !== pid || !img) return;
+      if (curId.current !== jid || !img) return;
 
-      // 2) 360° turn — consumes a video.
+      // 2) Video (360° turn or film) — consumes a video.
       setTurnLoading(true);
       const t1 = Date.now();
-      track(EVENTS.GENERATION_STARTED, { kind: "spin", productId: pid });
+      track(EVENTS.GENERATION_STARTED, { kind, productId: pid });
       try {
-        const res = await fetch("/api/generate-360", {
+        const res = await fetch(videoUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             image: img,
+            prompt: prompt || undefined,
             productId: pid,
             campaign: getAttribution()?.utm_campaign,
           }),
         });
         if (res.status === 401) {
-          if (curId.current !== pid) return;
-          track(EVENTS.SIGN_IN_REQUIRED, { kind: "spin", productId: pid });
+          if (curId.current !== jid) return;
+          track(EVENTS.SIGN_IN_REQUIRED, { kind, productId: pid });
           useAtelier.getState().openSignIn();
           setTurnLoading(false);
           return; // keep showing the try-on image
         }
         if (res.status === 402) {
-          if (curId.current !== pid) return;
-          track(EVENTS.VIDEO_LIMIT_REACHED, { kind: "spin", productId: pid });
+          if (curId.current !== jid) return;
+          track(EVENTS.VIDEO_LIMIT_REACHED, { kind, productId: pid });
           useAtelier.getState().openPricing();
-          setError("Video limit reached — subscribe to see the 360°.");
+          setError(`Video limit reached — subscribe to see the ${job.turnLabel}.`);
           setTurnLoading(false);
           return; // keep showing the try-on image
         }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Generation failed");
-        if (curId.current !== pid) return;
+        if (curId.current !== jid) return;
         const lookId: string = data.lookId;
         setTurn({ videoUrl: data.videoUrl, posterUrl: data.posterUrl, lookId });
-        addLook({ id: lookId, productId: pid, kind: "spin", inputImage: img, assetUrl: data.videoUrl, posterUrl: data.posterUrl, createdAt: Date.now() });
-        track(EVENTS.GENERATION_COMPLETED, { kind: "spin", productId: pid, lookId, durationMs: Date.now() - t1 });
+        addLook({ id: lookId, productId: pid, kind, inputImage: img, assetUrl: data.videoUrl, posterUrl: data.posterUrl, createdAt: Date.now() });
+        track(EVENTS.GENERATION_COMPLETED, { kind, productId: pid, lookId, durationMs: Date.now() - t1 });
       } catch (e) {
-        if (curId.current !== pid) return;
-        track(EVENTS.GENERATION_FAILED, { kind: "spin", productId: pid, error: e instanceof Error ? e.message : "unknown" });
+        if (curId.current !== jid) return;
+        track(EVENTS.GENERATION_FAILED, { kind, productId: pid, error: e instanceof Error ? e.message : "unknown" });
         setError(e instanceof Error ? e.message : "Generation failed");
       } finally {
-        if (curId.current === pid) setTurnLoading(false);
+        if (curId.current === jid) setTurnLoading(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product?.id, body]);
+  }, [job?.id, body]);
 
   // A terminal state = there's a result to show (the 360°) or an error/limit.
   const terminal = Boolean(turn) || Boolean(error);
@@ -186,51 +197,57 @@ export default function TryOnProvider() {
   const inFlightRef = useRef(false);
   inFlightRef.current = (tryonLoading || turnLoading) && !terminal;
 
-  // Per opened product: start expanded, then collapse to the island after 5s if
-  // it's still generating. Auto-expand the moment it reaches a terminal state.
+  // Per opened job: start expanded, then collapse to the island after the delay
+  // if it's still generating. Auto-expand the moment it reaches a terminal state.
   useEffect(() => {
-    if (!product) return;
+    if (!job) return;
     setView("expanded");
     const t = setTimeout(() => {
       if (inFlightRef.current) setView("island");
-    }, 5000);
+    }, ISLAND_COLLAPSE_MS);
     return () => clearTimeout(t);
-  }, [product?.id]);
+  }, [job?.id]);
   useEffect(() => {
     if (terminal) setView("expanded");
   }, [terminal]);
 
-  // Lock body scroll only while the full modal is up (island lets the grid scroll).
+  // Lock body scroll only while the full modal is up (island lets the page scroll).
   useEffect(() => {
-    if (!product) return;
+    if (!job) return;
     document.body.style.overflow = view === "expanded" ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [product, view]);
+  }, [job, view]);
 
   // Escape closes the expanded modal.
   useEffect(() => {
-    if (!product || view !== "expanded") return;
+    if (!job || view !== "expanded") return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product, view]);
+  }, [job, view]);
 
-  if (!product || !mounted) return null;
+  if (!job || !mounted) return null;
 
   const composingFitting = tryonLoading && !tryon;
-  const phase: "tryon" | "spin" | null = composingFitting ? "tryon" : turnLoading ? "spin" : null;
+  const phase: "tryon" | "spin" | "video" | null = composingFitting
+    ? "tryon"
+    : turnLoading
+      ? job.kind === "video"
+        ? "video"
+        : "spin"
+      : null;
   const hasResult = Boolean(tryon || turn);
   const spring = reduce
     ? { duration: 0 }
     : { type: "spring" as const, stiffness: 360, damping: 32 };
 
   function shop() {
-    if (!product?.buyUrl) return;
-    track(EVENTS.PURCHASE_CLICKED, { productId: product.id, lookId: turn?.lookId ?? tryon?.lookId });
-    window.open(product.buyUrl, "_blank", "noopener,noreferrer");
+    if (!job?.buyUrl) return;
+    track(EVENTS.PURCHASE_CLICKED, { productId: job.productId, lookId: turn?.lookId ?? tryon?.lookId });
+    window.open(job.buyUrl, "_blank", "noopener,noreferrer");
   }
 
   return createPortal(
@@ -263,12 +280,12 @@ export default function TryOnProvider() {
           >
             <div className="modal-top">
               <div className="mt-info">
-                <span className="label h">{product.brand}</span>
-                <span className="n">{product.name}</span>
+                <span className="label h">{job.brand}</span>
+                {job.name && <span className="n">{job.name}</span>}
               </div>
               <div className="mt-right">
-                <span className="price">{formatPrice(product.price)}</span>
-                {product.buyUrl && hasResult && (
+                {job.price && <span className="price">{formatPrice(job.price)}</span>}
+                {job.buyUrl && hasResult && (
                   <button className="shop-cta" onClick={shop}>
                     <ShoppingBag size={14} strokeWidth={1.5} /> Shop
                     <span className="sc-rest">&nbsp;this piece</span>
@@ -285,23 +302,23 @@ export default function TryOnProvider() {
               video={turn?.videoUrl}
               poster={turn?.posterUrl}
               phase={phase}
-              turnLabel="360°"
-              turnSub="The Turn"
-              caption={{ brand: product.brand, name: product.name }}
-              buyUrl={product.buyUrl}
+              turnLabel={job.turnLabel}
+              turnSub={job.turnSub}
+              caption={{ brand: job.brand, name: job.name }}
+              buyUrl={job.buyUrl}
               imageLookId={tryon?.lookId}
               videoLookId={turn?.lookId}
-              productId={product.id}
+              productId={job.productId}
               wished={wished}
-              onSave={() => toggleWish(product.id)}
+              onSave={job.wishable ? () => toggleWish(job.productId) : undefined}
               error={error}
-              mono={product.mono}
+              mono={job.mono}
               emptyState={
                 !body ? (
                   <div className="ph">
-                    <div className="mono">{product.mono}</div>
+                    {job.mono && <div className="mono">{job.mono}</div>}
                     <div className="pm">
-                      Add a full-length photo to see {product.name} on you.{" "}
+                      Add a full-length photo to see {job.name ?? "this"} on you.{" "}
                       <Link href="/onboarding" className="sl-link">
                         Add yours →
                       </Link>
@@ -322,7 +339,7 @@ export default function TryOnProvider() {
           >
             <TryOnIsland
               phase={phase}
-              image={product.imageUrl}
+              image={job.thumbImage}
               onExpand={() => setView("expanded")}
               onDismiss={onClose}
             />

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import CatalogClient from "@/components/CatalogClient";
 import SiteFooter from "@/components/SiteFooter";
@@ -6,6 +7,13 @@ import { getFacetRows } from "@/lib/data/facetSource";
 import { computeFacets, parseFilters, EMPTY_FILTERS } from "@/lib/data/facets";
 
 const PAGE_SIZE = 20;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+// Filtered views (?brands=…, ?occasions=…) all canonicalize to the clean
+// /curator URL so query-string variants consolidate instead of competing.
+export const metadata: Metadata = {
+  alternates: { canonical: `${SITE_URL}/curator` },
+};
 
 export default async function CuratorPage({
   searchParams,

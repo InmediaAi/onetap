@@ -5,10 +5,8 @@ import Link from "next/link";
 import { Plus, RotateCw } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
-import { composeReel, VideoLimitError, SignInRequiredError } from "@/lib/generate";
-import { ensureCanGenerateVideo } from "@/lib/billing/gate";
+import { useStartReel } from "@/lib/billing/useStartTryOn";
 import { validateImageFile, IMAGE_GUIDELINE } from "@/lib/image/validate";
-import ResultModal from "@/components/ResultModal";
 
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -19,25 +17,16 @@ function readAsDataURL(file: File): Promise<string> {
   });
 }
 
-interface Result {
-  image?: string;
-  videoUrl: string;
-  posterUrl?: string;
-  lookId: string;
-}
-
 export default function Studio360() {
   const hydrated = useHydrated();
   // Full-length photo is the primary try-on likeness (a face-only selfie breaks
   // the full-body result), so gate on `body`, not the face-or-body `portrait`.
   const body = useAtelier((s) => s.body);
+  const startReel = useStartReel();
 
   const [piece, setPiece] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Result | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function pick(file?: File) {
@@ -48,32 +37,26 @@ export default function Studio360() {
       return;
     }
     setPiece(await readAsDataURL(file));
-    setResult(null);
     setError(null);
   }
 
-  async function run() {
-    if (!piece || !body || loading) return;
-    if (!(await ensureCanGenerateVideo())) return; // sign-in / quota gate
-    setLoading(true);
+  // Hand off to the global try-on island (same experience as the Curator):
+  // it gates sign-in/quota + full-length photo, then composes the still → 360°.
+  function run() {
+    if (!piece) return;
     setError(null);
-    setResult(null);
-    setModalOpen(true);
-    try {
-      const res = await composeReel({
-        kind: "spin",
-        likeness: body,
-        pieceImage: piece,
-        productId: "tryon-360",
-      });
-      setResult({ image: res.imageUrl, videoUrl: res.videoUrl, posterUrl: res.posterUrl, lookId: res.lookId });
-    } catch (e) {
-      if (!(e instanceof VideoLimitError) && !(e instanceof SignInRequiredError)) {
-        setError(e instanceof Error ? e.message : "Generation failed");
-      }
-    } finally {
-      setLoading(false);
-    }
+    void startReel({
+      id: `spin-${Date.now()}`,
+      kind: "spin",
+      garmentImage: piece,
+      garmentImages: [piece],
+      thumbImage: piece,
+      brand: "360° Try-On",
+      mono: "360",
+      turnLabel: "360°",
+      turnSub: "The Turn",
+      productId: "tryon-360",
+    });
   }
 
   return (
@@ -135,7 +118,7 @@ export default function Studio360() {
         <button
           className="studio-go"
           onClick={run}
-          disabled={!piece || !body || loading}
+          disabled={!piece}
           title="One tap · 1 video"
         >
           <RotateCw size={15} strokeWidth={1.5} /> Try-On
@@ -154,23 +137,6 @@ export default function Studio360() {
           }}
         />
       </div>
-
-      <ResultModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setResult(null);
-        }}
-        brand="360° Try-On"
-        image={result?.image}
-        video={result?.videoUrl}
-        poster={result?.posterUrl}
-        phase={loading ? "spin" : null}
-        turnLabel="360°"
-        turnSub="The Turn"
-        videoLookId={result?.lookId}
-        productId="tryon-360"
-      />
     </div>
   );
 }
