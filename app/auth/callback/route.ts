@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServiceClient } from "@/lib/supabase/server";
+import { registerEmail } from "@/lib/external/mailchimp";
 
 export const runtime = "nodejs";
 
@@ -53,10 +55,24 @@ export async function GET(req: Request) {
       let onboarded = true;
       const { data: profile, error: pErr } = await supabase
         .from("profiles")
-        .select("onboarded")
+        .select("onboarded, mailchimp_registered")
         .eq("user_id", data.user.id)
         .maybeSingle();
       if (!pErr) onboarded = Boolean(profile?.onboarded);
+
+      // First sign-in → add the email to the registered Mailchimp audience once
+      // (brand tags are added later at onboarding). Guarded by mailchimp_registered
+      // so later logins skip it. Non-blocking: never fails the sign-in redirect.
+      if (!pErr && profile && !profile.mailchimp_registered && data.user.email) {
+        await registerEmail(data.user.email);
+        const svc = createServiceClient();
+        if (svc) {
+          await svc
+            .from("profiles")
+            .update({ mailchimp_registered: true })
+            .eq("user_id", data.user.id);
+        }
+      }
       // Campaign microsites (e.g. /fifa) capture the photo in-funnel — skip the
       // app onboarding and return the visitor straight to the campaign.
       const isCampaign = nextParam.startsWith("/fifa");

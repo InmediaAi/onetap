@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { registerBrands } from "@/lib/external/mailchimp";
 import {
   STYLES,
   CATEGORIES,
@@ -99,6 +100,13 @@ export async function PATCH(req: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+  }
+
+  // Onboarding complete → tag the registered Mailchimp contact with the selected
+  // brands (upserts the member first, so it's fine even if the sign-in add didn't
+  // run). Non-blocking: never fails the profile save.
+  if (body.onboarded === true && Array.isArray(patch.favorite_brands)) {
+    await registerBrands(user.email, patch.favorite_brands as string[]);
   }
 
   return NextResponse.json({ ok: true });

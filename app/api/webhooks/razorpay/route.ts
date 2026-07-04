@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/server";
 import { planFromRazorpayId } from "@/lib/pricing/razorpay";
+import { getPlan } from "@/lib/pricing/plans";
+import { addPaidMember } from "@/lib/external/mailchimp";
 
 export const runtime = "nodejs";
 
@@ -108,6 +110,16 @@ export async function POST(req: Request) {
         await svc
           .from("subscriptions")
           .upsert({ user_id: userId, plan: resolvedPlan, ...patch }, { onConflict: "user_id" });
+
+        // Sync the paying user into the paid Mailchimp audience with their plan
+        // tag (idempotent; no-op when Mailchimp is unconfigured). Non-blocking.
+        const { data: prof } = await svc
+          .from("profiles")
+          .select("email")
+          .eq("user_id", userId)
+          .maybeSingle();
+        const planName = getPlan(resolvedPlan)?.name ?? resolvedPlan;
+        if (prof?.email) await addPaidMember(prof.email as string, planName);
       } else {
         await svc.from("subscriptions").update(patch).match(match);
       }

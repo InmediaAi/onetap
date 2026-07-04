@@ -939,3 +939,10 @@ create policy "public read home config" on home_config for select using (true);
 -- No client write policy → only the service role (admin route) mutates it.
 
 insert into home_config (id) values ('default') on conflict (id) do nothing;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION: Mailchimp registered-audience once-guard. Idempotent.
+-- Flips true the first time we add the user's email to the registered audience
+-- (see app/auth/callback), so we don't re-call Mailchimp on every login.
+-- ═══════════════════════════════════════════════════════════════════════════
+alter table profiles add column if not exists mailchimp_registered boolean not null default false;
