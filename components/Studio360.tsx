@@ -62,8 +62,10 @@ export default function Studio360() {
   return (
     <div className="studio-solo">
       <div className="solo-col">
+        <h1 className="solo-h">The Only 360° Video Try-On</h1>
         <p className="solo-sub">
-          One upload. One tap. A turn of you wearing the piece, from every angle.
+          A screenshot from your cart. A photo from the boutique. Any piece, from
+          anywhere, turned into a 360° video of you wearing it.
         </p>
 
         <div

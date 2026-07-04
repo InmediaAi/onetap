@@ -5044,6 +5044,17 @@
 }
 .studio-solo .studio-tabs { justify-content: flex-end; margin-bottom: 10px; }
 .solo-col { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.solo-h {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--noir);
+  max-width: 16ch;
+  margin: 6px 0 0;
+}
 .solo-sub {
   font-family: var(--sans); font-weight: 300; font-size: 14px; line-height: 1.6;
   color: var(--taupe); text-align: center; max-width: 40ch; margin: 2px 0 6px;

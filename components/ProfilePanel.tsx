@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAtelier } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { BRANDS } from "@/lib/data/brands";
@@ -38,6 +39,8 @@ const PHOTOS: { kind: IdentityKind; label: string; hint?: string }[] = [
 ];
 
 export default function ProfilePanel() {
+  const router = useRouter();
+  const redirecting = useRef(false);
   const hydrated = useHydrated();
   const email = useAtelier((s) => s.email);
   const profileLoaded = useAtelier((s) => s.profileLoaded);
@@ -103,26 +106,27 @@ export default function ProfilePanel() {
     back: useRef<HTMLInputElement>(null),
   };
 
-  // Until the session resolves (/api/me), we don't yet know if the user is signed
-  // in — show a loading shimmer rather than flashing the signed-out gate (which
-  // made the profile/images appear to "not show" right after opening the app).
-  if (!hydrated || !profileLoaded) {
+  // Session resolved but not signed in → send them straight to the onboarding
+  // sign-in (step 1), instead of a separate "Sign in" gate (one action, not two).
+  // `next=/profile` returns them here after they authenticate. Guarded so it fires
+  // once, and only AFTER the session resolves (never redirects a signed-in user).
+  const needsSignIn = hydrated && profileLoaded && !email;
+  useEffect(() => {
+    if (needsSignIn && !redirecting.current) {
+      redirecting.current = true;
+      router.replace("/onboarding?next=/profile");
+    }
+  }, [needsSignIn, router]);
+
+  // Until the session resolves (/api/me) — and while the redirect above is in
+  // flight — show a loading shimmer rather than flashing the profile or a gate
+  // (this also fixed the profile/images appearing to "not show" right after open).
+  if (!hydrated || !profileLoaded || !email) {
     return (
       <div className="profile-loading" aria-busy="true">
         <span className="shimmer profile-load-line" style={{ width: "40%", height: 14 }} />
         <span className="shimmer profile-load-line" style={{ width: "70%", height: 36 }} />
         <span className="shimmer profile-load-line" style={{ width: "100%", height: 220 }} />
-      </div>
-    );
-  }
-
-  if (!email) {
-    return (
-      <div className="admin-card admin-gate profile-gate">
-        <p className="admin-hint">You’re not signed in.</p>
-        <Link href="/onboarding" className="btn-line admin-btn">
-          Sign in
-        </Link>
       </div>
     );
   }
