@@ -842,3 +842,100 @@ insert into ai_prompts (id, label, content) values
   ('spin_scene', '360° spin scene (motion for the turn)',
    'the person performs a 40-degree rotation in place: pausing precisely for 0.5 second, holding the pause with a natural, composed posture. then keep rotating 40-degree in the same direction, pause 0.5 seconds. then rotate back toward the camera and pause precisely for one full second. then they confidently walk to the left and leave off-screen from the side. in Paris Street')
 on conflict (id) do nothing;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Partner enquiries — brands submitting the "Partner with us" form (/partners).
+-- Public INSERT (the form posts via /api/partners); NO select policy → only the
+-- service role (admin API) can read them. View + manage under /admin.
+-- ═══════════════════════════════════════════════════════════════════════════
+create table if not exists partner_leads (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  email      text not null,
+  company    text not null,
+  message    text,
+  status     text not null default 'new' check (status in ('new', 'contacted', 'closed')),
+  source_url text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists partner_leads_created_idx on partner_leads (created_at desc);
+
+alter table partner_leads enable row level security;
+
+drop policy if exists "public insert partner leads" on partner_leads;
+create policy "public insert partner leads"
+  on partner_leads for insert
+  with check (true);
+
+-- Admin-managed "See your pieces in action" showcase clips for /partners.
+-- Singleton row; public read (the URLs render on the public page); writes via
+-- the service role only (admin API).
+create table if not exists partner_config (
+  id            text primary key default 'default',
+  showcase_urls text[] not null default '{}',
+  updated_at    timestamptz not null default now()
+);
+
+insert into partner_config (id) values ('default') on conflict (id) do nothing;
+
+alter table partner_config enable row level security;
+
+drop policy if exists "public read partner config" on partner_config;
+create policy "public read partner config"
+  on partner_config for select
+  using (true);
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION: admin-managed home-page module cards. Idempotent — run as-is.
+-- The three "ways to try on yourself" cards (Curator / 360° Try-On / Atelier
+-- Scenes) become editable: title, tag, blurb + a background video clip (+poster).
+-- Public read (RLS on, select policy); writes via the service role (admin route).
+-- Route (/curator, /tryon, /creator), index and CTA label stay code-defined.
+-- ═══════════════════════════════════════════════════════════════════════════
+create table if not exists home_modules (
+  id          text primary key,        -- 'curator' | 'tryon' | 'creator'
+  title       text not null,
+  tag         text not null,
+  blurb       text not null,
+  video_url   text,                     -- hosted background clip (mp4)
+  poster_url  text,                     -- poster/thumbnail (shown before/without video)
+  sort_order  integer not null default 0,
+  updated_at  timestamptz not null default now()
+);
+
+alter table home_modules enable row level security;
+drop policy if exists "public read home modules" on home_modules;
+create policy "public read home modules" on home_modules for select using (true);
+-- No client write policy → only the service role (admin route) mutates rows.
+
+insert into home_modules (id, title, tag, blurb, sort_order) values
+  ('curator', 'OneTap Curator', 'OneTap Try-On',
+     'Tap any piece from the houses you love and see it on your own body.', 0),
+  ('tryon',   '360° Try-On',    'OneTap TryOn',
+     'Upload anything you''re considering and see yourself in it, from every angle.', 1),
+  ('creator', 'Atelier Scenes', 'OneTap Creator',
+     'Place a piece in the world you''d wear it in — the film situates it in your life.', 2)
+on conflict (id) do nothing;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION: admin-managed home editorial (trending-occasion tiles + house
+-- carousel). Idempotent. Singleton config; empty arrays = the home page falls
+-- back to auto-derived defaults (occasion imagery from products; top houses by
+-- depth). Public read (RLS on); writes via the service role (admin route).
+--   occasion_tiles: [{ title, description, occasions, image }]  (occasions = CSV of facet values)
+--   house_tiles:    [{ name, image }]  (up to 8; image can be any hosted URL)
+-- ═══════════════════════════════════════════════════════════════════════════
+create table if not exists home_config (
+  id             text primary key default 'default',
+  occasion_tiles jsonb not null default '[]'::jsonb,
+  house_tiles    jsonb not null default '[]'::jsonb,
+  updated_at     timestamptz not null default now()
+);
+
+alter table home_config enable row level security;
+drop policy if exists "public read home config" on home_config;
+create policy "public read home config" on home_config for select using (true);
+-- No client write policy → only the service role (admin route) mutates it.
+
+insert into home_config (id) values ('default') on conflict (id) do nothing;

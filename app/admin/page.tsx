@@ -6,6 +6,11 @@ import { Trash2, Link as LinkIcon } from "lucide-react";
 import PackagesAdmin from "@/components/admin/PackagesAdmin";
 import PromptsAdmin from "@/components/admin/PromptsAdmin";
 import CampaignLinks from "@/components/admin/CampaignLinks";
+import PartnerLeadsAdmin from "@/components/admin/PartnerLeadsAdmin";
+import PartnerShowcaseAdmin from "@/components/admin/PartnerShowcaseAdmin";
+import HomeModulesAdmin from "@/components/admin/HomeModulesAdmin";
+import OccasionTilesAdmin from "@/components/admin/OccasionTilesAdmin";
+import HouseTilesAdmin from "@/components/admin/HouseTilesAdmin";
 import CampaignManager from "@/components/admin/CampaignManager";
 import { useToast } from "@/components/admin/Toast";
 import { formatPrice, type Product } from "@/lib/data/products";
@@ -75,7 +80,9 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
-  const [tab, setTab] = useState<"pieces" | "packages" | "campaigns" | "prompts">("pieces");
+  const [tab, setTab] = useState<
+    "pieces" | "packages" | "campaigns" | "prompts" | "partners" | "home"
+  >("pieces");
 
   const [url, setUrl] = useState("");
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -430,9 +437,11 @@ export default function AdminPage() {
               ? "Packages"
               : tab === "campaigns"
                 ? "Campaigns"
-                : editingId
-                  ? "Edit a Piece"
-                  : "Add a Piece"}
+                : tab === "partners"
+                  ? "Partners"
+                  : editingId
+                    ? "Edit a Piece"
+                    : "Add a Piece"}
           </h1>
         </div>
         <Link href="/" className="admin-link">View catalogue →</Link>
@@ -463,10 +472,33 @@ export default function AdminPage() {
         >
           Prompts
         </button>
+        <button
+          className={"admin-tab" + (tab === "partners" ? " on" : "")}
+          onClick={() => setTab("partners")}
+        >
+          Partners
+        </button>
+        <button
+          className={"admin-tab" + (tab === "home" ? " on" : "")}
+          onClick={() => setTab("home")}
+        >
+          Home
+        </button>
       </div>
 
       {tab === "packages" ? (
         <PackagesAdmin password={password} />
+      ) : tab === "partners" ? (
+        <>
+          <PartnerShowcaseAdmin password={password} />
+          <PartnerLeadsAdmin password={password} />
+        </>
+      ) : tab === "home" ? (
+        <>
+          <HomeModulesAdmin password={password} />
+          <OccasionTilesAdmin password={password} />
+          <HouseTilesAdmin password={password} />
+        </>
       ) : tab === "prompts" ? (
         <PromptsAdmin password={password} />
       ) : tab === "campaigns" ? (

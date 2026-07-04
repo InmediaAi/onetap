@@ -12,6 +12,7 @@ const PUBLIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/brands", priority: 0.8 },
   { path: "/tryon", priority: 0.8 },
   { path: "/fifa", priority: 0.8 },
+  { path: "/partners", priority: 0.6 },
   { path: "/pricing", priority: 0.6 },
   { path: "/privacy", priority: 0.3 },
   { path: "/terms", priority: 0.3 },

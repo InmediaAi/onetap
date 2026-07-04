@@ -38,11 +38,26 @@ const THEMES: ThemeDef[] = [
   { id: "wedding-guest", label: "Wedding Guest", facet: "occasion", values: ["Wedding Guest"] },
 ];
 
+/** The occasion THEME whose values set-equal `occ` (so a deep-link lights its chip). */
+function themeForOccasions(occ?: string[]): string | null {
+  if (!occ || occ.length === 0) return null;
+  const want = new Set(occ);
+  const t = THEMES.find(
+    (x) =>
+      x.facet === "occasion" &&
+      x.values &&
+      x.values.length === want.size &&
+      x.values.every((v) => want.has(v)),
+  );
+  return t?.id ?? null;
+}
+
 export default function ProductGrid({
   initialProducts,
   initialTotal,
   initialFacets,
   initialBrand,
+  initialOccasions,
   onTry,
 }: {
   initialProducts: Product[];
@@ -50,12 +65,19 @@ export default function ProductGrid({
   initialFacets: FacetOptions;
   /** Brand pre-selected from the URL (?brands=) — seeds the quick-brand chip. */
   initialBrand?: string | null;
+  /** Occasions pre-selected from the URL (?occasions=) — seeds the quick-theme chip. */
+  initialOccasions?: string[];
   onTry: (product: Product) => void;
 }) {
+  // An occasion deep-link that matches a quick-filter theme lights that chip;
+  // otherwise the occasions seed the Refine multi-select (shown as selected there).
+  const seededTheme = themeForOccasions(initialOccasions);
   const [brands, setBrands] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [styles, setStyles] = useState<string[]>([]);
-  const [occasions, setOccasions] = useState<string[]>([]);
+  const [occasions, setOccasions] = useState<string[]>(
+    seededTheme ? [] : (initialOccasions ?? []),
+  );
   const [colours, setColours] = useState<string[]>([]);
   const [brackets, setBrackets] = useState<string[]>([]);
   const [brandQuery, setBrandQuery] = useState("");
@@ -63,7 +85,7 @@ export default function ProductGrid({
 
   // Single-select quick filters — one theme + one brand at a time, kept separate
   // from the Refine multi-select arrays and merged into the query (effFilters).
-  const [quickTheme, setQuickTheme] = useState<string | null>(null);
+  const [quickTheme, setQuickTheme] = useState<string | null>(seededTheme);
   // Seeded from ?brands= (a /brands landing CTA) so the deep-link lands filtered.
   const [quickBrand, setQuickBrand] = useState<string | null>(initialBrand ?? null);
   // The user's onboarding brand preferences → the brand quick-filter row.

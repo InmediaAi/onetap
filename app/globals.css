@@ -5863,3 +5863,647 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ═══════════════════ Home — compact modules + Editor's picks ═══════════════════ */
+
+/* Section 2 — three modules condensed to one compact row */
+.lp-modrow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 2.5vw, 1.6rem);
+  margin-top: 2.4rem;
+}
+.lp-modcard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(1.6rem, 3vw, 2.2rem);
+  border: 1px solid var(--stone-soft);
+  border-radius: 14px;
+  background: var(--ivory);
+  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease);
+}
+.lp-modcard:hover {
+  border-color: var(--stone-hair);
+  transform: translateY(-2px);
+}
+.lp-modcard h3 {
+  font-size: clamp(1.3rem, 2.4vw, 1.6rem);
+  margin: 0.5rem 0 0.2rem;
+}
+.lp-modcard-blurb {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--taupe);
+  margin: 0.9rem 0 1.4rem;
+}
+.lp-modcard-cta {
+  margin-top: auto;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--noir);
+  text-decoration: none;
+  border-bottom: 1px solid var(--noir);
+  padding-bottom: 3px;
+  transition: opacity 0.2s var(--ease);
+}
+.lp-modcard-cta:hover { opacity: 0.6; }
+
+/* Section 2 (home) — big 9:16 module cards: background clip + dark overlay + text */
+.lp-mod9 {
+  position: relative;
+  display: block;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--noir);
+  text-decoration: none;
+  color: #fff;
+}
+.lp-mod9-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.lp-mod9:hover .lp-mod9-bg { transform: scale(1.04); }
+/* Black transparent layer so the text below stays legible over any clip. */
+.lp-mod9-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.28) 0%,
+    rgba(0, 0, 0, 0.18) 42%,
+    rgba(0, 0, 0, 0.82) 100%
+  );
+}
+.lp-mod9-body {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  padding: clamp(1.4rem, 2.2vw, 2rem);
+}
+.lp-mod9-body .lp-idx { color: rgba(255, 255, 255, 0.6); }
+.lp-mod9-body .lp-tag { color: rgba(255, 255, 255, 0.72); }
+.lp-mod9-body h3 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  line-height: 1.08;
+  margin: 0.35rem 0 0;
+  color: #fff;
+}
+.lp-mod9-blurb {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0.7rem 0 1.1rem;
+  max-width: 32ch;
+}
+.lp-mod9-cta {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+  padding-bottom: 3px;
+  transition: opacity 0.2s var(--ease);
+}
+.lp-mod9:hover .lp-mod9-cta { opacity: 0.75; }
+
+/* Editorial "Editor's picks" sections (occasions + houses) */
+.lp-edits {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(3rem, 8vh, 5.5rem) var(--lp-gut);
+}
+.ed-head {
+  text-align: center;
+  margin-bottom: clamp(1.8rem, 4vw, 2.6rem);
+}
+.ed-head .eyebrow { display: block; margin-bottom: 12px; }
+.ed-head h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  line-height: 1.05;
+  margin: 0;
+  color: var(--noir);
+}
+
+/* Section 3 — occasion image tiles (title overlaid) */
+.ed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 2.5vw, 1.6rem);
+}
+.ed-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--noir);
+  text-decoration: none;
+}
+.ed-tile-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.ed-tile:hover .ed-tile-img { transform: scale(1.04); }
+.ed-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 40%, rgba(0, 0, 0, 0.62) 100%);
+}
+.ed-tile-body {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: clamp(1.4rem, 3vw, 2rem);
+}
+.ed-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.35);
+}
+.ed-cta {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+  padding-bottom: 3px;
+  align-self: flex-start;
+}
+
+/* Section 4 — house cards (image over caption) */
+.house-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1.2rem, 3vw, 2rem);
+}
+.house-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.house-img {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--noir);
+}
+.house-img-el {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.house-card:hover .house-img-el { transform: scale(1.04); }
+.house-mono {
+  font-family: var(--serif);
+  font-size: 34px;
+  color: rgba(255, 255, 255, 0.45);
+}
+.house-name {
+  display: block;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--noir);
+  margin: 1rem 0 0.3rem;
+}
+.house-cap {
+  display: block;
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.95rem;
+  color: var(--taupe);
+}
+.house-cta {
+  display: inline-block;
+  margin-top: 0.9rem;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--noir);
+  border-bottom: 1px solid var(--noir);
+  padding-bottom: 3px;
+  transition: opacity 0.2s var(--ease);
+}
+.house-card:hover .house-cta { opacity: 0.6; }
+.ed-more {
+  text-align: center;
+  margin-top: clamp(2rem, 5vw, 3rem);
+}
+
+@media (max-width: 860px) {
+  .lp-modrow { grid-template-columns: 1fr; gap: 1rem; }
+  .ed-grid { grid-template-columns: 1fr; gap: 1.1rem; }
+  .ed-tile { aspect-ratio: 16 / 10; }
+  .house-grid { grid-template-columns: 1fr; gap: 1.6rem; }
+  .house-img { aspect-ratio: 16 / 11; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Partner ("Partner with us") page — reuses .sec-hero / .lp-modcard /
+   .btn-line / .wrap + tokens; only page-specific bits below.
+   ══════════════════════════════════════════════════════════════════ */
+.partner-page { background: var(--ivory); color: var(--noir); }
+.partner-hero-cta { margin-top: 34px; }
+
+.partner-section { padding: clamp(2.75rem, 7vh, 5rem) 0; }
+.partner-h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1.08;
+  text-align: center;
+  margin: 0;
+  color: var(--noir);
+}
+.partner-lede {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--taupe);
+  text-align: center;
+  max-width: 60ch;
+  margin: 14px auto 0;
+}
+
+/* Card grids (problem + benefit) — auto-fit so 4 and 6 both flow cleanly */
+.partner-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 34px;
+}
+.partner-cards .lp-modcard h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.25rem, 2.4vw, 1.5rem);
+  margin: 6px 0 0;
+}
+
+/* Steps */
+.partner-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 34px;
+}
+.partner-step {
+  border: 1px solid var(--stone-soft);
+  border-radius: 14px;
+  padding: clamp(1.4rem, 3vw, 2rem);
+  background: var(--ivory);
+}
+.partner-step-no {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--taupe);
+}
+.partner-step h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+  margin: 8px 0 6px;
+}
+.partner-step p {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--taupe);
+  margin: 0;
+}
+
+/* Visuals — catalog imagery grid, or the showcase video reel */
+.partner-visuals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 34px;
+}
+.partner-visuals img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--ivory-panel);
+}
+.partner-reel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 34px;
+}
+.partner-reel video {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--noir-raise);
+}
+
+/* Houses word-strip */
+.partner-strip-lbl { text-align: center; display: block; margin-bottom: 18px; }
+.partner-brandstrip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 26px;
+}
+.partner-brandstrip span {
+  font-family: var(--serif);
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  color: var(--stone);
+}
+
+/* Contact form */
+.partner-form-card {
+  max-width: 660px;
+  margin: 0 auto;
+  background: var(--ivory-panel);
+  border: 1px solid var(--stone-soft);
+  border-radius: 20px;
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+}
+.partner-form-h2 { text-align: center; }
+.partner-form { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; }
+.partner-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.partner-input {
+  width: 100%;
+  border: 1px solid var(--stone-hair);
+  background: var(--ivory);
+  color: var(--noir);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  padding: 13px 18px;
+  border-radius: 999px;
+  outline: none;
+  transition: border-color 0.2s var(--ease);
+}
+.partner-input::placeholder { color: var(--taupe); }
+.partner-input:focus { border-color: var(--noir); }
+.partner-textarea { border-radius: 18px; resize: vertical; line-height: 1.5; }
+.partner-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.partner-submit {
+  margin-top: 6px;
+  width: 100%;
+  background: var(--noir);
+  color: var(--ivory);
+  border: 0;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 16px;
+  border-radius: 999px;
+  transition: opacity 0.25s var(--ease);
+}
+.partner-submit:hover:not(:disabled) { opacity: 0.88; }
+.partner-submit:disabled { opacity: 0.5; cursor: default; }
+.partner-mail { color: var(--noir); text-decoration: underline; }
+.partner-thanks {
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--noir);
+  margin: 24px 0 4px;
+}
+
+@media (max-width: 560px) {
+  .partner-form-row { grid-template-columns: 1fr; }
+}
+
+/* Admin — partner leads list */
+.lead-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.lead-row {
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid var(--stone-soft);
+  border-left: 3px solid var(--stone-hair);
+  border-radius: 12px;
+  background: var(--ivory);
+}
+.lead-row.lead-new { border-left-color: var(--noir); }
+.lead-row.lead-contacted { border-left-color: var(--stone); }
+.lead-row.lead-closed { opacity: 0.6; }
+.lead-main { min-width: 0; }
+.lead-head { display: flex; align-items: baseline; gap: 12px; }
+.lead-date { font-size: 11px; color: var(--taupe); }
+.lead-contact { font-size: 0.9rem; color: var(--noir); margin-top: 3px; }
+.lead-msg {
+  font-size: 0.88rem;
+  color: var(--taupe);
+  line-height: 1.5;
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+}
+.lead-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.lead-status { padding: 7px 10px; border-radius: 8px; font-size: 0.82rem; width: auto; text-transform: capitalize; }
+.lead-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--stone-hair);
+  border-radius: 8px;
+  background: var(--ivory);
+  color: var(--taupe);
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.lead-del:hover { color: #9a3b2f; border-color: #9a3b2f; }
+
+/* ═══════════════ Home §3 — trending-occasion tiles (image + text below) ═══════════════ */
+.tocc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.tocc-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+.tocc-img {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 5 / 6;
+  overflow: hidden;
+  border-radius: 2px; /* rectangular / squared corners */
+  background: var(--ivory-panel);
+}
+.tocc-img-el {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.tocc-card:hover .tocc-img-el { transform: scale(1.03); }
+.tocc-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  line-height: 1.1;
+  color: var(--noir);
+  margin: 1.1rem 0 0;
+}
+.tocc-desc {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--taupe);
+  margin: 0.5rem 0 0;
+  max-width: 42ch;
+}
+.tocc-cta {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--noir);
+  border-bottom: 1px solid var(--noir);
+  padding-bottom: 3px;
+  align-self: flex-start;
+  margin-top: 0.9rem;
+  transition: opacity 0.2s var(--ease);
+}
+.tocc-card:hover .tocc-cta { opacity: 0.6; }
+
+/* ═══════════════ Home §4 — auto-swiping house carousel ═══════════════ */
+.hc { position: relative; }
+.hc-viewport { overflow: hidden; }
+.hc-track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  --vis: 4;
+  transform: translateX(calc(var(--i, 0) * -100% / var(--vis)));
+}
+.hc-track.anim { transition: transform 0.6s var(--ease); }
+.hc-slide {
+  flex: 0 0 calc(100% / var(--vis));
+  box-sizing: border-box;
+  padding: 0 8px;
+  text-decoration: none;
+  color: inherit;
+}
+.hc-img {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--ivory-panel);
+}
+.hc-img-el {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.hc-slide:hover .hc-img-el { transform: scale(1.03); }
+.hc-mono { font-family: var(--serif); font-size: 30px; color: var(--stone); }
+.hc-name {
+  display: block;
+  text-align: center;
+  margin-top: 0.8rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--noir);
+}
+.hc-next {
+  position: absolute;
+  top: 38%;
+  right: -4px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--stone-soft);
+  background: var(--ivory);
+  color: var(--noir);
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.hc-next:hover { background: var(--noir); color: var(--ivory); }
+
+@media (max-width: 1024px) {
+  .hc-track { --vis: 3; }
+}
+@media (max-width: 860px) {
+  .tocc-grid { grid-template-columns: 1fr; gap: 1.6rem; }
+  .tocc-img { aspect-ratio: 16 / 11; }
+}
+@media (max-width: 680px) {
+  .hc-track { --vis: 2; }
+  .hc-next { display: none; }
+}

@@ -45,3 +45,8 @@ export function brandNewArrivalsUrl(name: string, origin?: string): string {
 export function curatorBrandPath(name: string): string {
   return `/curator?brands=${encodeURIComponent(name)}`;
 }
+
+/** Curator deep-link with one or more occasions pre-selected in the filter. */
+export function curatorOccasionPath(occasions: string[]): string {
+  return `/curator?occasions=${encodeURIComponent(occasions.join(","))}`;
+}

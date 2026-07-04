@@ -1,141 +1,61 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
+import type { HomeModule } from "@/lib/data/getHomeModules";
 
 /* ───────────────────────────────────────────────────────────────────
-   Module demo films — CDN-hosted (Supabase Storage).
-   Fill videoUrl / posterUrl with the real hosted URLs. While blank the
-   panel renders a graceful empty state (poster/typographic still; play
-   does nothing). preload="metadata" keeps these off the critical path.
+   The three modules — big 9:16 cards with an (admin-managed) background
+   clip under a dark overlay. The title/tag/blurb/clip come from the DB
+   (getHomeModules); the route + CTA label stay code-defined here.
    ─────────────────────────────────────────────────────────────────── */
-type Film = {
-  key: string;
-  idx: string;
-  title: string;
-  tag: string;
-  desc: string;
-  steps: { n: string; t: string }[];
-  cap: string;
-  href: string;
-  cta: string;
-  videoUrl: string;
-  posterUrl: string;
+const MODULE_STRUCTURE: Record<string, { href: string; cta: string }> = {
+  curator: { href: "/curator", cta: "Open the edit" },
+  tryon: { href: "/tryon", cta: "Try it on" },
+  creator: { href: "/creator", cta: "Compose a scene" },
 };
 
-const MODULE_FILMS: Film[] = [
-  {
-    key: "curator",
-    idx: "01",
-    title: "OneTap Curator",
-    tag: "Working name — OneTap Try-On",
-    desc: "A personalised listing, built on the houses you already buy. Tap any piece and see yourself wearing it — the decision made on your own body, in your own light.",
-    cap: "OneTap Curator — Film",
-    href: "/curator",
-    cta: "Open the edit",
-    steps: [
-      { n: "One", t: "Open the edit." },
-      { n: "Two", t: "Tap the piece." },
-      { n: "Three", t: "Watch it on you." },
-    ],
-    videoUrl: "", // e.g. https://<project>.supabase.co/storage/v1/object/public/films/onetap-curator.mp4
-    posterUrl: "",
-  },
-  {
-    key: "tryon",
-    idx: "02",
-    title: "360° Try-On",
-    tag: "Action — OneTap TryOn",
-    desc: "Upload anything you are considering — a product image, a screenshot, a photograph taken in a store — and see yourself wearing it, from every angle. One upload, one action.",
-    cap: "360° Try-On — Film",
-    href: "/tryon",
-    cta: "Try it on",
-    steps: [
-      { n: "One", t: "Upload the piece." },
-      { n: "Two", t: "One tap." },
-      { n: "Three", t: "The turn, returned." },
-    ],
-    videoUrl: "",
-    posterUrl: "",
-  },
-  {
-    key: "creator",
-    idx: "03",
-    title: "Atelier Scenes",
-    tag: "Working name — OneTap Creator",
-    desc: "Place a piece in the world you would wear it in — a city street at dusk, a coastal evening, quiet luxury, old money. The film situates the object in your life.",
-    cap: "Atelier Scenes — Film",
-    href: "/creator",
-    cta: "Compose a scene",
-    steps: [
-      { n: "One", t: "Choose the piece." },
-      { n: "Two", t: "Choose the world." },
-      { n: "Three", t: "The film follows." },
-    ],
-    videoUrl: "",
-    posterUrl: "",
-  },
-];
-
-/* Per-module framed film with click-to-play overlay (lazy, no autoplay). */
-function FilmPanel({ film }: { film: Film }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-
-  const handlePlay = () => {
-    const v = videoRef.current;
-    if (!v || !film.videoUrl) return; // no source yet → overlay stays
-    const p = v.play();
-    if (p && typeof p.then === "function") {
-      p.then(() => setPlaying(true)).catch(() => {});
-    } else {
-      setPlaying(true);
-    }
-  };
-
+/** A single 9:16 module card — ambient background clip + dark scrim + text. */
+function ModuleCard({ module, idx }: { module: HomeModule; idx: number }) {
+  const struct = MODULE_STRUCTURE[module.id] ?? { href: "/curator", cta: "Explore" };
   return (
-    <figure className="lp-film">
-      {film.videoUrl ? (
+    <Link href={struct.href} className="lp-mod9 reveal" aria-label={module.title}>
+      {module.videoUrl ? (
         <video
-          ref={videoRef}
-          preload="metadata"
-          playsInline
+          className="lp-mod9-bg"
+          src={module.videoUrl}
+          poster={module.posterUrl || undefined}
+          autoPlay
           muted
           loop
-          poster={film.posterUrl || undefined}
-          onClick={() => {
-            videoRef.current?.pause();
-            setPlaying(false);
-          }}
-          onEnded={() => setPlaying(false)}
-        >
-          <source src={film.videoUrl} type="video/mp4" />
-        </video>
+          playsInline
+          preload="metadata"
+        />
       ) : (
-        film.posterUrl && (
+        module.posterUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={film.posterUrl} alt="" className="lp-film-poster" />
+          <img className="lp-mod9-bg" src={module.posterUrl} alt="" loading="lazy" />
         )
       )}
-
-      <button
-        type="button"
-        className={`lp-overlay${playing ? " hidden" : ""}`}
-        aria-label={`Play the ${film.title} film`}
-        onClick={handlePlay}
-      >
-        <span className="lp-play" aria-hidden="true">
-          <svg width="18" height="20" viewBox="0 0 20 22">
-            <path d="M2 2 L18 11 L2 20 Z" fill="var(--stone)" />
-          </svg>
-        </span>
-        <span className="lp-cap">{film.cap}</span>
-      </button>
-    </figure>
+      <span className="lp-mod9-scrim" aria-hidden="true" />
+      <span className="lp-mod9-body">
+        <span className="lp-idx">{String(idx + 1).padStart(2, "0")}</span>
+        <span className="lp-tag">{module.tag}</span>
+        <h3>{module.title}</h3>
+        <p className="lp-mod9-blurb">{module.blurb}</p>
+        <span className="lp-mod9-cta">{struct.cta} →</span>
+      </span>
+    </Link>
   );
 }
 
-export default function LandingClient() {
+export default function LandingClient({
+  modules,
+  children,
+}: {
+  modules: HomeModule[];
+  children?: React.ReactNode;
+}) {
   /* Gentle reveal-on-scroll (respects reduced motion). */
   useEffect(() => {
     const reduce = window.matchMedia(
@@ -209,43 +129,21 @@ export default function LandingClient() {
         <div className="lp-wrap">
           <div className="lp-modules-head reveal">
             <h2>Three ways to see it on yourself.</h2>
+            <p className="lp-modules-intro">
+              Every module serves one decision — to own the piece, or not.
+            </p>
           </div>
-          <p className="lp-modules-intro reveal">
-            Every module serves one decision — to own the piece, or not. Watch
-            how each one works.
-          </p>
 
-          {MODULE_FILMS.map((film, i) => (
-            <article
-              key={film.key}
-              className={`lp-module reveal${i % 2 === 1 ? " flip" : ""}`}
-            >
-              <div className="lp-film-col">
-                <FilmPanel film={film} />
-              </div>
-              <div className="lp-text-col">
-                <span className="lp-idx">{film.idx}</span>
-                <h3>{film.title}</h3>
-                <span className="lp-tag">{film.tag}</span>
-                <p className="lp-desc">{film.desc}</p>
-                <div className="lp-steps">
-                  {film.steps.map((s) => (
-                    <span key={s.n} className="lp-step">
-                      <span className="lp-n">{s.n}</span>
-                      {s.t}
-                    </span>
-                  ))}
-                </div>
-                <div className="lp-module-cta">
-                  <Link href={film.href} className="btn-line">
-                    {film.cta}
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
+          <div className="lp-modrow">
+            {modules.map((m, i) => (
+              <ModuleCard key={m.id} module={m} idx={i} />
+            ))}
+          </div>
         </div>
       </section>
+
+      {/* EDITOR'S PICKS (server-rendered sections passed as children) */}
+      {children}
 
       {/* MEMBERSHIP + PRIVACY */}
       <section id="membership" className="lp-strip">

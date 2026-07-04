@@ -41,7 +41,7 @@ function groupByBrand(products: Product[]): Map<string, Product[]> {
 }
 
 /** The brand's best image for hero/OG — highest oneTapScore, else first found. */
-function bestImage(items: Product[]): string | null {
+export function bestImage(items: Product[]): string | null {
   const ranked = [...items].sort((a, b) => (b.oneTapScore ?? 0) - (a.oneTapScore ?? 0));
   for (const p of ranked) {
     const img = p.imageUrl || p.images?.[0];

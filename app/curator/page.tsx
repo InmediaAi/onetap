@@ -23,6 +23,7 @@ export default async function CuratorPage({
   }
   const filters = parseFilters(sp);
   const initialBrand = filters.brands[0] ?? null;
+  const initialOccasions = filters.occasions;
 
   const [{ products, total }, facetRows] = await Promise.all([
     queryProducts(filters, 1, PAGE_SIZE),
@@ -47,6 +48,7 @@ export default async function CuratorPage({
         initialTotal={total}
         initialFacets={facets}
         initialBrand={initialBrand}
+        initialOccasions={initialOccasions}
       />
 
       <SiteFooter />
