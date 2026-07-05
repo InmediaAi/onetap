@@ -307,7 +307,8 @@ export default function OnboardingPage() {
           ) : !signedIn ? (
             <div className="ob-step">
               <p className="ob-sub">
-                Sign in to begin. Your likeness stays private to you.
+                The world’s first video curator. 100+ luxury houses, edited to
+                your taste.
               </p>
               <button className="oauth-btn" onClick={() => oauth("google")}>
                 <GoogleMark /> Sign in with Google

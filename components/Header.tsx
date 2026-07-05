@@ -47,7 +47,7 @@ export default function Header() {
                 </span>
               )}
             </span>
-            <span className="label ut-label">Closet</span>
+            <span className="label ut-label">My Closet</span>
           </Link>
           <Link href="/profile" className="ic" aria-label="Profile">
             <User size={17} strokeWidth={1.4} />

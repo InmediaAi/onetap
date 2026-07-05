@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Play } from "lucide-react";
 import { useAtelier } from "@/lib/store";
+import { useHydrated } from "@/lib/useHydrated";
 import Pagination from "@/components/Pagination";
 
 /** One row from GET /api/me/looks. */
@@ -35,8 +37,23 @@ type Tab = "clips" | "images";
  * /look/[id], where download + share live.
  */
 export default function ClosetGallery() {
-  const openSignIn = useAtelier((s) => s.openSignIn);
+  const router = useRouter();
+  const hydrated = useHydrated();
+  const email = useAtelier((s) => s.email);
+  const profileLoaded = useAtelier((s) => s.profileLoaded);
   const markClosetSeen = useAtelier((s) => s.markClosetSeen);
+  const redirecting = useRef(false);
+
+  // Session resolved but not signed in → send them straight to the onboarding
+  // sign-in (step 1), instead of a separate gate/modal (one action, not two) —
+  // exactly like the profile screen. `next=/closet` returns them here after auth.
+  const needsSignIn = hydrated && profileLoaded && !email;
+  useEffect(() => {
+    if (needsSignIn && !redirecting.current) {
+      redirecting.current = true;
+      router.replace("/onboarding?next=/closet");
+    }
+  }, [needsSignIn, router]);
 
   const [tab, setTab] = useState<Tab>("clips"); // clips first, by default
   const [page, setPage] = useState(1);
@@ -95,13 +112,12 @@ export default function ClosetGallery() {
     );
   }
 
-  if (state === "signedout") {
+  // Not signed in → the effect above redirects to onboarding; render a neutral
+  // placeholder in the meantime (never the old two-step "Sign in" gate).
+  if (state === "signedout" || needsSignIn) {
     return (
       <div className="cl-empty">
-        <p>Sign in to see the looks and videos you’ve created.</p>
-        <button className="btn-line" onClick={() => openSignIn()}>
-          Sign in
-        </button>
+        <p>Loading your closet…</p>
       </div>
     );
   }

@@ -165,7 +165,7 @@ export default function LookPage() {
         </button>
 
         {!hydrated || (!look && !notFound) ? (
-          <div className="shimmer mt-4 aspect-[9/16] h-[56svh] max-h-[600px] w-auto md:h-[64svh]" />
+          <div className="shimmer mt-4 aspect-[9/16] w-full overflow-hidden md:h-[64svh] md:max-h-[600px] md:w-auto" />
         ) : !look ? (
           <div className="flex flex-col items-center gap-6 py-20">
             <p className="font-display text-3xl">This look isn’t here</p>
@@ -192,7 +192,7 @@ export default function LookPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="relative mt-4 aspect-[9/16] h-[56svh] max-h-[600px] w-auto max-w-full overflow-hidden bg-ivoryPanel md:mt-6 md:h-[64svh]"
+              className="relative mt-4 aspect-[9/16] w-full max-w-full overflow-hidden bg-ivoryPanel md:mt-6 md:h-[64svh] md:max-h-[600px] md:w-auto"
             >
               {look.kind === "tryon" ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -242,24 +242,10 @@ export default function LookPage() {
             </div>
 
             <div className="mt-8 flex flex-col items-center gap-4">
-              {look.campaign === "fifa-worldcup" ? (
-                <>
-                  <p className="text-sm text-muted">Made with Viral Fan · by OneTap.</p>
-                  <Link
-                    href="/fifa?utm_campaign=fifa-worldcup&utm_source=share&utm_medium=look"
-                    className="btn-line"
-                  >
-                    Try your team’s jersey →
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-muted">Visualized with OneTap Atelier.</p>
-                  <Link href="/" className="btn-line">
-                    Create Your Own Look
-                  </Link>
-                </>
-              )}
+              <p className="text-sm text-muted">Visualized with OneTap Atelier.</p>
+              <Link href="/curator" className="btn-line">
+                Explore More →
+              </Link>
             </div>
           </>
         )}
