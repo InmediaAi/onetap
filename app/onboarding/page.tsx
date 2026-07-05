@@ -24,7 +24,7 @@ function readAsDataURL(file: File): Promise<string> {
   });
 }
 
-/* ——— Provider marks (monochrome, currentColor) ——— */
+/* --- Provider marks (monochrome, currentColor) --- */
 const GoogleMark = () => (
   <svg viewBox="0 0 24 24">
     <path d="M12 11v2.4h3.97c-.16 1.03-1.2 3.02-3.97 3.02-2.39 0-4.34-1.98-4.34-4.42S9.61 7.58 12 7.58c1.36 0 2.27.58 2.79 1.08l1.9-1.83C15.47 5.69 13.89 5 12 5c-3.87 0-7 3.13-7 7s3.13 7 7 7c4.04 0 6.72-2.84 6.72-6.84 0-.46-.05-.81-.11-1.16H12z" />
@@ -221,7 +221,7 @@ export default function OnboardingPage() {
       }
       setStep("brands");
     } catch (e) {
-      // Stay on the upload step so the user can retry — don't lose their photos.
+      // Stay on the upload step so the user can retry - don't lose their photos.
       setSaveErr(e instanceof Error ? e.message : "Could not save your photos.");
     } finally {
       setSaving(false);
@@ -299,7 +299,7 @@ export default function OnboardingPage() {
           <div className="wordmark ob-word">OneTap Atelier</div>
 
           {!hydrated || !profileLoaded || (signedIn && onboarded) ? (
-            // Loading / redirecting — never flash the sign-in step for a user
+            // Loading / redirecting - never flash the sign-in step for a user
             // who arrived already authenticated from the OAuth callback.
             <div className="ob-step">
               <p className="ob-sub">One moment…</p>
@@ -321,7 +321,7 @@ export default function OnboardingPage() {
           ) : step === "upload" ? (
             <div className="ob-step">
               <p className="ob-sub">
-                Two photos — one to recognise your face, one to read your
+                Two photos - one to recognise your face, one to read your
                 full-body shape.
               </p>
               <p className="ob-guide">{IMAGE_GUIDELINE}</p>
@@ -355,7 +355,7 @@ export default function OnboardingPage() {
           ) : (
             <div className="ob-step">
               <p className="ob-sub">
-                Choose at least five houses you love — your edit will lead with them.
+                Choose at least five houses you love - your edit will lead with them.
                 <span className="ob-count"> {picked.length}/5 selected</span>
               </p>
               <div className="brand-search ob-brand-search">

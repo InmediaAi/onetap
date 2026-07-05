@@ -77,13 +77,13 @@ export default function CampaignManager({ password }: { password: string }) {
     <>
       <p className="admin-hint">
         Attach jersey products to each nation (add the jerseys first in <strong>Pieces</strong> with
-        “Campaign only” on). A nation can hold multiple kits — Home, Away, Authentic. These power the{" "}
+        “Campaign only” on). A nation can hold multiple kits - Home, Away, Authentic. These power the{" "}
         <a className="admin-inline-btn" href="/fifa" target="_blank" rel="noreferrer">/fifa</a> landing.
       </p>
 
       {products.length === 0 && (
         <p className="admin-status">
-          No campaign jerseys yet — add jersey products in Pieces (toggle “Campaign only”), then attach them here.
+          No campaign jerseys yet - add jersey products in Pieces (toggle “Campaign only”), then attach them here.
         </p>
       )}
 
@@ -104,7 +104,7 @@ export default function CampaignManager({ password }: { password: string }) {
                   return (
                     <li key={j.id} className="admin-recent-row" style={{ cursor: "default" }}>
                       <span className="admin-recent-brand">{j.kit}</span>
-                      <span className="admin-recent-name">{p ? p.name : j.product_id ?? "—"}</span>
+                      <span className="admin-recent-name">{p ? p.name : j.product_id ?? "-"}</span>
                       <button
                         className="admin-img-rm"
                         onClick={() => post({ action: "removeJersey", id: j.id })}
@@ -147,7 +147,7 @@ export default function CampaignManager({ password }: { password: string }) {
                 >
                   <option value="">Select a jersey…</option>
                   {products.map((p) => (
-                    <option key={p.id} value={p.id}>{p.brand} — {p.name}</option>
+                    <option key={p.id} value={p.id}>{p.brand} - {p.name}</option>
                   ))}
                 </select>
               </label>
@@ -168,7 +168,7 @@ export default function CampaignManager({ password }: { password: string }) {
       <section className="admin-card">
         <h2 className="admin-subtitle">Moments</h2>
         <p className="admin-hint">
-          Each moment has two prompts — the <strong>video</strong> scene (sent to the
+          Each moment has two prompts - the <strong>video</strong> scene (sent to the
           film model) and the <strong>image</strong> prompt (used to compose the still
           onto the try-on). Use ↑/↓ to set the order shown on{" "}
           <a className="admin-inline-btn" href="/fifa" target="_blank" rel="noreferrer">/fifa</a>.
@@ -206,14 +206,14 @@ export default function CampaignManager({ password }: { password: string }) {
           <textarea
             className="admin-input admin-textarea"
             rows={4}
-            placeholder="Video scene prompt — describe the shot, motion, stadium, lighting, mood…"
+            placeholder="Video scene prompt - describe the shot, motion, stadium, lighting, mood…"
             value={newPrompt}
             onChange={(e) => setNewPrompt(e.target.value)}
           />
           <textarea
             className="admin-input admin-textarea"
             rows={4}
-            placeholder="Image prompt (optional) — how to compose the still onto the try-on…"
+            placeholder="Image prompt (optional) - how to compose the still onto the try-on…"
             value={newImagePrompt}
             onChange={(e) => setNewImagePrompt(e.target.value)}
           />
@@ -237,7 +237,7 @@ export default function CampaignManager({ password }: { password: string }) {
   );
 }
 
-/** Inline editor for one moment — editable label + video prompt + image prompt,
+/** Inline editor for one moment - editable label + video prompt + image prompt,
     plus reorder (↑/↓) controls. */
 function MomentEditor({
   moment,

@@ -7,7 +7,7 @@ import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 
 export const runtime = "nodejs";
-// 300s to match the video/360 routes — prompt-capable providers (GPT-Image) can
+// 300s to match the video/360 routes - prompt-capable providers (GPT-Image) can
 // take well over 60s when composing from high-fidelity reference images.
 export const maxDuration = 300;
 
@@ -23,7 +23,7 @@ async function currentUserId(): Promise<string | null> {
   }
 }
 
-/** Photo Try-On — generateTryOn(). Body: { userImage, productImage, productId? }. */
+/** Photo Try-On - generateTryOn(). Body: { userImage, productImage, productId? }. */
 export async function POST(req: Request) {
   const startedAt = Date.now();
   let body: {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // All views of the same garment (primary first), deduped + capped — extra
+    // All views of the same garment (primary first), deduped + capped - extra
     // reference images give the prompt-capable providers a more faithful render.
     const garmentImages = Array.from(
       new Set([productImage, ...(Array.isArray(productImages) ? productImages : [])]),

@@ -151,7 +151,7 @@ export default function PackagesAdmin({ password }: { password: string }) {
       <p className="admin-hint">
         Edit the tiers shown on the pricing page. <strong>Video limits, features,
         the top-up price and the free allowance are enforced by us.</strong> The
-        monthly price is display-only — the real charge is set by the matching
+        monthly price is display-only - the real charge is set by the matching
         Razorpay plan, so keep them in sync.
       </p>
 

@@ -11,7 +11,7 @@ import { ToastProvider } from "@/components/Toast";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-// Site-wide structured data — the brand entity + site (helps Google connect all
+// Site-wide structured data - the brand entity + site (helps Google connect all
 // pages, incl. the brand index, to the OneTap Atelier organization).
 const SITE_JSONLD = [
   {
@@ -29,7 +29,7 @@ const SITE_JSONLD = [
   },
 ];
 
-// Display typeface — a modern grotesque sans for headings & product names
+// Display typeface - a modern grotesque sans for headings & product names
 // (the crisp, editorial black-&-white look). Body stays Helvetica Neue.
 const display = Archivo({
   subsets: ["latin"],
@@ -41,22 +41,22 @@ const display = Archivo({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "OneTap Atelier — New In",
+  title: "OneTap Atelier - New In",
   description:
-    "A private edit of the season's most considered pieces — each seen on you before it is yours.",
+    "A private edit of the season's most considered pieces - each seen on you before it is yours.",
   openGraph: {
-    title: "OneTap Atelier — New In",
+    title: "OneTap Atelier - New In",
     description:
-      "A private edit of the season's most considered pieces — each seen on you before it is yours.",
+      "A private edit of the season's most considered pieces - each seen on you before it is yours.",
     siteName: "OneTap Atelier",
     url: SITE_URL,
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "OneTap Atelier — New In",
+    title: "OneTap Atelier - New In",
     description:
-      "A private edit of the season's most considered pieces — each seen on you before it is yours.",
+      "A private edit of the season's most considered pieces - each seen on you before it is yours.",
   },
   // Renders the Google Search Console <meta google-site-verification> only when set.
   verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION

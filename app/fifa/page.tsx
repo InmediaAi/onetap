@@ -13,12 +13,12 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Viral Fan — your jersey, your stadium moment",
+  title: "Viral Fan - your jersey, your stadium moment",
   description:
-    "Create a viral fan video of yourself — your jersey, your face, on the stadium big screen. Preview free.",
+    "Create a viral fan video of yourself - your jersey, your face, on the stadium big screen. Preview free.",
 };
 
-/** Standalone FIFA "Viral Fan" microsite — no global app header/footer. */
+/** Standalone FIFA "Viral Fan" microsite - no global app header/footer. */
 export default async function FifaCampaignPage() {
   const campaign = await getCampaign("fifa-worldcup");
   return (

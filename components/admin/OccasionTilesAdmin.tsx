@@ -81,7 +81,7 @@ export default function OccasionTilesAdmin({ password }: { password: string }) {
 
   return (
     <div className="admin-card">
-      <h2 className="admin-subtitle">Home — trending occasions</h2>
+      <h2 className="admin-subtitle">Home - trending occasions</h2>
       <p className="admin-hint">
         The three tiles in “By trending occasions” on the home page. Each links to
         the Curator filtered by its occasions (comma-separated facet values, e.g.{" "}

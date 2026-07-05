@@ -14,12 +14,12 @@ import ResultStage from "@/components/ResultStage";
 import TryOnIsland from "@/components/TryOnIsland";
 
 /**
- * Global try-on controller — shared by the Curator (360°), the 360 module and
+ * Global try-on controller - shared by the Curator (360°), the 360 module and
  * the Creator (film). Mounted once in the root layout so the generation + its
  * "Dynamic Island" survive page navigation. One tap (via store.startTryOn(job))
  * auto-composes the on-you image (free) then the video (spin or film, consumes a
  * video). ISLAND_COLLAPSE_MS after opening, the modal collapses into a floating
- * island (the user keeps browsing — even on other pages) and auto-expands back
+ * island (the user keeps browsing - even on other pages) and auto-expands back
  * into the result when the clip is ready. Single-session: store.startTryOn
  * refuses a second run while one is active.
  */
@@ -37,7 +37,7 @@ interface Asset {
 export default function TryOnProvider() {
   const job = useAtelier((s) => s.activeTryOn);
   const closeTryOn = useAtelier((s) => s.closeTryOn);
-  // Try-on requires the FULL-LENGTH photo as the primary likeness — a face-only
+  // Try-on requires the FULL-LENGTH photo as the primary likeness - a face-only
   // selfie produces a broken full-body result, so we gate on `body`, not portrait.
   const body = useAtelier((s) => s.body);
   const addLook = useAtelier((s) => s.addLook);
@@ -65,7 +65,7 @@ export default function TryOnProvider() {
   const onClose = () => closeTryOn();
 
   // Keep the island anchored just below the header at any breakpoint (the mobile
-  // nav wraps taller) — measure the sticky header and expose it as a CSS var.
+  // nav wraps taller) - measure the sticky header and expose it as a CSS var.
   useEffect(() => {
     const measure = () => {
       const h = document.querySelector(".topbar")?.getBoundingClientRect().height;
@@ -104,7 +104,7 @@ export default function TryOnProvider() {
     const prompt = job.prompt;
 
     (async () => {
-      // 1) Try-on image — always free. (Plain still; the prompt applies to the film.)
+      // 1) Try-on image - always free. (Plain still; the prompt applies to the film.)
       setTryonLoading(true);
       const t0 = Date.now();
       track(EVENTS.GENERATION_STARTED, { kind: "tryon", productId: pid });
@@ -139,7 +139,7 @@ export default function TryOnProvider() {
       setTryonLoading(false);
       if (curId.current !== jid || !img) return;
 
-      // 2) Video (360° turn or film) — consumes a video.
+      // 2) Video (360° turn or film) - consumes a video.
       setTurnLoading(true);
       const t1 = Date.now();
       track(EVENTS.GENERATION_STARTED, { kind, productId: pid });
@@ -165,7 +165,7 @@ export default function TryOnProvider() {
           if (curId.current !== jid) return;
           track(EVENTS.VIDEO_LIMIT_REACHED, { kind, productId: pid });
           useAtelier.getState().openPricing();
-          setError(`Video limit reached — subscribe to see the ${job.turnLabel}.`);
+          setError(`Video limit reached - subscribe to see the ${job.turnLabel}.`);
           setTurnLoading(false);
           return; // keep showing the try-on image
         }
@@ -191,7 +191,7 @@ export default function TryOnProvider() {
   const terminal = Boolean(turn) || Boolean(error);
   const terminalRef = useRef(terminal);
   terminalRef.current = terminal;
-  // Only collapse while generation is actually running — NOT for the no-photo
+  // Only collapse while generation is actually running - NOT for the no-photo
   // empty state or an instant error (else the island would show "in progress…"
   // with nothing generating).
   const inFlightRef = useRef(false);

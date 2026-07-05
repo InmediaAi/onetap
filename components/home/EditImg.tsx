@@ -13,7 +13,7 @@ function optimizable(url?: string | null): boolean {
   }
 }
 
-/** Editorial tile image — next/image when the host allows, else a lazy <img>. */
+/** Editorial tile image - next/image when the host allows, else a lazy <img>. */
 export default function EditImg({
   src,
   alt,

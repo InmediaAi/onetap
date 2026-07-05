@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 const MAX_URLS = 12;
 
-/** GET — current showcase clip URLs. Password via header. */
+/** GET - current showcase clip URLs. Password via header. */
 export async function GET(req: Request) {
   if (!checkAdmin(req.headers.get("x-admin-password"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ urls: data?.showcase_urls ?? [] });
 }
 
-/** POST — replace the showcase clip URLs. Body: { password, urls: string[] }. */
+/** POST - replace the showcase clip URLs. Body: { password, urls: string[] }. */
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   if (!checkAdmin(body?.password)) {

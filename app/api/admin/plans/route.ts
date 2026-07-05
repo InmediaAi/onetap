@@ -11,7 +11,7 @@ function clean(v: unknown, max = 300): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
-/** GET — all tiers + the top-up config (admin list). Password via header. */
+/** GET - all tiers + the top-up config (admin list). Password via header. */
 export async function GET(req: Request) {
   if (!checkAdmin(req.headers.get("x-admin-password"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
 }
 
 /**
- * POST — update a tier OR the top-up config.
+ * POST - update a tier OR the top-up config.
  * Body: { password, kind: "plan", plan: {...} } | { password, kind: "config", config: {...} }.
  * Tier ids are fixed (free/starter/pro); no create/delete.
  */

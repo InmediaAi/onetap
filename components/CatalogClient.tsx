@@ -18,9 +18,9 @@ export default function CatalogClient({
   initialProducts: Product[];
   initialTotal: number;
   initialFacets: FacetOptions;
-  /** Brand pre-selected from the URL (?brands=) — e.g. a /brands landing CTA. */
+  /** Brand pre-selected from the URL (?brands=) - e.g. a /brands landing CTA. */
   initialBrand?: string | null;
-  /** Occasions pre-selected from the URL (?occasions=) — e.g. a home occasion tile. */
+  /** Occasions pre-selected from the URL (?occasions=) - e.g. a home occasion tile. */
   initialOccasions?: string[];
 }) {
   const profileLoaded = useAtelier((s) => s.profileLoaded);
@@ -42,7 +42,7 @@ export default function CatalogClient({
         const { product } = await res.json();
         if (product) void openTryOn(product);
       } catch {
-        /* deeplink lookup failed — ignore */
+        /* deeplink lookup failed - ignore */
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps

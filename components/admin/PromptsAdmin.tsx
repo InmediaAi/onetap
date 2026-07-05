@@ -54,7 +54,7 @@ export default function PromptsAdmin({ password }: { password: string }) {
         toast.error(d?.error || "Could not save the prompt.");
         return;
       }
-      toast.success("Prompt saved — live within a minute.");
+      toast.success("Prompt saved - live within a minute.");
       load();
     } catch {
       toast.error("Could not save the prompt.");

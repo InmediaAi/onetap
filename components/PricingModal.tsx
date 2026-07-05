@@ -49,7 +49,7 @@ export default function PricingModal() {
             {hydrated
               ? active
                 ? `${remaining} try-on${remaining === 1 ? "" : "s"} left${usage.topupBalance > 0 ? ` (incl. ${usage.topupBalance} top-up)` : ""}. A try-on is a 360° spin or a film.`
-                : `${remaining} free try-on${remaining === 1 ? "" : "s"} left. Subscribe to keep creating — a try-on is a 360° spin or a film.`
+                : `${remaining} free try-on${remaining === 1 ? "" : "s"} left. Subscribe to keep creating - a try-on is a 360° spin or a film.`
               : "Each plan includes a monthly allowance of try-ons (360° spins or films)."}
           </p>
         </div>

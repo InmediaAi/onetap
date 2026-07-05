@@ -17,7 +17,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
-  // Honeypot — real users never see/fill this. Pretend success (don't tip off bots).
+  // Honeypot - real users never see/fill this. Pretend success (don't tip off bots).
   if (typeof body.website === "string" && body.website.trim() !== "") {
     return NextResponse.json({ ok: true });
   }
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   const db = createServiceClient();
   if (!db) {
     return NextResponse.json(
-      { error: "We couldn't record that right now — please email us directly." },
+      { error: "We couldn't record that right now - please email us directly." },
       { status: 503 },
     );
   }
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     source_url: str(body.sourceUrl, 500) || null,
   });
   if (error) {
-    return NextResponse.json({ error: "Something went wrong — please try again." }, { status: 500 });
+    return NextResponse.json({ error: "Something went wrong - please try again." }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

@@ -3,7 +3,7 @@ import EditImg from "@/components/home/EditImg";
 import type { OccasionTile } from "@/lib/data/getHomeEditorial";
 
 /**
- * "Editor's picks — By trending occasions for you": large rectangular image
+ * "Editor's picks - By trending occasions for you": large rectangular image
  * tiles with the title + description below, linking to the Curator filtered by
  * that occasion. Content (image/title/description) is admin-managed with an
  * auto-derived fallback. Server-rendered; the reveal observer animates them.

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — OneTap Atelier",
+  title: "Terms of Service - OneTap Atelier",
   description: "The terms governing your use of OneTap Atelier, a product of Inmedia AI Inc.",
 };
 
@@ -24,7 +24,7 @@ export default function TermsPage() {
       <h2>2. What the Service is</h2>
       <p>The Service is a technology platform that curates apparel and accessories offered by third-party brands and retailers and generates illustrative visualizations (“Try-On Films”) showing how selected items may appear on you. The Service includes the OneTap Curator, 360° Try-On, and Atelier Scenes features. The Service is provided on a subscription basis as described in Section 4.</p>
 
-      <h2>3. We do not own or sell merchandise — independent intermediary</h2>
+      <h2>3. We do not own or sell merchandise - independent intermediary</h2>
       <p><strong>Inmedia AI Inc does not design, manufacture, own, stock, distribute, sell, or ship any clothing, footwear, accessories, or other merchandise.</strong> The Service is a curation and middleware layer only. Accordingly:</p>
       <ul>
         <li>All garments and products shown on the Service are offered by third parties. We do not hold title to, take possession of, or have control over any product, its price, its availability, its authenticity, or its sale.</li>
@@ -69,9 +69,9 @@ export default function TermsPage() {
       <p>The Service, including its software, models, design, text, the “OneTap Atelier” name and marks, and all related intellectual property, is owned by Inmedia AI Inc and protected by law. All rights are reserved by Inmedia AI Inc. We grant you a limited, revocable, non-transferable licence to use the Service in accordance with these Terms; no other rights are granted.</p>
       <h3>Third-party property</h3>
       <p>All other trademarks, names, logos, and product imagery referenced on or surfaced through the Service belong to their respective owners and are used only nominatively to identify items, as described in Section 3. We claim no ownership of, and no affiliation with, those marks or their owners.</p>
-      <h3>Copyright complaints — DMCA notice and takedown</h3>
+      <h3>Copyright complaints - DMCA notice and takedown</h3>
       <p>We respect intellectual-property rights and respond to notices of alleged infringement under the Digital Millennium Copyright Act (17 U.S.C. § 512). If you believe content on the Service infringes your copyright, send a written notice to our Designated Agent containing: (a) your signature; (b) identification of the copyrighted work; (c) identification of the allegedly infringing material and its location; (d) your contact information; (e) a statement of good-faith belief that the use is unauthorized; and (f) a statement, under penalty of perjury, that your notice is accurate and you are authorized to act.</p>
-      <p><strong>Designated Copyright Agent:</strong> <span className="ph">[Designated agent name]</span>, Inmedia AI Inc, <span className="ph">[physical address — required to register the agent with the U.S. Copyright Office]</span>, mitul@inmediaai.com.</p>
+      <p><strong>Designated Copyright Agent:</strong> <span className="ph">[Designated agent name]</span>, Inmedia AI Inc, <span className="ph">[physical address - required to register the agent with the U.S. Copyright Office]</span>, mitul@inmediaai.com.</p>
       <p>We will respond to valid notices, may remove or disable the material, will accommodate counter-notifications as the DMCA provides, and will <strong>terminate the accounts of repeat infringers</strong> in appropriate circumstances.</p>
 
       <h2>9. Third-party brands, retailers, and links</h2>
@@ -84,15 +84,15 @@ export default function TermsPage() {
       <p className="legal-caps">To the maximum extent permitted by law, Inmedia AI Inc and its officers, employees, and agents will not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or any loss of profits, data, goodwill, or for any third-party products or transactions. Our total liability for any claim relating to the Service will not exceed the greater of the amount you paid us in the twelve months before the claim or one hundred U.S. dollars ($100).</p>
 
       <h2>12. Indemnification</h2>
-      <p>You agree to indemnify, defend, and hold harmless Inmedia AI Inc and its affiliates from any claims, damages, losses, and expenses (including reasonable legal fees) arising out of your User Content, your use of the Service, your violation of these Terms, or your infringement of any third party’s rights — including any claim that your uploaded content or your use of any Try-On Film infringed intellectual-property, privacy, or publicity rights.</p>
+      <p>You agree to indemnify, defend, and hold harmless Inmedia AI Inc and its affiliates from any claims, damages, losses, and expenses (including reasonable legal fees) arising out of your User Content, your use of the Service, your violation of these Terms, or your infringement of any third party’s rights - including any claim that your uploaded content or your use of any Try-On Film infringed intellectual-property, privacy, or publicity rights.</p>
 
       <h2>13. Dispute resolution; governing law</h2>
       <p>These Terms are governed by the laws of the State of <span className="ph">[State, e.g., Delaware]</span>, without regard to conflict-of-laws rules.</p>
-      <div className="note"><strong style={{ color: "var(--ink)" }}>Optional — confirm with counsel.</strong> Many U.S. platforms include binding arbitration with a class-action waiver. Whether to include one, and how to draft the opt-out, are significant legal choices.</div>
+      <div className="note"><strong style={{ color: "var(--ink)" }}>Optional - confirm with counsel.</strong> Many U.S. platforms include binding arbitration with a class-action waiver. Whether to include one, and how to draft the opt-out, are significant legal choices.</div>
       <p className="legal-caps">Except where prohibited, any dispute will be resolved by binding individual arbitration administered by <span className="ph">[arbitration body]</span> under its rules, and you and Inmedia AI Inc waive any right to a jury trial or to participate in a class action. You may opt out of arbitration within 30 days of first accepting these Terms by notifying us at mitul@inmediaai.com. Claims that qualify may be brought in small-claims court.</p>
 
       <h2>14. Termination</h2>
-      <p>You may stop using the Service and close your account at any time. We may suspend or terminate your access if you violate these Terms or to protect the Service or others. Sections that by their nature should survive termination — including ownership, disclaimers, limitation of liability, indemnification, and dispute resolution — survive.</p>
+      <p>You may stop using the Service and close your account at any time. We may suspend or terminate your access if you violate these Terms or to protect the Service or others. Sections that by their nature should survive termination - including ownership, disclaimers, limitation of liability, indemnification, and dispute resolution - survive.</p>
 
       <h2>15. Changes to these Terms</h2>
       <p>We may update these Terms from time to time. Material changes will be indicated by updating the effective date and posting the revised Terms. Your continued use of the Service after changes take effect constitutes acceptance.</p>
@@ -101,7 +101,7 @@ export default function TermsPage() {
       <p>These Terms and the Privacy Policy are the entire agreement between you and Inmedia AI Inc regarding the Service. If any provision is found unenforceable, the remainder stays in effect. Our failure to enforce a provision is not a waiver. You may not assign these Terms; we may assign them in connection with a merger, acquisition, or sale of assets. We are not liable for delays or failures caused by events beyond our reasonable control.</p>
 
       <h2>17. Contact</h2>
-      <p>Inmedia AI Inc — OneTap Atelier<br />
+      <p>Inmedia AI Inc - OneTap Atelier<br />
       mitul@inmediaai.com</p>
 
       <footer className="legal-foot">

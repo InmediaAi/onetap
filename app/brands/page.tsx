@@ -6,19 +6,19 @@ import JsonLd from "@/components/seo/JsonLd";
 import { fetchBrands } from "@/lib/data/getBrands";
 import { brandUrl } from "@/lib/data/links";
 
-export const revalidate = 3600; // ISR — refresh the brand index hourly.
+export const revalidate = 3600; // ISR - refresh the brand index hourly.
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
   title: "Designer & Fashion Brands A–Z · OneTap Atelier",
   description:
-    "Explore every designer and fashion brand on OneTap Atelier, A to Z. Try each label on you with AI virtual try-on, styled looks and 360° reels — before you buy.",
+    "Explore every designer and fashion brand on OneTap Atelier, A to Z. Try each label on you with AI virtual try-on, styled looks and 360° reels - before you buy.",
   alternates: { canonical: "/brands" },
   openGraph: {
     title: "Explore Brands A–Z · OneTap Atelier",
     description:
-      "Every designer and fashion brand on OneTap Atelier — try them on you before you buy.",
+      "Every designer and fashion brand on OneTap Atelier - try them on you before you buy.",
     url: `${SITE_URL}/brands`,
     type: "website",
   },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Explore Brands A–Z · OneTap Atelier",
     description:
-      "Every designer and fashion brand on OneTap Atelier — try them on you before you buy.",
+      "Every designer and fashion brand on OneTap Atelier - try them on you before you buy.",
   },
 };
 
@@ -74,7 +74,7 @@ export default async function BrandsPage() {
           <p className="eyebrow">OneTap Atelier</p>
           <h1>Explore brands</h1>
           <p className="sec-sub">
-            The houses we carry, A to Z. Choose a label to see its pieces — and try
+            The houses we carry, A to Z. Choose a label to see its pieces - and try
             them on you before you buy.
           </p>
         </section>

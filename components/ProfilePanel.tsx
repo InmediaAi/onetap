@@ -64,7 +64,7 @@ export default function ProfilePanel() {
   const [mood, setMood] = useState<string[]>(store.sceneMood);
   const [setting, setSetting] = useState<string[]>(store.sceneSetting);
   // Locally-picked previews ONLY (data: URLs). Server (signed) URLs are read live
-  // from the store via srcFor() — the store often hydrates from /api/me AFTER this
+  // from the store via srcFor() - the store often hydrates from /api/me AFTER this
   // mounts (fresh load / refocus), and re-signs on refresh, so reading it live is
   // what keeps the images from intermittently never appearing (or going stale).
   const [imgs, setImgs] = useState<Partial<Record<IdentityKind, string>>>({});
@@ -88,7 +88,7 @@ export default function ProfilePanel() {
   const [topupBusy, setTopupBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
-  // How many angles are on file — gates the composite generation.
+  // How many angles are on file - gates the composite generation.
   const photoCount = [
     srcFor("body"),
     srcFor("selfie"),
@@ -118,8 +118,8 @@ export default function ProfilePanel() {
     }
   }, [needsSignIn, router]);
 
-  // Until the session resolves (/api/me) — and while the redirect above is in
-  // flight — show a loading shimmer rather than flashing the profile or a gate
+  // Until the session resolves (/api/me) - and while the redirect above is in
+  // flight - show a loading shimmer rather than flashing the profile or a gate
   // (this also fixed the profile/images appearing to "not show" right after open).
   if (!hydrated || !profileLoaded || !email) {
     return (
@@ -152,7 +152,7 @@ export default function ProfilePanel() {
     else if (kind === "body") setIdentity(store.face, dataUrl);
     try {
       const path = await uploadIdentity(kind, dataUrl);
-      if (!path) return clearNote(kind); // Supabase unconfigured — kept in memory
+      if (!path) return clearNote(kind); // Supabase unconfigured - kept in memory
       const key = {
         selfie: "selfiePath",
         body: "bodyPath",
@@ -231,7 +231,7 @@ export default function ProfilePanel() {
     if (res.ok) {
       track(EVENTS.SUBSCRIPTION_CANCELLED, { plan: usage.planId });
       await store.refreshProfile(); // reflect the scheduled-cancel state immediately
-      setStatus("Your membership will end at the period close — you keep access until then.");
+      setStatus("Your membership will end at the period close - you keep access until then.");
     } else {
       setStatus(data?.error || "Could not cancel.");
     }
@@ -248,7 +248,7 @@ export default function ProfilePanel() {
   const monthlyLeft = Math.max(0, usage.videoLimit - usage.videosUsed);
   const remaining = active ? monthlyLeft + usage.topupBalance : usage.freeTrialRemaining;
 
-  // "Your model" widget hidden for now — the feature/handlers stay intact, just
+  // "Your model" widget hidden for now - the feature/handlers stay intact, just
   // not surfaced. Flip to true to bring it back.
   const SHOW_MODEL = false;
 
@@ -342,13 +342,13 @@ export default function ProfilePanel() {
         </div>
       </section>
 
-      {/* System-derived model sheet (read-only) — hidden for now (SHOW_MODEL). */}
+      {/* System-derived model sheet (read-only) - hidden for now (SHOW_MODEL). */}
       {SHOW_MODEL && (
         <section className="admin-card">
           <h2 className="admin-subtitle">Your model</h2>
           <p className="admin-hint">
             One multi-angle likeness composed by OneTap from your photos. We create
-            this for you — it can’t be uploaded or replaced.
+            this for you - it can’t be uploaded or replaced.
           </p>
           <div className="model-sheet">
             <div className="model-frame">
@@ -416,7 +416,7 @@ export default function ProfilePanel() {
             </p>
             {usage.cancelAtPeriodEnd ? (
               <p className="admin-hint">
-                Your membership won’t renew — you keep access until it ends.
+                Your membership won’t renew - you keep access until it ends.
               </p>
             ) : (
               <>

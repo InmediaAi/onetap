@@ -5305,16 +5305,58 @@
   background: var(--stone);
 }
 
-/* — Hero — */
+/* — Hero (full-bleed editorial image background; light text on the left) — */
 .lp-hero {
-  padding: clamp(5rem, 16vh, 11rem) 0 clamp(4rem, 10vh, 7rem);
-  border-bottom: 1px solid var(--stone-soft);
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: clamp(520px, 82vh, 800px);
+  padding: clamp(2rem, 6vh, 4rem) 0;
+  /* Dark scrim (stronger on the left where the copy sits) over the photo so text
+     stays legible across the responsive crop. Drop the image at /public/hero.png. */
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(15, 17, 14, 0.86) 0%,
+      rgba(15, 17, 14, 0.6) 40%,
+      rgba(15, 17, 14, 0.2) 68%,
+      rgba(15, 17, 14, 0.05) 100%
+    ),
+    url("/hero.png");
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  background-color: #12140f; /* fallback tone until the image loads / if missing */
 }
-.lp-hero .lp-accent { margin-bottom: 2.4rem; }
+.lp-hero .lp-accent { margin-bottom: 2.4rem; background: rgba(255, 255, 255, 0.6); }
 .lp-hero h1 {
   font-size: clamp(2.7rem, 7.5vw, 5.4rem);
   line-height: 1.04;
   max-width: 16ch;
+  color: #ffffff;
+}
+.lp-hero .lp-sub { color: rgba(255, 255, 255, 0.82); }
+/* CTAs re-toned for the dark hero */
+.lp-hero .btn-line {
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+}
+.lp-hero .btn-line:hover {
+  background: #ffffff;
+  color: var(--noir);
+  border-color: #ffffff;
+}
+.lp-hero .lp-quiet { color: rgba(255, 255, 255, 0.82); border-color: rgba(255, 255, 255, 0.45); }
+.lp-hero .lp-quiet:hover { color: #ffffff; border-color: #ffffff; }
+/* Desktop: match the hero box to the image's own ratio (1672×941) so the FULL
+   photo shows with no top/bottom crop. Mobile keeps the cover crop (looks right
+   there). Content stays vertically centered over it. */
+@media (min-width: 1024px) {
+  .lp-hero {
+    min-height: 0;
+    aspect-ratio: 1672 / 941;
+    background-position: center;
+  }
 }
 .lp-sub {
   font-family: var(--sans);

@@ -1,5 +1,5 @@
 /**
- * Onboarding left panel — an auto-scrolling masonry of sample try-on reels
+ * Onboarding left panel - an auto-scrolling masonry of sample try-on reels
  * (columns drift up/down on a loop). Decorative only.
  */
 

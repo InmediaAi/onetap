@@ -38,7 +38,7 @@ export default function CreatorBuilder({
 }) {
   const hydrated = useHydrated();
   // Try-on needs the full-length photo as the primary likeness (a face-only
-  // selfie breaks the full-body result) — gate on `body`, not portrait.
+  // selfie breaks the full-body result) - gate on `body`, not portrait.
   const body = useAtelier((s) => s.body);
   const startReel = useStartReel();
 
@@ -154,14 +154,14 @@ export default function CreatorBuilder({
         </h1>
         <p className="sec-sub">
           Turn a single garment into a directed, cinema-grade reel for AI video
-          tools. Choose a format, bring your piece, set the mood — then create
+          tools. Choose a format, bring your piece, set the mood - then create
           your reel.
         </p>
       </section>
 
       <div className="creator-body">
-        {/* Step 1 — format */}
-        <p className="step-lbl">Step 1 — choose reel format</p>
+        {/* Step 1 - format */}
+        <p className="step-lbl">Step 1 - choose reel format</p>
         <p className="step-note">
           Each format is built for AI video tools (Runway, Kling) from a single
           garment image + prompt.
@@ -184,8 +184,8 @@ export default function CreatorBuilder({
           ))}
         </div>
 
-        {/* Step 2 — garment */}
-        <p className="step-lbl">Step 2 — garment</p>
+        {/* Step 2 - garment */}
+        <p className="step-lbl">Step 2 - garment</p>
         <div className="garment-tabs">
           <button className={"gt" + (tab === "upload" ? " on" : "")} onClick={() => setTab("upload")}>
             <Upload size={13} strokeWidth={1.5} /> Upload your piece
@@ -251,10 +251,10 @@ export default function CreatorBuilder({
           <Pagination page={page} pageCount={pageCount} onPage={setPage} topRef={pickRef} />
         )}
 
-        {/* Step 3 — options */}
+        {/* Step 3 - options */}
         {fmt && (
           <>
-            <p className="step-lbl">Step 3 — options</p>
+            <p className="step-lbl">Step 3 - options</p>
             <div className="opts-panel">
               {fmt.fields.map((f) => (
                 <div className="film-field" key={f.id}>
@@ -275,7 +275,7 @@ export default function CreatorBuilder({
               <input
                 className="creator-free"
                 type="text"
-                placeholder="Optional — add any extra direction"
+                placeholder="Optional - add any extra direction"
                 value={free}
                 onChange={(e) => setFree(e.target.value)}
               />

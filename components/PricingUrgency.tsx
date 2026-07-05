@@ -10,7 +10,7 @@ import {
 /**
  * Founding-members scarcity meter (pricing hook). Renders a progress bar whose
  * fill = "booked %" with a marker showing how many of the 1,000 are sold. The
- * numbers are a hard-coded monthly curve (see lib/pricing/membershipOffer) —
+ * numbers are a hard-coded monthly curve (see lib/pricing/membershipOffer) -
  * not real subscription data.
  */
 export default function PricingUrgency() {

@@ -12,7 +12,7 @@ function clean(v: unknown, max = 300): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
-/** GET — campaign data for the admin manager (teams, jerseys, moments, jersey products). */
+/** GET - campaign data for the admin manager (teams, jerseys, moments, jersey products). */
 export async function GET(req: Request) {
   if (!checkAdmin(req.headers.get("x-admin-password"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
   });
 }
 
-/** POST — mutate the campaign. Body: { password, action, ... }. */
+/** POST - mutate the campaign. Body: { password, action, ... }. */
 export async function POST(req: Request) {
   try {
     const body = await req.json();

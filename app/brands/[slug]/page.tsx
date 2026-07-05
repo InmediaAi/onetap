@@ -14,7 +14,7 @@ import {
   campaignUrl,
 } from "@/lib/data/links";
 
-export const revalidate = 3600; // ISR — refresh brand landing pages hourly.
+export const revalidate = 3600; // ISR - refresh brand landing pages hourly.
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -27,8 +27,8 @@ export async function generateMetadata({
   const brand = await fetchBrand(slug);
   if (!brand) return { title: "Brand · OneTap Atelier" };
 
-  const title = `${brand.name} — Shop & Try On · OneTap Atelier`;
-  const description = `See ${brand.name} on you before you buy — ${brand.count} ${
+  const title = `${brand.name} - Shop & Try On · OneTap Atelier`;
+  const description = `See ${brand.name} on you before you buy - ${brand.count} ${
     brand.count === 1 ? "piece" : "pieces"
   } in the OneTap edit. AI virtual try-on, styled looks and 360° reels.`;
 
@@ -88,7 +88,7 @@ export default async function BrandLandingPage({
         itemListElement: brand.products.map((p, i) => ({
           "@type": "ListItem",
           position: i + 1,
-          name: `${p.brand} — ${p.name}`,
+          name: `${p.brand} - ${p.name}`,
           url: campaignUrl(p, SITE_URL),
         })),
       },
@@ -110,7 +110,7 @@ export default async function BrandLandingPage({
           <h1>{brand.name}</h1>
           <p className="sec-sub">
             {brand.count} {brand.count === 1 ? "piece" : "pieces"} from {brand.name} in
-            the OneTap edit — see each one on you before you buy.
+            the OneTap edit - see each one on you before you buy.
           </p>
           <div className="brand-hero-cta">
             <Link href={curatorBrandPath(brand.name)} className="btn-line">

@@ -16,7 +16,7 @@ function optimizable(url?: string): boolean {
   }
 }
 
-/** Product image — next/image when the host allows, else a plain lazy <img>. */
+/** Product image - next/image when the host allows, else a plain lazy <img>. */
 function PImg({ src, alt, className, hidden }: { src: string; alt: string; className: string; hidden?: boolean }) {
   if (optimizable(src)) {
     return (
@@ -28,12 +28,12 @@ function PImg({ src, alt, className, hidden }: { src: string; alt: string; class
 }
 
 /**
- * Server-rendered product tile for the brand landing grid — a crawlable link to
+ * Server-rendered product tile for the brand landing grid - a crawlable link to
  * the piece's PDP (no client JS / try-on interaction; that lives in the Curator).
  */
 export default function BrandProductCard({ product }: { product: Product }) {
-  const alt = `${product.brand} — ${product.name}`;
-  // Second variant (if any) reveals on hover — same as the Curator card.
+  const alt = `${product.brand} - ${product.name}`;
+  // Second variant (if any) reveals on hover - same as the Curator card.
   const hoverImage = product.images?.find((u) => u && u !== product.imageUrl);
   return (
     <Link href={campaignPath(product)} className="card brand-piece">

@@ -39,7 +39,7 @@ export default function SessionLoader() {
     };
   }, [pathname, refreshProfile]);
 
-  // Re-hydrate when the app regains focus / is restored — covers pull-to-refresh,
+  // Re-hydrate when the app regains focus / is restored - covers pull-to-refresh,
   // returning from the Razorpay tab, and bfcache restores (none of which change
   // the pathname, so the effect above wouldn't fire).
   useEffect(() => {

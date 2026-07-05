@@ -10,7 +10,7 @@ export default function ClosetPage() {
         <header className="closet-head">
           <p className="eyebrow">OneTap Atelier</p>
           <h1 className="admin-title">My Closet</h1>
-          <p className="admin-hint">Every look and video you’ve created — newest first.</p>
+          <p className="admin-hint">Every look and video you’ve created - newest first.</p>
         </header>
         <ClosetGallery />
       </div>

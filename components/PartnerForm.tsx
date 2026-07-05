@@ -33,10 +33,10 @@ export default function PartnerForm() {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Something went wrong — please try again.");
+      if (!res.ok) throw new Error(data?.error || "Something went wrong - please try again.");
       setSent(true);
     } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : "Something went wrong — please try again.");
+      setErr(e2 instanceof Error ? e2.message : "Something went wrong - please try again.");
     } finally {
       setBusy(false);
     }
@@ -54,7 +54,7 @@ export default function PartnerForm() {
 
       {sent ? (
         <p className="partner-thanks">
-          Thank you — we&rsquo;ve received your details and will be in touch shortly.
+          Thank you - we&rsquo;ve received your details and will be in touch shortly.
         </p>
       ) : (
         <form className="partner-form" onSubmit={submit}>
@@ -89,7 +89,7 @@ export default function PartnerForm() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
-          {/* Honeypot — hidden from real users; bots that fill it are dropped. */}
+          {/* Honeypot - hidden from real users; bots that fill it are dropped. */}
           <input
             type="text"
             name="website"

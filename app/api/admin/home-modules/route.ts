@@ -17,7 +17,7 @@ function validUrl(v: unknown): string | null {
   return /^https?:\/\//i.test(s) ? s.slice(0, 2000) : null;
 }
 
-/** GET — the three home modules (seeds any missing rows so they're editable). */
+/** GET - the three home modules (seeds any missing rows so they're editable). */
 export async function GET(req: Request) {
   if (!checkAdmin(req.headers.get("x-admin-password"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ modules: rows ?? [] });
 }
 
-/** POST — save one module. Body: { password, module: { id, title, tag, blurb, videoUrl, posterUrl } }. */
+/** POST - save one module. Body: { password, module: { id, title, tag, blurb, videoUrl, posterUrl } }. */
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   if (!checkAdmin(body?.password)) {

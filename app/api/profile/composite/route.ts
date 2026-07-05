@@ -7,7 +7,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const MODEL_PATH = "model"; // {uid}/model — system-derived, user cannot write it.
+const MODEL_PATH = "model"; // {uid}/model - system-derived, user cannot write it.
 
 /** Fetch bytes from a hosted/data URL. */
 async function toBytes(
@@ -65,7 +65,7 @@ export async function POST() {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Use every angle on file — full body, both side looks, back, and face.
+    // Use every angle on file - full body, both side looks, back, and face.
     const paths = [
       profile?.body_url,
       profile?.left_url,

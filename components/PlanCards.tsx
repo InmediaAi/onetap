@@ -13,7 +13,7 @@ import { startSubscription, startTopup } from "@/lib/billing/checkout";
 /**
  * The comparison rows = every feature any visible plan lists, in first-seen order
  * across the tiers (base features first, higher-tier additions after). Fully
- * admin-driven — each plan's `features` (billing_plans.features) decides ✓ / ✗.
+ * admin-driven - each plan's `features` (billing_plans.features) decides ✓ / ✗.
  */
 function featureUnion(plans: BillingPlan[]): string[] {
   const seen = new Set<string>();
@@ -40,7 +40,7 @@ export default function PlanCards() {
     SEED_PLANS.filter((p) => p.active && p.id !== "free"),
   );
   // Gate the real cards until BOTH the live plans AND the user's subscription
-  // are loaded — otherwise seed prices / an empty "Subscribe" state flash first
+  // are loaded - otherwise seed prices / an empty "Subscribe" state flash first
   // and jump when the fetches resolve. Show shimmer cards until then.
   const [plansLoaded, setPlansLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -196,7 +196,7 @@ function TopupBlock({
       <div className="topup-info">
         <span className="plan-name">Need more?</span>
         <p className="plan-tag">
-          Add extra try-ons any time — ${unitPrice} each, they never expire.
+          Add extra try-ons any time - ${unitPrice} each, they never expire.
           {balance > 0 && <> You have {balance} in reserve.</>}
         </p>
       </div>

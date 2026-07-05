@@ -37,7 +37,7 @@ type Stage = "form" | "gen" | "result";
 interface Result { videoUrl: string; posterUrl?: string; lookId: string }
 
 /**
- * Showcase clip that only downloads + plays while it's actually on screen — the
+ * Showcase clip that only downloads + plays while it's actually on screen - the
  * reel duplicates its track and would otherwise autoplay/buffer every clip at
  * once (heavy egress). Source is attached lazily on first intersection.
  */
@@ -108,11 +108,11 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
   const jersey = jerseys[kitIdx];
   const accent = team?.accent || campaign?.accent || "#1F3A93";
   const moment = moments.find((m) => m.id === momentId) ?? null;
-  // The full-length photo is the primary try-on likeness — required (a face-only
+  // The full-length photo is the primary try-on likeness - required (a face-only
   // shot breaks the full-body result). The face close-up stays optional.
   const photo = bodyImg;
   const ready = Boolean(country && photo && moment && jersey);
-  // Wait for the profile to load before deciding — otherwise a real member is
+  // Wait for the profile to load before deciding - otherwise a real member is
   // briefly treated as locked while /api/me resolves.
   const isMember = profileLoaded && usage.status === "active" && Boolean(usage.planId);
   // Hard download paywall: only an active member WITH remaining video quota may
@@ -172,7 +172,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
       } catch (e) {
         if (e instanceof SignInRequiredError) {
           setStage("form");
-          setAuthOpen(true); // shouldn't usually hit — we gate before run
+          setAuthOpen(true); // shouldn't usually hit - we gate before run
         } else if (e instanceof VideoLimitError) {
           // Out of free previews → offer membership (the other place the sheet
           // opens is a non-member tapping Download/Share).
@@ -193,11 +193,11 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
    * Pre-flight: confirm the user still has video quota BEFORE we start
    * generating. Without this, generation begins (composing the free Kling
    * try-on still, showing the progress modal) and only discovers the limit when
-   * the metered video step returns 402 — a jarring "it started then vanished".
+   * the metered video step returns 402 - a jarring "it started then vanished".
    * Returns false (and opens the membership sheet) when out of credits.
    */
   async function ensureQuotaOrSubscribe(): Promise<boolean> {
-    // Always pull the freshest quota — a credit may have been spent on the last
+    // Always pull the freshest quota - a credit may have been spent on the last
     // generation (server-side) or on another device, so cached usage can lie.
     await refreshProfile();
     if (!hasVideoQuota(useAtelier.getState().usage)) {
@@ -234,7 +234,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
   }
 
   /** After auth lands: animate the pre-composed image into the video (falling
-   *  back to a full compose), or — if nothing's pending — just land on the form. */
+   *  back to a full compose), or - if nothing's pending - just land on the form. */
   async function proceedAfterAuth() {
     if (!jersey || !photo || !moment) {
       document.getElementById("creator")?.scrollIntoView({ behavior: "smooth" });
@@ -250,7 +250,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     let precomposed: string | undefined;
     const job = imgJobRef.current;
     if (job) {
-      const r = await job.promise; // the overlap payoff — usually already done
+      const r = await job.promise; // the overlap payoff - usually already done
       if ("url" in r) precomposed = r.url;
     }
     void run({
@@ -277,7 +277,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     }
     await refreshProfile();
     setAuthing(false);
-    if (!useAtelier.getState().email) return; // cancelled / failed — keep cached image
+    if (!useAtelier.getState().email) return; // cancelled / failed - keep cached image
     toast.success("You’re in! 🎉 Generating your fan video…");
     await proceedAfterAuth();
   }
@@ -354,7 +354,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     }
   }, []);
 
-  /* ---- resume after OAuth — load the IndexedDB stash once, restore selections.
+  /* ---- resume after OAuth - load the IndexedDB stash once, restore selections.
      `resumeChecked` flips once we know the resume state (with or without a stash),
      so the welcome popup can decide whether a generation is pending. ---- */
   const resumeLoaded = useRef(false);
@@ -475,7 +475,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
     setTimeout(() => document.getElementById("creator")?.scrollIntoView({ behavior: "smooth" }), 0);
   }
 
-  // Share is ungated by design — it shares the public /look preview link (a
+  // Share is ungated by design - it shares the public /look preview link (a
   // growth lever), not the file.
   async function shareVideo() {
     if (!result?.lookId) return;
@@ -545,8 +545,8 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
             <span className="label"><span className="dot" />Tournament summer · 11 June – 19 July</span>
             <h1 className="serif">Be the fan the whole stadium <em>watches</em></h1>
             <p className="lede">
-              Create a viral fan video of yourself — <strong>your jersey, your face, on the stadium big
-              screen</strong> — from one photo, in under a minute.
+              Create a viral fan video of yourself - <strong>your jersey, your face, on the stadium big
+              screen</strong> - from one photo, in under a minute.
             </p>
             <p className="lede" style={{ marginTop: 12, fontSize: 15 }}>Preview free. Keep it with membership.</p>
             <div className="proofline">
@@ -591,7 +591,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
           </div>
 
           <div className="creator" id="creator">
-            {/* The funnel form — also the backdrop while the modal generates/shows result. */}
+            {/* The funnel form - also the backdrop while the modal generates/shows result. */}
             {(
               <>
                 <div className="c-head">
@@ -666,7 +666,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
                       </div>
                     )}
                     {team && jerseys.length === 0 && (
-                      <p className="up-err">Jersey for {country} is coming soon — try another nation.</p>
+                      <p className="up-err">Jersey for {country} is coming soon - try another nation.</p>
                     )}
                   </div>
 
@@ -733,10 +733,10 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
                     {error
                       ? error
                       : authing
-                        ? "Finishing sign-in — your video is already composing in the background."
+                        ? "Finishing sign-in - your video is already composing in the background."
                         : ready
                           ? "One tap. Under a minute. Free to preview."
-                          : "Add a full-length photo and pick a moment — the jersey is set."}
+                          : "Add a full-length photo and pick a moment - the jersey is set."}
                   </div>
                 </div>
               </>
@@ -748,7 +748,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
 
       {/* Generation + result use the SAME dark try-on modal as Curator/360°/Creator
           (portaled to <body>, so it escapes the light .viralfan theme). FIFA-specific
-          chrome — nation band, Preview/watermark, membership-gated Download/Share — is
+          chrome - nation band, Preview/watermark, membership-gated Download/Share - is
           passed in via props. */}
       <ResultModal
         open={stage === "gen" || stage === "result"}
@@ -795,7 +795,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
             {quotaExhausted ? (
               <>
                 <h3 className="serif">You’re out of videos this month</h3>
-                <p className="s-body">You’ve used all your fan videos for this cycle. Top up or upgrade to keep creating — and to download what you make.</p>
+                <p className="s-body">You’ve used all your fan videos for this cycle. Top up or upgrade to keep creating - and to download what you make.</p>
                 <a className="s-btn" href="/pricing">Manage plan →</a>
                 <p className="s-note">Everything you keep remains yours, always.</p>
               </>
@@ -803,7 +803,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
               <>
                 <h3 className="serif">Keep what you create</h3>
                 <div className="s-price serif">$25 <span>a month · ends in one tap</span></div>
-                <p className="s-body">The preview is yours to watch. Membership keeps the video — high definition, without the mark — and lets you make more.</p>
+                <p className="s-body">The preview is yours to watch. Membership keeps the video - high definition, without the mark - and lets you make more.</p>
                 <div className="s-list">
                   <div>Ten fan videos every month</div>
                   <div>Every nation, every moment</div>
@@ -820,7 +820,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
         </div>
       )}
 
-      {/* Sign-up / sign-in popup — shown whenever auth is required on /fifa. */}
+      {/* Sign-up / sign-in popup - shown whenever auth is required on /fifa. */}
       {authOpen && (
         <div className="viralfan-veil" onMouseDown={(e) => { if (e.target === e.currentTarget) setAuthOpen(false); }}>
           <div className="sheet vf-auth">
@@ -828,7 +828,7 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
             <span className="label">Free · No credit card</span>
             <h3 className="serif">Claim your stadium moment</h3>
             <p className="s-body">
-              Create your account to make your free Viral Fan video — your jersey, your face,
+              Create your account to make your free Viral Fan video - your jersey, your face,
               on the stadium big screen, in under a minute.
             </p>
             <div className="vf-oauth">
@@ -845,13 +845,13 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
           <div className="sec-head">
             <span className="label">How it works</span>
             <h2 className="serif">Four steps. Under a minute.</h2>
-            <p>Choose, upload, tap — your video does the rest.</p>
+            <p>Choose, upload, tap - your video does the rest.</p>
           </div>
           <div className="how-steps">
-            <div className="how-step"><div className="hs-no">i.</div><h3>Pick your jersey</h3><p>Search your nation — your colours carry through the whole video.</p></div>
+            <div className="how-step"><div className="hs-no">i.</div><h3>Pick your jersey</h3><p>Search your nation - your colours carry through the whole video.</p></div>
             <div className="how-step"><div className="hs-no">ii.</div><h3>Add your photos</h3><p>One full-length photo is enough; a face close-up makes it sharper.</p></div>
             <div className="how-step"><div className="hs-no">iii.</div><h3>Choose your moment</h3><p>Fan cam, goal celebration, VIP box, crowd reaction, big screen.</p></div>
-            <div className="how-step"><div className="hs-no">iv.</div><h3>Tap, preview, keep</h3><p>One tap composes your video. Watch free — membership keeps it in HD.</p></div>
+            <div className="how-step"><div className="hs-no">iv.</div><h3>Tap, preview, keep</h3><p>One tap composes your video. Watch free - membership keeps it in HD.</p></div>
           </div>
         </div>
       </section>
@@ -861,9 +861,9 @@ export default function ViralFan({ campaign }: { campaign: CampaignSnapshot | nu
           <div className="sec-head"><span className="label">Good to know</span><h2 className="serif">Questions, answered</h2></div>
           <div className="faq-list">
             <details><summary>Is the preview really free</summary><p>Yes. Choose, upload, and preview your first fan video without payment. Membership applies only when you keep videos in full quality.</p></details>
-            <details><summary>What happens to my photos</summary><p>Your photos are used only to create your videos, never anything else without your consent, and you can delete them — and every video — at any time.</p></details>
+            <details><summary>What happens to my photos</summary><p>Your photos are used only to create your videos, never anything else without your consent, and you can delete them - and every video - at any time.</p></details>
             <details><summary>How long does a video take</summary><p>Most videos are returned in about a minute. During peak hours, members are served first.</p></details>
-            <details><summary>Can I leave any time</summary><p>Yes — membership ends in one tap, and every video you have kept remains yours.</p></details>
+            <details><summary>Can I leave any time</summary><p>Yes - membership ends in one tap, and every video you have kept remains yours.</p></details>
           </div>
         </div>
       </section>

@@ -13,7 +13,7 @@ function validUrl(v: unknown): string {
   return /^https?:\/\//i.test(s) ? s.slice(0, 2000) : "";
 }
 
-/** GET — the stored admin config (empty arrays = site uses auto defaults). */
+/** GET - the stored admin config (empty arrays = site uses auto defaults). */
 export async function GET(req: Request) {
   if (!checkAdmin(req.headers.get("x-admin-password"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   });
 }
 
-/** POST — replace one section. Body: { password, kind: "occasions"|"houses", tiles: [...] }. */
+/** POST - replace one section. Body: { password, kind: "occasions"|"houses", tiles: [...] }. */
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   if (!checkAdmin(body?.password)) {

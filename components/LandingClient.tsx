@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { HomeModule } from "@/lib/data/getHomeModules";
 
 /* ───────────────────────────────────────────────────────────────────
-   The three modules — big 9:16 cards with an (admin-managed) background
+   The three modules - big 9:16 cards with an (admin-managed) background
    clip under a dark overlay. The title/tag/blurb/clip come from the DB
    (getHomeModules); the route + CTA label stay code-defined here.
    ─────────────────────────────────────────────────────────────────── */
@@ -15,7 +15,7 @@ const MODULE_STRUCTURE: Record<string, { href: string; cta: string }> = {
   creator: { href: "/creator", cta: "Compose a scene" },
 };
 
-/** A single 9:16 module card — ambient background clip + dark scrim + text. */
+/** A single 9:16 module card - ambient background clip + dark scrim + text. */
 function ModuleCard({ module, idx }: { module: HomeModule; idx: number }) {
   const struct = MODULE_STRUCTURE[module.id] ?? { href: "/curator", cta: "Explore" };
   return (
@@ -89,9 +89,8 @@ export default function LandingClient({
           <span className="lp-accent reveal" />
           <h1 className="reveal">See it on yourself, before you own it.</h1>
           <p className="lp-sub reveal">
-            OneTap Atelier is where the luxury buyer tries a piece on herself
-            before she buys it. The fit, the fall, the light — seen, before any
-            decision.
+            A curated luxury membership that lets you try on fashion from 100+
+            designer brands in under 2 minutes.
           </p>
           <div className="lp-actions reveal">
             <Link href="/curator" className="btn-line">
@@ -107,15 +106,15 @@ export default function LandingClient({
       {/* WHAT ONETAP IS */}
       <section className="lp-what">
         <div className="lp-wrap lp-what-grid">
-          <h2 className="reveal">The piece, on you — not on a model.</h2>
+          <h2 className="reveal">The piece, on you - not on a model.</h2>
           <div className="lp-body reveal">
             <p>
               A jacket photographed on a model is a guess. The same jacket on
               you is a decision. OneTap Atelier removes the guess.
             </p>
             <p>
-              Curated pieces from more than one hundred houses — Saint Laurent,
-              Bottega Veneta, The Row, Loewe, Khaite, Toteme, Alaïa and beyond —
+              Curated pieces from more than one hundred houses - Saint Laurent,
+              Bottega Veneta, The Row, Loewe, Khaite, Toteme, Alaïa and beyond -
               tried on in a single tap, returned as a short film, before you
               buy.
             </p>
@@ -130,7 +129,7 @@ export default function LandingClient({
           <div className="lp-modules-head reveal">
             <h2>Three ways to see it on yourself.</h2>
             <p className="lp-modules-intro">
-              Every module serves one decision — to own the piece, or not.
+              Every module serves one decision - to own the piece, or not.
             </p>
           </div>
 

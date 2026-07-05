@@ -63,9 +63,9 @@ export default function ProductGrid({
   initialProducts: Product[];
   initialTotal: number;
   initialFacets: FacetOptions;
-  /** Brand pre-selected from the URL (?brands=) — seeds the quick-brand chip. */
+  /** Brand pre-selected from the URL (?brands=) - seeds the quick-brand chip. */
   initialBrand?: string | null;
-  /** Occasions pre-selected from the URL (?occasions=) — seeds the quick-theme chip. */
+  /** Occasions pre-selected from the URL (?occasions=) - seeds the quick-theme chip. */
   initialOccasions?: string[];
   onTry: (product: Product) => void;
 }) {
@@ -83,7 +83,7 @@ export default function ProductGrid({
   const [brandQuery, setBrandQuery] = useState("");
   const [refineOpen, setRefineOpen] = useState(false);
 
-  // Single-select quick filters — one theme + one brand at a time, kept separate
+  // Single-select quick filters - one theme + one brand at a time, kept separate
   // from the Refine multi-select arrays and merged into the query (effFilters).
   const [quickTheme, setQuickTheme] = useState<string | null>(seededTheme);
   // Seeded from ?brands= (a /brands landing CTA) so the deep-link lands filtered.
@@ -129,7 +129,7 @@ export default function ProductGrid({
 
   const didMount = useRef(false);
 
-  // The user's preferred brands that exist in the catalog — matched case/accent-
+  // The user's preferred brands that exist in the catalog - matched case/accent-
   // insensitively (brand strings are free-form on both sides) and displayed in the
   // catalog's exact spelling so selecting one filters correctly. Uses the
   // unfiltered SSR brand set so the row is stable, not narrowed by other filters.
@@ -227,7 +227,7 @@ export default function ProductGrid({
   const toggleColour = toggle(setColours, "colour");
   const toggleBracket = toggle(setBrackets, "price");
 
-  // One global single-select across BOTH quick rows — selecting a theme clears
+  // One global single-select across BOTH quick rows - selecting a theme clears
   // any brand and vice versa; re-tapping the active chip clears it.
   const selectTheme = (id: string) => {
     setQuickBrand(null);
@@ -336,7 +336,7 @@ export default function ProductGrid({
         </p>
       )}
 
-      {/* ——— Refine drawer (right navigation) ——— */}
+      {/* --- Refine drawer (right navigation) --- */}
       {refineOpen && (
         <div
           className="refine-scrim"
@@ -353,7 +353,7 @@ export default function ProductGrid({
             </div>
 
             <div className="refine-body">
-              {/* Brand — searchable */}
+              {/* Brand - searchable */}
               {facets.brands.length > 0 && (
                 <section className="refine-sec">
                   <div className="refine-sec-head">

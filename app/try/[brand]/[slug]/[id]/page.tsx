@@ -6,7 +6,7 @@ import ProductLanding from "@/components/campaign/ProductLanding";
 import { fetchProduct } from "@/lib/data/getProducts";
 
 /**
- * Per-product campaign landing page (PDP) — /try/{brand}/{slug}/{id}. The id is
+ * Per-product campaign landing page (PDP) - /try/{brand}/{slug}/{id}. The id is
  * the lookup; brand + slug are cosmetic. Same header/footer as home, shows the
  * piece, and a OneTap Try-On CTA that runs the exact Curator try-on flow.
  */
@@ -18,10 +18,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const product = await fetchProduct(id);
-  if (!product) return { title: "Piece — OneTap Atelier" };
-  const title = `${product.brand} — ${product.name} · OneTap Atelier`;
+  if (!product) return { title: "Piece - OneTap Atelier" };
+  const title = `${product.brand} - ${product.name} · OneTap Atelier`;
   const description =
-    product.stylistNote || product.description || `See ${product.name} by ${product.brand} on you — one tap.`;
+    product.stylistNote || product.description || `See ${product.name} by ${product.brand} on you - one tap.`;
   const image = product.imageUrl;
   return {
     title,

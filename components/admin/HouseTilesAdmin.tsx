@@ -72,7 +72,7 @@ export default function HouseTilesAdmin({ password }: { password: string }) {
 
   return (
     <div className="admin-card">
-      <h2 className="admin-subtitle">Home — favourite houses</h2>
+      <h2 className="admin-subtitle">Home - favourite houses</h2>
       <p className="admin-hint">
         The auto-swiping house carousel on the home page. One house per line:{" "}
         <code>Brand Name | https://image-url</code>. Up to 8 (shows 4 at a time).

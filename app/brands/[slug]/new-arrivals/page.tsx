@@ -15,11 +15,11 @@ import {
 } from "@/lib/data/links";
 import type { Product } from "@/lib/data/products";
 
-export const revalidate = 3600; // ISR — refresh hourly.
+export const revalidate = 3600; // ISR - refresh hourly.
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-/** Newest-first ordering — the natural "new arrivals" sort (drop date desc). */
+/** Newest-first ordering - the natural "new arrivals" sort (drop date desc). */
 function newestFirst(products: Product[]): Product[] {
   return [...products].sort((a, b) => {
     const ta = a.droppedAt ? Date.parse(a.droppedAt) : NaN;
@@ -39,8 +39,8 @@ export async function generateMetadata({
   const brand = await fetchBrand(slug);
   if (!brand) return { title: "New Arrivals · OneTap Atelier" };
 
-  const title = `${brand.name} New Arrivals — New In · OneTap Atelier`;
-  const description = `The latest ${brand.name} arrivals on OneTap Atelier — new-season pieces you can see on you before you buy. ${brand.count} ${
+  const title = `${brand.name} New Arrivals - New In · OneTap Atelier`;
+  const description = `The latest ${brand.name} arrivals on OneTap Atelier - new-season pieces you can see on you before you buy. ${brand.count} ${
     brand.count === 1 ? "piece" : "pieces"
   } in the edit.`;
 
@@ -108,7 +108,7 @@ export default async function BrandNewArrivalsPage({
         itemListElement: pieces.map((p, i) => ({
           "@type": "ListItem",
           position: i + 1,
-          name: `${p.brand} — ${p.name}`,
+          name: `${p.brand} - ${p.name}`,
           url: campaignUrl(p, SITE_URL),
         })),
       },
@@ -133,7 +133,7 @@ export default async function BrandNewArrivalsPage({
           </p>
           <h1>{brand.name} New Arrivals</h1>
           <p className="sec-sub">
-            The latest from {brand.name} in the OneTap edit — the newest{" "}
+            The latest from {brand.name} in the OneTap edit - the newest{" "}
             {brand.count === 1 ? "piece" : "pieces"} first, each one you can see on
             you before you buy.
           </p>

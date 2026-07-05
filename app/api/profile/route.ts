@@ -75,7 +75,7 @@ export async function PATCH(req: Request) {
   }
 
   // Persist the editable fields. RLS allows a user to UPDATE (not INSERT) their
-  // own row — the signup trigger seeds it. Update + check the error (the old
+  // own row - the signup trigger seeds it. Update + check the error (the old
   // upsert silently failed RLS, so nothing was ever saved).
   const hasFields = Object.keys(patch).length > 1; // beyond updated_at
   if (hasFields) {

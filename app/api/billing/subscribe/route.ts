@@ -12,7 +12,7 @@ export const runtime = "nodejs";
  * Start a subscription for the signed-in user. Body: { planId }.
  * Creates a Razorpay subscription, records it as 'created' (service role),
  * and returns { subscriptionId, keyId } for Razorpay Checkout. Activation is
- * confirmed by the webhook — never trusted from the client.
+ * confirmed by the webhook - never trusted from the client.
  */
 export async function POST(req: Request) {
   const sb = await createServerSupabase();
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
   // R2: prevent double mandates. If the user already has a live Razorpay
   // subscription (plan switch, or a re-subscribe), cancel it IMMEDIATELY before
-  // creating the new one — cancel before create so we never leave two active
+  // creating the new one - cancel before create so we never leave two active
   // subscriptions charging in parallel. For a billable prior sub (active/halted)
   // a cancel failure aborts the switch (old sub stays, no double charge); a
   // never-charged `created` leftover is best-effort cleanup only.
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         console.error("[billing/subscribe] could not cancel previous subscription:", err);
         if (billable) {
           return NextResponse.json(
-            { error: "Could not switch plans — please try again." },
+            { error: "Could not switch plans - please try again." },
             { status: 502 },
           );
         }

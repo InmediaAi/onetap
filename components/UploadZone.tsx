@@ -74,7 +74,7 @@ export default function UploadZone({
           <div className="px-6 text-center">
             <p className="font-display text-lg">Upload a portrait</p>
             <p className="mt-2 text-xs text-muted">
-              Drag & drop or click — jpg, jpeg, png
+              Drag & drop or click - jpg, jpeg, png
             </p>
           </div>
         )}

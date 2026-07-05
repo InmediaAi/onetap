@@ -5,7 +5,7 @@ import { getPlans, videoLimitOf, freeTrialLimit, planNameOf } from "@/lib/pricin
 import { reconcileCreated, type SubRow } from "@/lib/billing/reconcile";
 
 export const runtime = "nodejs";
-// Session snapshot — must never be HTTP-cached. A cached response makes a normal
+// Session snapshot - must never be HTTP-cached. A cached response makes a normal
 // reload (e.g. window.location.reload() after subscribing, or pull-to-refresh)
 // serve stale usage/profile, so only a HARD refresh would pick up changes.
 export const dynamic = "force-dynamic";

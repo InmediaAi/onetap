@@ -112,7 +112,7 @@ export default function Studio360() {
               </Link>
             </>
           ) : (
-            <>Your likeness — private to you, used only with your consent.</>
+            <>Your likeness - private to you, used only with your consent.</>
           )}
         </p>
 

@@ -23,7 +23,7 @@ async function currentUserId(): Promise<string | null> {
   }
 }
 
-/** Social Video — generateVideo(). Body: { image, prompt?, productId? }. Metered. */
+/** Social Video - generateVideo(). Body: { image, prompt?, productId? }. Metered. */
 export async function POST(req: Request) {
   const startedAt = Date.now();
   let body: {

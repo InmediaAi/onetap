@@ -40,7 +40,7 @@ function GalleryImage({ src, alt, priority }: { src: string; alt: string; priori
 }
 
 /**
- * Campaign product landing page (PDP). Shows one piece — its images + details —
+ * Campaign product landing page (PDP). Shows one piece - its images + details -
  * and a OneTap Try-On CTA that runs the exact same flow as the Curator (the
  * global try-on island). Anonymous-safe; the try-on gate handles sign-in.
  */
@@ -59,14 +59,14 @@ export default function ProductLanding({ product }: { product: Product }) {
 
   return (
     <div className="pdp">
-      {/* ——— Gallery ——— */}
+      {/* --- Gallery --- */}
       <div className="pdp-gallery">
         <div className="pdp-main">
           <div className="pdp-mono">{product.mono}</div>
           <GalleryImage
             key={images[idx]}
             src={images[idx]}
-            alt={`${product.brand} — ${product.name}`}
+            alt={`${product.brand} - ${product.name}`}
             priority
           />
           {images.length > 1 && (
@@ -97,7 +97,7 @@ export default function ProductLanding({ product }: { product: Product }) {
         )}
       </div>
 
-      {/* ——— Details ——— */}
+      {/* --- Details --- */}
       <div className="pdp-details">
         <p className="pdp-brand">{product.brand}</p>
         <h1 className="pdp-name">{product.name}</h1>

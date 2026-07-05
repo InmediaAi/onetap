@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 const MAX_QTY = 100;
 
 /**
- * Buy extra videos (roll-over top-up) — active subscribers only. Body: { quantity }.
+ * Buy extra videos (roll-over top-up) - active subscribers only. Body: { quantity }.
  * Creates a Razorpay ONE-TIME order for quantity × top-up unit price; the webhook
  * credits subscriptions.topup_balance on payment.captured (idempotent).
  */

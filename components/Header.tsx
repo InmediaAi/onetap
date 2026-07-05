@@ -21,7 +21,7 @@ export default function Header() {
   const hydrated = useHydrated();
   const lookCount = useAtelier((s) => s.looks.length);
   const closetSeen = useAtelier((s) => s.closetSeen);
-  // Unseen looks since the last closet visit — nudges new users to their looks.
+  // Unseen looks since the last closet visit - nudges new users to their looks.
   const unseen = hydrated ? Math.max(0, lookCount - closetSeen) : 0;
 
   return (
@@ -37,7 +37,7 @@ export default function Header() {
           <Link
             href="/closet"
             className={"ic ic-closet" + (unseen > 0 ? " has-new" : "")}
-            aria-label={unseen > 0 ? `My closet — ${unseen} new` : "My closet"}
+            aria-label={unseen > 0 ? `My closet - ${unseen} new` : "My closet"}
           >
             <span className="ic-closet-ic">
               <Images size={17} strokeWidth={1.4} />

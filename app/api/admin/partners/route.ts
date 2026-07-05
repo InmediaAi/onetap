@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 const STATUSES = ["new", "contacted", "closed"] as const;
 
-/** GET — list partner enquiries (newest first). Password via header. */
+/** GET - list partner enquiries (newest first). Password via header. */
 export async function GET(req: Request) {
   if (!checkAdmin(req.headers.get("x-admin-password"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ leads: data ?? [] });
 }
 
-/** PATCH — update a lead's status. Body: { password, id, status }. */
+/** PATCH - update a lead's status. Body: { password, id, status }. */
 export async function PATCH(req: Request) {
   const body = await req.json().catch(() => ({}));
   if (!checkAdmin(body?.password)) {
@@ -40,7 +40,7 @@ export async function PATCH(req: Request) {
   return NextResponse.json({ ok: true });
 }
 
-/** DELETE — remove a lead. Body: { password, id }. */
+/** DELETE - remove a lead. Body: { password, id }. */
 export async function DELETE(req: Request) {
   const body = await req.json().catch(() => ({}));
   if (!checkAdmin(body?.password)) {

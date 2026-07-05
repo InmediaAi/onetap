@@ -9,7 +9,7 @@ export const revalidate = 86400;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 // Public, indexable routes. Private/auth-gated pages (profile, closet, admin,
-// onboarding) are intentionally excluded — see app/robots.ts.
+// onboarding) are intentionally excluded - see app/robots.ts.
 const PUBLIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/", priority: 1 },
   { path: "/curator", priority: 0.9 },

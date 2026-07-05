@@ -23,7 +23,7 @@ async function currentUserId(): Promise<string | null> {
   }
 }
 
-/** 360 Spin — generate360(). Body: { image, prompt?, productId? }. Metered. */
+/** 360 Spin - generate360(). Body: { image, prompt?, productId? }. Metered. */
 export async function POST(req: Request) {
   const startedAt = Date.now();
   let body: {

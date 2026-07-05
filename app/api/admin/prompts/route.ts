@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 const PROMPT_IDS = Object.keys(SEED_PROMPTS) as PromptId[];
 
-/** GET — the editable AI prompts (admin list). Password via header. Seeds any
+/** GET - the editable AI prompts (admin list). Password via header. Seeds any
  *  missing rows so the editor always shows both, even before the DB is seeded. */
 export async function GET(req: Request) {
   if (!checkAdmin(req.headers.get("x-admin-password"))) {
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ prompts });
 }
 
-/** POST — update one prompt. Body: { password, id, content }. */
+/** POST - update one prompt. Body: { password, id, content }. */
 export async function POST(req: Request) {
   try {
     const body = await req.json();

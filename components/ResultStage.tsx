@@ -9,7 +9,7 @@ import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
 /**
- * Shared try-on result stage — the SAME experience across Curator, 360° and
+ * Shared try-on result stage - the SAME experience across Curator, 360° and
  * Creator. Left rail: the try-on still (the "middleware") + the moving result;
  * centre: the selected media (defaults to the moving result once ready); right:
  * save / download / share / shop. While generating it shows GenerationProgress.
@@ -45,7 +45,7 @@ export interface ResultStageProps {
   canKeep?: boolean;
   onLocked?: () => void;
   /** Action buttons rendered BELOW the media (e.g. FIFA's Download + Explore).
-      When set, the right-side icon rail is hidden — the footer owns the actions. */
+      When set, the right-side icon rail is hidden - the footer owns the actions. */
   footer?: ReactNode;
 }
 
@@ -111,7 +111,7 @@ export default function ResultStage({
 
   return (
     <div className="modal-stage">
-      {/* left thumbnail rail — try-on still (middleware) + the moving result */}
+      {/* left thumbnail rail - try-on still (middleware) + the moving result */}
       {(image || video || videoPhase) && (
         <div className="thumbrail">
           {image && (
@@ -171,12 +171,12 @@ export default function ResultStage({
           mono={mono}
           emptyState={emptyState}
         />
-        {/* Campaign footer actions — sit directly under the clip (e.g. FIFA's
+        {/* Campaign footer actions - sit directly under the clip (e.g. FIFA's
             Download + Explore). When present, they replace the icon rail below. */}
         {footer && <div className="media-foot">{footer}</div>}
       </div>
 
-      {/* action rail — hidden when a footer owns the actions */}
+      {/* action rail - hidden when a footer owns the actions */}
       {!footer && (
         <div className="actrail">
           {onSave && (

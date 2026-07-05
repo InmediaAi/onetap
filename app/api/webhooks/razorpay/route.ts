@@ -8,7 +8,7 @@ import { addPaidMember } from "@/lib/external/mailchimp";
 export const runtime = "nodejs";
 
 /**
- * Razorpay subscription webhook — the authoritative source for activation.
+ * Razorpay subscription webhook - the authoritative source for activation.
  * Verifies the HMAC signature over the RAW body, then upserts the user's
  * subscription via the service role (RLS-bypassing; no client write policy).
  */
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
       if (plan) patch.plan = plan;
       if (userId) {
         // If the Razorpay plan id can't be mapped (e.g. RAZORPAY_PLAN_FAN
-        // misconfigured), DON'T clobber to "starter" — preserve the plan the
+        // misconfigured), DON'T clobber to "starter" - preserve the plan the
         // subscribe route already recorded (e.g. "fan").
         let resolvedPlan = plan;
         if (!resolvedPlan) {
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
     }
     case "subscription.cancelled":
     case "subscription.completed":
-      // Terminal — fully cancelled now, no longer merely "scheduled".
+      // Terminal - fully cancelled now, no longer merely "scheduled".
       await svc
         .from("subscriptions")
         .update({

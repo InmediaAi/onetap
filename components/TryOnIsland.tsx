@@ -34,7 +34,7 @@ export default function TryOnIsland({
       tabIndex={0}
       onClick={onExpand}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onExpand()}
-      aria-label="Try-on in progress — tap to view"
+      aria-label="Try-on in progress - tap to view"
     >
       <span className="ti-ring" aria-hidden="true">
         <span className="ti-thumb">
@@ -46,7 +46,7 @@ export default function TryOnIsland({
       </span>
       <span className="ti-copy">
         <span className="ti-text">{label}</span>
-        <span className="ti-sub">Tap to watch — keep browsing</span>
+        <span className="ti-sub">Tap to watch - keep browsing</span>
       </span>
       <button
         className="ti-x"

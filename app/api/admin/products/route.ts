@@ -61,7 +61,7 @@ async function uniqueId(db: SupabaseClient, base: string): Promise<string> {
   return `${base}-${Date.now().toString(36)}`;
 }
 
-/** GET — recently added products (admin list). Body-less; password via header. */
+/** GET - recently added products (admin list). Body-less; password via header. */
 export async function GET(req: Request) {
   const password = req.headers.get("x-admin-password");
   if (!checkAdmin(password)) {
@@ -78,7 +78,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ products: (data as ProductRow[]).map(rowToProduct) });
 }
 
-/** DELETE — remove a piece. Body: { password, id }. */
+/** DELETE - remove a piece. Body: { password, id }. */
 export async function DELETE(req: Request) {
   const body = await req.json().catch(() => ({}));
   if (!checkAdmin(body?.password)) {
@@ -102,7 +102,7 @@ export async function DELETE(req: Request) {
 }
 
 /**
- * POST — create a product. Body: { password, brand, name, price, imageUrl, sourceUrl }.
+ * POST - create a product. Body: { password, brand, name, price, imageUrl, sourceUrl }.
  * id + mono are derived server-side; the client-supplied id (if any) is ignored.
  */
 export async function POST(req: Request) {

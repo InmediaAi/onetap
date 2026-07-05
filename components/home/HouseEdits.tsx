@@ -3,7 +3,7 @@ import HouseCarousel from "@/components/home/HouseCarousel";
 import type { HouseTile } from "@/lib/data/getHomeEditorial";
 
 /**
- * "Editor's picks — By your favourite top houses": an auto-swiping carousel of
+ * "Editor's picks - By your favourite top houses": an auto-swiping carousel of
  * houses (4 visible, advancing every 2s). Content is admin-managed with an
  * auto-derived fallback (top houses by catalogue depth).
  */

@@ -9,7 +9,7 @@ export const runtime = "nodejs";
  * Cancel the signed-in user's subscription at the end of the current cycle.
  * Razorpay keeps the subscription ACTIVE until the cycle closes (the
  * subscription.cancelled webhook fires then), so we persist a local
- * `cancel_at_period_end` flag immediately — the UI reflects "ends on <date>,
+ * `cancel_at_period_end` flag immediately - the UI reflects "ends on <date>,
  * won't renew" right away, access is preserved until the period end, and the
  * plan never auto-renews (see consume_video()).
  */
@@ -32,7 +32,7 @@ export async function POST() {
     return NextResponse.json({ error: "No active subscription" }, { status: 400 });
   }
 
-  // Idempotent — already scheduled to cancel; don't hit Razorpay again.
+  // Idempotent - already scheduled to cancel; don't hit Razorpay again.
   if (sub.cancel_at_period_end) {
     return NextResponse.json({
       ok: true,
@@ -52,11 +52,11 @@ export async function POST() {
     const alreadyCancelled = e?.statusCode === 400 && desc.includes("cancel");
     if (!alreadyCancelled) {
       console.error("[billing/cancel] Razorpay cancel failed:", err);
-      return NextResponse.json({ error: "Could not cancel — please try again." }, { status: 502 });
+      return NextResponse.json({ error: "Could not cancel - please try again." }, { status: 502 });
     }
   }
 
-  // Persist the schedule now (service role — RLS-bypassing, like the webhook).
+  // Persist the schedule now (service role - RLS-bypassing, like the webhook).
   const svc = createServiceClient();
   if (svc) {
     await svc

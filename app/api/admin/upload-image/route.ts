@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 /**
- * Manual image upload — the guaranteed fallback when a retailer CDN blocks our
+ * Manual image upload - the guaranteed fallback when a retailer CDN blocks our
  * server fetch. The admin's browser reads the file as a data URL and posts it
  * here; we store the bytes in the product-images bucket and return the public
  * URL (which the admin form adds to the piece, like a pasted image URL).

@@ -68,7 +68,7 @@ export default function GenerationProgress({
   const [pct, setPct] = useState(floor);
   const [line, setLine] = useState(0);
 
-  // Ease toward the ceiling — fast at first, slowing as it approaches.
+  // Ease toward the ceiling - fast at first, slowing as it approaches.
   useEffect(() => {
     setPct((p) => Math.max(p, floor));
     const id = setInterval(() => {
@@ -101,7 +101,7 @@ export default function GenerationProgress({
         <div className="genprog-fill" style={{ width: `${pct}%` }} />
       </div>
       {!compact && (
-        <div className="genprog-note">A few moments — every stitch by hand.</div>
+        <div className="genprog-note">A few moments - every stitch by hand.</div>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import { providerStatus } from "@/lib/ai";
 export const runtime = "nodejs";
 
 /**
- * Dev-only diagnostics — which provider + model is live for try-on and video,
+ * Dev-only diagnostics - which provider + model is live for try-on and video,
  * and which registered providers have their env keys satisfied. Never exposed
  * in production (would leak configuration).
  */

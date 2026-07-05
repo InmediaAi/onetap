@@ -24,7 +24,7 @@ export default function PoseFigure({
     className,
   };
   switch (kind) {
-    case "body": // full length — standing figure
+    case "body": // full length - standing figure
       return (
         <svg {...svg}>
           <circle cx="32" cy="12" r="7" />
@@ -33,14 +33,14 @@ export default function PoseFigure({
           <path d="M32 45 23 74M32 45l9 29" />
         </svg>
       );
-    case "selfie": // face close-up — head & shoulders
+    case "selfie": // face close-up - head & shoulders
       return (
         <svg {...svg}>
           <circle cx="32" cy="26" r="13" />
           <path d="M12 73c0-12 9-19 20-19s20 7 20 19" />
         </svg>
       );
-    case "left": // left profile — face cue on the left
+    case "left": // left profile - face cue on the left
       return (
         <svg {...svg}>
           <circle cx="32" cy="26" r="13" />
@@ -48,7 +48,7 @@ export default function PoseFigure({
           <path d="M12 73c0-12 9-19 20-19s20 7 20 19" />
         </svg>
       );
-    case "right": // right profile — face cue on the right
+    case "right": // right profile - face cue on the right
       return (
         <svg {...svg}>
           <circle cx="32" cy="26" r="13" />
@@ -56,7 +56,7 @@ export default function PoseFigure({
           <path d="M12 73c0-12 9-19 20-19s20 7 20 19" />
         </svg>
       );
-    case "back": // from behind — crown/part line, no face
+    case "back": // from behind - crown/part line, no face
       return (
         <svg {...svg}>
           <circle cx="32" cy="26" r="13" />

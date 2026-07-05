@@ -31,7 +31,7 @@ type State = "loading" | "ready" | "signedout" | "error";
 type Tab = "clips" | "images";
 
 /**
- * The signed-in user's generated looks — their closet/history. Paged
+ * The signed-in user's generated looks - their closet/history. Paged
  * server-side per tab from /api/me/looks (authoritative + cross-device). Clips
  * (360°/film) and Images (try-on stills) paginate independently; each card opens
  * /look/[id], where download + share live.
@@ -45,7 +45,7 @@ export default function ClosetGallery() {
   const redirecting = useRef(false);
 
   // Session resolved but not signed in → send them straight to the onboarding
-  // sign-in (step 1), instead of a separate gate/modal (one action, not two) —
+  // sign-in (step 1), instead of a separate gate/modal (one action, not two) -
   // exactly like the profile screen. `next=/closet` returns them here after auth.
   const needsSignIn = hydrated && profileLoaded && !email;
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function ClosetGallery() {
   if (counts.clips + counts.images === 0) {
     return (
       <div className="cl-empty">
-        <p>Nothing here yet — make your first look.</p>
+        <p>Nothing here yet - make your first look.</p>
         <Link className="btn-line" href="/curator">
           Browse the Curator
         </Link>
@@ -160,7 +160,7 @@ export default function ClosetGallery() {
 
       {total === 0 ? (
         <div className="cl-empty">
-          <p>{tab === "clips" ? "No clips yet — create a 360° or film." : "No try-on images yet."}</p>
+          <p>{tab === "clips" ? "No clips yet - create a 360° or film." : "No try-on images yet."}</p>
         </div>
       ) : (
         <div className="cl-grid" ref={gridRef}>

@@ -5,7 +5,7 @@ import { Heart } from "lucide-react";
 import { formatPrice, type Product } from "@/lib/data/products";
 import { useAtelier } from "@/lib/store";
 
-// Grid columns at our breakpoints — lets next/image request a right-sized file.
+// Grid columns at our breakpoints - lets next/image request a right-sized file.
 const IMG_SIZES = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw";
 
 /** Only hosts in next.config remotePatterns can be optimized; everything else
@@ -20,7 +20,7 @@ function optimizable(url?: string): boolean {
   }
 }
 
-/** Product image — next/image (resized, Vercel-CDN cached) when the host allows,
+/** Product image - next/image (resized, Vercel-CDN cached) when the host allows,
  *  else a raw lazy <img>. */
 function PImg({ src, alt, className, hidden }: { src: string; alt: string; className: string; hidden?: boolean }) {
   if (optimizable(src)) {
@@ -61,7 +61,7 @@ export default function ProductCard({
         <PImg
           className="pimg"
           src={product.imageUrl}
-          alt={`${product.brand} — ${product.name}`}
+          alt={`${product.brand} - ${product.name}`}
         />
         {hoverImage && (
           <PImg className="pimg pimg-alt" src={hoverImage} alt="" hidden />
@@ -85,7 +85,7 @@ export default function ProductCard({
         </div>
       </div>
 
-      {/* Persistent try-on action — directly under the image (shown on touch;
+      {/* Persistent try-on action - directly under the image (shown on touch;
           hidden on hover-capable devices, where the tile overlay is used). */}
       <button className="tryon-link" onClick={() => onTry(product)}>
         <span className="mk" /> OneTap Try-On

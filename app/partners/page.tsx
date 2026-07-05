@@ -6,9 +6,9 @@ import { fetchProducts } from "@/lib/data/getProducts";
 import { getPartnerShowcase } from "@/lib/data/partnerConfig";
 
 export const metadata: Metadata = {
-  title: "Partner with OneTap Atelier — put your pieces on real shoppers",
+  title: "Partner with OneTap Atelier - put your pieces on real shoppers",
   description:
-    "Reach high-intent shoppers who try your pieces on themselves before they buy. Curated AI discovery, lower returns, campaign deeplinks with first-party attribution, and viral social moments — with zero integration lift.",
+    "Reach high-intent shoppers who try your pieces on themselves before they buy. Curated AI discovery, lower returns, campaign deeplinks with first-party attribution, and viral social moments - with zero integration lift.",
 };
 
 const PROBLEMS: { title: string; body: string }[] = [
@@ -18,7 +18,7 @@ const PROBLEMS: { title: string; body: string }[] = [
   },
   {
     title: "Returns are expensive",
-    body: "Buyers guess at fit and how a piece will actually look on them — and send back what misses.",
+    body: "Buyers guess at fit and how a piece will actually look on them - and send back what misses.",
   },
   {
     title: "Flat PDPs under-convert",
@@ -33,7 +33,7 @@ const PROBLEMS: { title: string; body: string }[] = [
 const BENEFITS: { title: string; body: string }[] = [
   {
     title: "Try-on that converts",
-    body: "Shoppers see your piece on themselves — a photo, a 360° turn, a short film — so intent is real before they reach checkout.",
+    body: "Shoppers see your piece on themselves - a photo, a 360° turn, a short film - so intent is real before they reach checkout.",
   },
   {
     title: "Lower returns",
@@ -41,7 +41,7 @@ const BENEFITS: { title: string; body: string }[] = [
   },
   {
     title: "Curated AI discovery",
-    body: "Your pieces surface inside styled edits, personalized feeds, and search — where shoppers are ready to buy.",
+    body: "Your pieces surface inside styled edits, personalized feeds, and search - where shoppers are ready to buy.",
   },
   {
     title: "Deeplinks + attribution",
@@ -49,7 +49,7 @@ const BENEFITS: { title: string; body: string }[] = [
   },
   {
     title: "Viral social moments",
-    body: "Feature in Atelier-owned activations and social channels — the kind that put your pieces in front of a 1M+ audience.",
+    body: "Feature in Atelier-owned activations and social channels - the kind that put your pieces in front of a 1M+ audience.",
   },
   {
     title: "Zero integration lift",
@@ -58,7 +58,7 @@ const BENEFITS: { title: string; body: string }[] = [
 ];
 
 const STEPS: { title: string; body: string }[] = [
-  { title: "Share your catalog", body: "Connect via your existing affiliate network — no integration fees." },
+  { title: "Share your catalog", body: "Connect via your existing affiliate network - no integration fees." },
   { title: "We ingest & quality-check", body: "Products, imagery, and try-on readiness, typically in 1–2 weeks." },
   { title: "Go live on OneTap", body: "You appear across discovery, search, try-on, and curated edits." },
   { title: "Review & scale", body: "Measure performance, then scale exposure, exclusives, and media." },
@@ -87,8 +87,8 @@ export default async function PartnersPage() {
             Join the <em>future</em> of fashion retail.
           </h1>
           <p className="sec-sub">
-            Put your pieces in front of high-intent shoppers who try them on — on
-            themselves — before they buy. Curated discovery, lower returns, and
+            Put your pieces in front of high-intent shoppers who try them on - on
+            themselves - before they buy. Curated discovery, lower returns, and
             first-party attribution, with zero integration lift.
           </p>
           <div className="partner-hero-cta">
@@ -115,7 +115,7 @@ export default async function PartnersPage() {
         <section className="partner-section wrap">
           <h2 className="partner-h2">Why partner with OneTap Atelier?</h2>
           <p className="partner-lede">
-            We turn high-intent discovery into incremental, full-price revenue —
+            We turn high-intent discovery into incremental, full-price revenue -
             bringing you new customers and higher-quality orders while protecting
             your brand.
           </p>

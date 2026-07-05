@@ -89,7 +89,7 @@ export default function LookPage() {
     track(EVENTS.RESULT_DOWNLOADED, { kind: look.kind, lookId: params.id, productId: look.productId });
   }
 
-  // Share is open — it shares this public preview link, not the file.
+  // Share is open - it shares this public preview link, not the file.
   async function shareLook() {
     if (!look) return;
     const url = window.location.href;
@@ -99,7 +99,7 @@ export default function LookPage() {
         await navigator.share({ url });
         return;
       } catch {
-        /* dismissed — fall through to clipboard */
+        /* dismissed - fall through to clipboard */
       }
     }
     try {
@@ -182,7 +182,7 @@ export default function LookPage() {
             <p className="eyebrow">OneTap Atelier</p>
             {product && (
               <h1 className="mt-3 max-w-full font-display text-2xl leading-tight md:max-w-2xl md:text-4xl">
-                {product.brand} — {product.name}
+                {product.brand} - {product.name}
               </h1>
             )}
 

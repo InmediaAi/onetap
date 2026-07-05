@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 /**
- * Meta (Facebook) Pixel — loaded once in the root layout, so it runs on every
+ * Meta (Facebook) Pixel - loaded once in the root layout, so it runs on every
  * page. The base snippet fires the initial PageView; we re-fire PageView on
  * client-side route changes (App Router SPA navigations don't reload the page).
  *
@@ -27,7 +27,7 @@ export default function MetaPixel() {
 
   useEffect(() => {
     if (!PIXEL_ID) return;
-    // The base snippet already fired PageView on first load — skip that run,
+    // The base snippet already fired PageView on first load - skip that run,
     // then track every subsequent route change.
     if (firstRun.current) {
       firstRun.current = false;

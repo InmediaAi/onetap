@@ -45,7 +45,7 @@ export default function SiteFooter() {
           <Link href="/partners" className="label flink">Partner with us</Link>
           <Link href="/privacy" className="label flink">Privacy</Link>
           <Link href="/terms" className="label flink">Terms</Link>
-          <span className="label">Confidential — By Invitation</span>
+          <span className="label">Confidential - By Invitation</span>
           <span className="label">&copy; MMXXVI</span>
         </div>
       </div>

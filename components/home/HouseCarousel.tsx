@@ -9,7 +9,7 @@ import type { HouseTile } from "@/lib/data/getHomeEditorial";
 const INTERVAL = 2000; // advance one house every 2s
 
 /**
- * Auto-advancing house carousel — shows 4 at a time (responsive), slides left
+ * Auto-advancing house carousel - shows 4 at a time (responsive), slides left
  * one house every 2s and loops seamlessly. Pauses on hover; the arrow advances
  * manually. Respects prefers-reduced-motion (no auto-advance).
  */

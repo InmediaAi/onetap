@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import GenerationProgress from "@/components/GenerationProgress";
 
 /**
- * The shared, theme-agnostic result frame — the 9:16 box that shows the moving
+ * The shared, theme-agnostic result frame - the 9:16 box that shows the moving
  * result (autoplay video), the try-on still, or GenerationProgress while a piece
  * composes. Both the main app's dark ResultStage and the FIFA microsite's light
  * result render through this so the media experience never diverges. Everything
@@ -28,7 +28,7 @@ export interface ResultMediaProps {
   progressCopy?: Partial<Record<Phase, { sub: string; lines: string[] }>>;
   /** The framed inner border (main app); off for the FIFA film frame. */
   showInset?: boolean;
-  /** Layered over the video — main: turn label; FIFA: nation band + watermark. */
+  /** Layered over the video - main: turn label; FIFA: nation band + watermark. */
   videoOverlay?: ReactNode;
   /** Layered over the still (main: brand/name caption). */
   caption?: ReactNode;
@@ -36,7 +36,7 @@ export interface ResultMediaProps {
   mono?: string;
   /** Shown when there's nothing yet (e.g. a sign-in invite). */
   emptyState?: ReactNode;
-  /** Frame class — "media" (main) keeps the global modal CSS; "ff-panel" for FIFA. */
+  /** Frame class - "media" (main) keeps the global modal CSS; "ff-panel" for FIFA. */
   className?: string;
   /** Try to autoplay WITH sound (films). Silent media (360° spin) leaves this off. */
   sound?: boolean;
@@ -117,7 +117,7 @@ export default function ResultMedia({
         </>
       )}
 
-      {/* the try-on still — shown while the result composes, or when toggled */}
+      {/* the try-on still - shown while the result composes, or when toggled */}
       {!showVideo && image && (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}

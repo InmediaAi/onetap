@@ -74,7 +74,7 @@ export default function AdminPage() {
     navigator.clipboard
       .writeText(url)
       .then(() => toast.success("Campaign link copied"))
-      .catch(() => toast.error("Couldn’t copy — copy it manually."));
+      .catch(() => toast.error("Couldn’t copy - copy it manually."));
   };
 
   const [password, setPassword] = useState("");
@@ -155,7 +155,7 @@ export default function AdminPage() {
     });
     setHasDraft(true);
     setEditingId(p.id);
-    setStatus(`Editing “${p.brand} — ${p.name}”.`);
+    setStatus(`Editing “${p.brand} - ${p.name}”.`);
     setUrl("");
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -176,13 +176,13 @@ export default function AdminPage() {
       setRecent((r) => r.filter((x) => x.id !== p.id));
       setPendingDelete(null);
       if (editingId === p.id) {
-        // The piece being edited was removed — clear the form.
+        // The piece being edited was removed - clear the form.
         setDraft({ ...EMPTY, dropDate: today() });
         setHasDraft(false);
         setEditingId(null);
         setStatus("");
       }
-      toast.success(`Removed “${p.brand} — ${p.name}”.`);
+      toast.success(`Removed “${p.brand} - ${p.name}”.`);
     } catch {
       toast.error("Could not remove this piece.");
     }
@@ -223,14 +223,14 @@ export default function AdminPage() {
       setHasDraft(true);
       setEditingId(null);
       if (data.blocked) {
-        setStatus("That site blocked automated reading — fill the fields in manually.");
-        toast.error("That site blocked automated reading — fill the fields in manually.");
+        setStatus("That site blocked automated reading - fill the fields in manually.");
+        toast.error("That site blocked automated reading - fill the fields in manually.");
       } else if (data.partial) {
-        setStatus("Some fields couldn’t be detected — review and complete them.");
-        toast.success("Some fields couldn’t be detected — review and complete them.");
+        setStatus("Some fields couldn’t be detected - review and complete them.");
+        toast.success("Some fields couldn’t be detected - review and complete them.");
       } else {
-        setStatus("Details extracted — review, then save.");
-        toast.success("Details extracted — review, then save.");
+        setStatus("Details extracted - review, then save.");
+        toast.success("Details extracted - review, then save.");
       }
     } catch {
       setStatus("Something went wrong reading that URL.");
@@ -257,12 +257,12 @@ export default function AdminPage() {
         toast.error(msg);
         return;
       }
-      const msg = `${editingId ? "Updated" : "Added"} “${data.product.brand} — ${data.product.name}”.`;
+      const msg = `${editingId ? "Updated" : "Added"} “${data.product.brand} - ${data.product.name}”.`;
       setStatus(msg);
       toast.success(msg);
       if (Array.isArray(data.failed) && data.failed.length > 0) {
         toast.error(
-          `${data.failed.length} image(s) couldn’t be captured — kept the original link(s). Try-on may fail for those.`,
+          `${data.failed.length} image(s) couldn’t be captured - kept the original link(s). Try-on may fail for those.`,
         );
       }
       setDraft({ ...EMPTY, dropDate: today() });
@@ -296,7 +296,7 @@ export default function AdminPage() {
   const removeImage = (i: number) =>
     setDraft((d) => ({ ...d, images: d.images.filter((_, j) => j !== i) }));
 
-  // Manual upload — the guaranteed fallback for images a retailer CDN blocks.
+  // Manual upload - the guaranteed fallback for images a retailer CDN blocks.
   // Reads each file as a data URL, stores it in our bucket, appends the URL.
   async function uploadImageFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -342,7 +342,7 @@ export default function AdminPage() {
   if (!authed) {
     return (
       <main className="admin-wrap admin-shell">
-        <p className="eyebrow">OneTap Atelier — Atelier Desk</p>
+        <p className="eyebrow">OneTap Atelier - Atelier Desk</p>
         <h1 className="admin-title">Admin</h1>
         <form className="admin-card admin-gate" onSubmit={authenticate}>
           <label className="admin-label">Password</label>
@@ -375,13 +375,13 @@ export default function AdminPage() {
       ...recent.map((p) => p.category).filter((c): c is string => Boolean(c)),
     ]),
   ].sort((a, b) => a.localeCompare(b));
-  // Filter options for the Curator-pieces list — only categories actually present.
+  // Filter options for the Curator-pieces list - only categories actually present.
   const catOptions = Object.keys(catCounts).sort((a, b) => a.localeCompare(b));
   const shownCurator = catFilter
     ? curatorItems.filter((p) => p.category === catFilter)
     : curatorItems;
 
-  // One list row — click to edit; the action cell deletes (with confirm).
+  // One list row - click to edit; the action cell deletes (with confirm).
   const pieceRow = (p: Product) => (
     <li
       key={p.id}
@@ -391,7 +391,7 @@ export default function AdminPage() {
     >
       <span className="admin-recent-brand">{p.brand}</span>
       <span className="admin-recent-name">{p.name}</span>
-      <span className="admin-recent-cat">{p.category || "—"}</span>
+      <span className="admin-recent-cat">{p.category || "-"}</span>
       <span className="admin-recent-price">{formatPrice(p.price)}</span>
       <span className="admin-recent-act" onClick={(e) => e.stopPropagation()}>
         {pendingDelete === p.id ? (
@@ -431,7 +431,7 @@ export default function AdminPage() {
     <main className="admin-wrap admin-shell">
       <div className="admin-head">
         <div>
-          <p className="eyebrow">OneTap Atelier — Atelier Desk</p>
+          <p className="eyebrow">OneTap Atelier - Atelier Desk</p>
           <h1 className="admin-title">
             {tab === "packages"
               ? "Packages"
@@ -512,7 +512,7 @@ export default function AdminPage() {
         <label className="admin-label">Product URL</label>
         <p className="admin-hint">
           Paste a link from Zara, H&amp;M, Gucci, Prada… We’ll pull the brand,
-          name, price and image. You can edit anything before saving — or{" "}
+          name, price and image. You can edit anything before saving - or{" "}
           <button type="button" className="admin-inline-btn" onClick={startBlank}>
             add one manually
           </button>
@@ -662,7 +662,7 @@ export default function AdminPage() {
               label="Purchase link"
               value={draft.buyUrl}
               onChange={set("buyUrl")}
-              placeholder="Where members buy it — the retailer product page"
+              placeholder="Where members buy it - the retailer product page"
             />
 
             <label className="pkg-check" style={{ marginTop: "0.25rem" }}>
@@ -671,7 +671,7 @@ export default function AdminPage() {
                 checked={draft.campaignOnly}
                 onChange={(e) => setDraft((d) => ({ ...d, campaignOnly: e.target.checked }))}
               />
-              Campaign only (e.g. FIFA jersey) — hidden from the Curator
+              Campaign only (e.g. FIFA jersey) - hidden from the Curator
             </label>
 
             <label className="admin-field">
@@ -681,7 +681,7 @@ export default function AdminPage() {
                 rows={3}
                 value={draft.description}
                 onChange={set("description")}
-                placeholder="Fabric, cut, fit, provenance — 2–3 plain sentences."
+                placeholder="Fabric, cut, fit, provenance - 2–3 plain sentences."
               />
             </label>
 
@@ -761,11 +761,11 @@ export default function AdminPage() {
         </form>
       )}
 
-          {/* Curator pieces — shown in the Curator grid; filterable by category */}
+          {/* Curator pieces - shown in the Curator grid; filterable by category */}
           {curatorItems.length > 0 && (
             <section className="admin-recent">
               <div className="admin-recent-head">
-                <h2 className="admin-subtitle">Curator pieces — {curatorItems.length}</h2>
+                <h2 className="admin-subtitle">Curator pieces - {curatorItems.length}</h2>
                 <select
                   className="admin-input admin-cat-filter"
                   value={catFilter}
@@ -788,10 +788,10 @@ export default function AdminPage() {
             </section>
           )}
 
-          {/* Campaign pieces — FIFA jerseys etc., hidden from the Curator */}
+          {/* Campaign pieces - FIFA jerseys etc., hidden from the Curator */}
           {campaignItems.length > 0 && (
             <section className="admin-recent">
-              <h2 className="admin-subtitle">Campaign pieces — {campaignItems.length}</h2>
+              <h2 className="admin-subtitle">Campaign pieces - {campaignItems.length}</h2>
               <ul>{campaignItems.map(pieceRow)}</ul>
             </section>
           )}

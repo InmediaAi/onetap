@@ -10,7 +10,7 @@ export const maxDuration = 30;
  * Extract product basics from a retailer URL.
  * Body: { password, url }
  * Returns: { ok, blocked, partial, product: { brand, name, price, imageUrl, sourceUrl } }
- * Never throws on extraction — empty fields are expected (admin fills them in).
+ * Never throws on extraction - empty fields are expected (admin fills them in).
  */
 export async function POST(req: Request) {
   try {
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     const page = await fetchPage(url);
     if (!page.ok) {
-      // Blocked or failed — return empty fields so the admin can fill manually.
+      // Blocked or failed - return empty fields so the admin can fill manually.
       return NextResponse.json({
         ok: false,
         blocked: page.blocked,

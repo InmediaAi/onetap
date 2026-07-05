@@ -8,7 +8,7 @@ import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
 /**
- * The shared try-on popup — identical chrome (scrim · top bar · stage) for the
+ * The shared try-on popup - identical chrome (scrim · top bar · stage) for the
  * Curator, 360° and Creator modules. Wraps ResultStage so the result + progress
  * experience is the same everywhere.
  */

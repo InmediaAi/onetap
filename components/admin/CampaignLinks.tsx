@@ -78,7 +78,7 @@ export default function CampaignLinks({ password }: { password: string }) {
       setTimeout(() => setCopied(null), 1400);
       toast.success("Link copied to clipboard.");
     } catch {
-      toast.error("Couldn’t copy — copy it manually.");
+      toast.error("Couldn’t copy - copy it manually.");
     }
   }
 
@@ -127,7 +127,7 @@ export default function CampaignLinks({ password }: { password: string }) {
           >
             {selected.has(p.id) && <span className="brand-check">✓</span>}
             <span className="brand-name">
-              {p.brand} — {p.name}
+              {p.brand} - {p.name}
             </span>
           </button>
         ))}

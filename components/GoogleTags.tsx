@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 /**
- * Google Tag Manager + Google Analytics (GA4) — loaded once in the root layout,
+ * Google Tag Manager + Google Analytics (GA4) - loaded once in the root layout,
  * so they run on every page. Mirrors MetaPixel: next/script (afterInteractive)
  * for the loaders, a <noscript> fallback for GTM, and a route-change pageview
  * (App Router SPA navigations don't reload the page, so the initial snippet's
@@ -16,7 +16,7 @@ import { useEffect, useRef } from "react";
  *
  * NOTE: GA4 is loaded BOTH directly (gtag) and via GTM. If the GTM container
  * also publishes a GA4 config tag for the same property, pageviews double-count
- * — clear NEXT_PUBLIC_GA_ID to let GTM own GA4, or leave GTM empty for gtag only.
+ * - clear NEXT_PUBLIC_GA_ID to let GTM own GA4, or leave GTM empty for gtag only.
  */
 
 declare global {
@@ -35,7 +35,7 @@ export default function GoogleTags() {
 
   useEffect(() => {
     if (!GTM_ID && !GA_ID) return;
-    // The base snippets already fired a pageview on first load — skip that run,
+    // The base snippets already fired a pageview on first load - skip that run,
     // then track every subsequent client-side route change.
     if (firstRun.current) {
       firstRun.current = false;
