@@ -6,6 +6,7 @@ const ENV: Record<PlanId, string> = {
   starter: "RAZORPAY_PLAN_STARTER",
   pro: "RAZORPAY_PLAN_PRO",
   maison: "RAZORPAY_PLAN_MAISON",
+  gold: "RAZORPAY_PLAN_GOLD",
   fan: "RAZORPAY_PLAN_FAN",
 };
 
@@ -18,6 +19,7 @@ export function planFromRazorpayId(id: string | undefined | null): PlanId | null
   if (id === process.env.RAZORPAY_PLAN_STARTER) return "starter";
   if (id === process.env.RAZORPAY_PLAN_PRO) return "pro";
   if (id === process.env.RAZORPAY_PLAN_MAISON) return "maison";
+  if (id === process.env.RAZORPAY_PLAN_GOLD) return "gold";
   if (id === process.env.RAZORPAY_PLAN_FAN) return "fan";
   return null;
 }

@@ -525,7 +525,9 @@ insert into billing_plans (id, name, tagline, monthly_price, video_limit, featur
   ('pro',     'Pro',     'For creators publishing at a steady pace.',     49, 30,
      array['30 try-ons (360° or film) / month', 'Priority generation queue', 'Early access to new formats'], true, true, 2),
   ('maison',  'Maison',  'For studios and brands producing at scale.',    129, 100,
-     array['100 try-ons (360° or film) / month', 'Priority generation queue', 'Early access to new formats', 'Commercial usage rights', 'Concierge onboarding'], false, true, 3)
+     array['100 try-ons (360° or film) / month', 'Priority generation queue', 'Early access to new formats', 'Commercial usage rights', 'Concierge onboarding'], false, true, 3),
+  ('gold',    'Gold Test', 'Small-amount live payment test.',             1,   5,
+     array['Live payment test tier', '5 try-ons / month'], false, true, 4)
 on conflict (id) do nothing;
 
 -- Global billing settings (singleton row).
@@ -679,7 +681,7 @@ end; $$;
 -- the canonical constraint below). Kept in sync with the final constraint.
 alter table subscriptions drop constraint if exists subscriptions_plan_check;
 alter table subscriptions
-  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'fan'));
+  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'maison', 'gold', 'fan'));
 
 -- Seed a free subscription on signup (profile + free sub). Lifetime: end = NULL.
 create or replace function handle_new_user()
@@ -771,7 +773,7 @@ create policy "public read campaign_moments" on campaign_moments for select usin
 -- Additive 'fan' membership tier ($25 / 10 videos) — leaves free/starter/pro intact.
 alter table subscriptions drop constraint if exists subscriptions_plan_check;
 alter table subscriptions
-  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'fan'));
+  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'maison', 'gold', 'fan'));
 
 insert into billing_plans (id, name, tagline, monthly_price, video_limit, features, most_popular, active, sort_order) values
   ('fan', 'Fan Membership', 'Keep every fan video you make.', 25, 10,
