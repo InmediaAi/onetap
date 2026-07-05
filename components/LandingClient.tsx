@@ -96,9 +96,6 @@ export default function LandingClient({
             <Link href="/curator" className="btn-line">
               Enter the atelier
             </Link>
-            <a href="#modules" className="lp-quiet">
-              The modules
-            </a>
           </div>
         </div>
       </section>

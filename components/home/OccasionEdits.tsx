@@ -23,10 +23,11 @@ export default function OccasionEdits({ tiles }: { tiles: OccasionTile[] }) {
           <Link key={t.title} href={t.href} className="tocc-card reveal">
             <span className="tocc-img">
               {t.image && <EditImg src={t.image} alt="" className="tocc-img-el" />}
+              <span className="tocc-overlay">
+                <span className="tocc-title">{t.title}</span>
+                <span className="tocc-cta">Start exploring →</span>
+              </span>
             </span>
-            <span className="tocc-title">{t.title}</span>
-            {t.description && <span className="tocc-desc">{t.description}</span>}
-            <span className="tocc-cta">Shop the edit →</span>
           </Link>
         ))}
       </div>
