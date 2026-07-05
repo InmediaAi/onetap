@@ -13,6 +13,7 @@ interface PlanDraft {
   currency: string;
   videoLimit: string;
   features: string; // one per line in the textarea
+  razorpayPlanId: string;
   mostPopular: boolean;
   active: boolean;
 }
@@ -31,6 +32,7 @@ interface PlanRow {
   currency: string;
   video_limit: number;
   features: string[] | null;
+  razorpay_plan_id?: string | null;
   most_popular: boolean;
   active: boolean;
 }
@@ -44,6 +46,7 @@ function rowToDraft(r: PlanRow): PlanDraft {
     currency: r.currency || "USD",
     videoLimit: String(r.video_limit ?? 0),
     features: (r.features ?? []).join("\n"),
+    razorpayPlanId: r.razorpay_plan_id ?? "",
     mostPopular: Boolean(r.most_popular),
     active: Boolean(r.active),
   };
@@ -152,7 +155,9 @@ export default function PackagesAdmin({ password }: { password: string }) {
         Edit the tiers shown on the pricing page. <strong>Video limits, features,
         the top-up price and the free allowance are enforced by us.</strong> The
         monthly price is display-only - the real charge is set by the matching
-        Razorpay plan, so keep them in sync.
+        Razorpay plan, so keep them in sync. Set each tier's <strong>Razorpay
+        plan ID</strong> here to switch plans without a redeploy; leave it blank
+        to fall back to the RAZORPAY_PLAN_* env var.
       </p>
 
       {plans.map((p) => (
@@ -192,6 +197,20 @@ export default function PackagesAdmin({ password }: { password: string }) {
             <span className="admin-label">Tagline</span>
             <input className="admin-input" value={p.tagline} onChange={(e) => setPlan(p.id, { tagline: e.target.value })} />
           </label>
+
+          {p.id !== "free" && (
+            <label className="admin-field">
+              <span className="admin-label">
+                Razorpay plan ID (overrides env; blank = use RAZORPAY_PLAN_* env)
+              </span>
+              <input
+                className="admin-input"
+                value={p.razorpayPlanId}
+                placeholder="plan_..."
+                onChange={(e) => setPlan(p.id, { razorpayPlanId: e.target.value })}
+              />
+            </label>
+          )}
 
           <label className="admin-field">
             <span className="admin-label">Features (one per line)</span>

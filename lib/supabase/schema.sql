@@ -509,8 +509,11 @@ create table if not exists billing_plans (
   most_popular  boolean not null default false,
   active        boolean not null default true,
   sort_order    integer not null default 0,
+  razorpay_plan_id text,                       -- admin-managed; blank → RAZORPAY_PLAN_* env fallback
   updated_at    timestamptz not null default now()
 );
+-- Migration for an existing DB (safe to re-run):
+alter table billing_plans add column if not exists razorpay_plan_id text;
 
 alter table billing_plans enable row level security;
 drop policy if exists "public read plans" on billing_plans;

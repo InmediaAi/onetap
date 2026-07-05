@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getRazorpay, isRazorpayConfigured } from "@/lib/billing/razorpay";
-import { razorpayPlanId } from "@/lib/pricing/razorpay";
+import { resolveRazorpayPlanId } from "@/lib/pricing/razorpay";
 import { type PlanId } from "@/lib/pricing/plans";
 import { getPlans } from "@/lib/pricing/getPlans";
 
@@ -35,7 +35,8 @@ export async function POST(req: Request) {
   if (!planId || !validPaid) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
-  const plan_id = razorpayPlanId(planId);
+  // DB-first (admin-managed billing_plans.razorpay_plan_id), env fallback.
+  const plan_id = await resolveRazorpayPlanId(planId);
   if (!plan_id) {
     return NextResponse.json({ error: "Plan not configured" }, { status: 503 });
   }

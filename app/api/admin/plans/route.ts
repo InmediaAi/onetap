@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { checkAdmin } from "@/lib/admin/auth";
 import { createServiceClient } from "@/lib/supabase/server";
+import { SEED_PLANS } from "@/lib/pricing/plans";
 
 export const runtime = "nodejs";
 
-const PLAN_IDS = ["free", "starter", "pro"] as const;
+// All editable tier ids come from the seed (free/starter/pro/maison/gold/fan and
+// any future tier) — not a hardcoded subset, so new tiers save without a code edit.
+const PLAN_IDS: string[] = SEED_PLANS.map((p) => p.id);
 
 function clean(v: unknown, max = 300): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
@@ -80,6 +83,9 @@ export async function POST(req: Request) {
       currency: clean(p.currency, 8) || "USD",
       video_limit: Number.isFinite(limit) && limit >= 0 ? Math.round(limit) : 0,
       features,
+      // Razorpay plan id (admin-managed). Empty → null so the RAZORPAY_PLAN_* env
+      // fallback applies (see resolveRazorpayPlanId in lib/pricing/razorpay.ts).
+      razorpay_plan_id: clean(p.razorpayPlanId, 80) || null,
       most_popular: Boolean(p.mostPopular),
       active: p.active === undefined ? true : Boolean(p.active),
       updated_at: new Date().toISOString(),

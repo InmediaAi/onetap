@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Minus, Plus, X } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { useAtelier } from "@/lib/store";
 import {
   SEED_PLANS,
@@ -11,22 +11,13 @@ import {
 import { startSubscription, startTopup } from "@/lib/billing/checkout";
 
 /**
- * The comparison rows = every feature any visible plan lists, in first-seen order
- * across the tiers (base features first, higher-tier additions after). Fully
- * admin-driven - each plan's `features` (billing_plans.features) decides ✓ / ✗.
+ * A feature line is rendered exactly as authored in the admin table
+ * (billing_plans.features) - no union, no cross-plan rows. A line that begins
+ * with a dash (- / – / —) or ✗ is an "excluded" line → light gray; anything
+ * else (✓ …) is included → bold. Each feature is its own line.
  */
-function featureUnion(plans: BillingPlan[]): string[] {
-  const seen = new Set<string>();
-  const rows: string[] = [];
-  for (const p of plans) {
-    for (const f of p.features) {
-      if (!seen.has(f)) {
-        seen.add(f);
-        rows.push(f);
-      }
-    }
-  }
-  return rows;
+function isExcludedFeature(f: string): boolean {
+  return /^\s*[-–—✗×]/.test(f);
 }
 
 /** Subscription tiers (from the admin-editable DB, seed fallback) + top-ups. */
@@ -80,8 +71,6 @@ export default function PlanCards() {
 
   const activePlan = usage.status === "active" ? usage.planId : null;
   const ready = plansLoaded && profileLoaded;
-  // Every feature across the visible plans → the shared ✓/✗ comparison rows.
-  const featureRows = featureUnion(plans);
 
   if (!ready) return <PlanCardsSkeleton />;
 
@@ -90,7 +79,6 @@ export default function PlanCards() {
       <div className="plan-cards">
         {plans.map((p) => {
           const isCurrent = activePlan === p.id;
-          const owned = new Set(p.features);
           return (
             <div key={p.id} className={"plan-card" + (p.mostPopular ? " featured" : "")}>
               <div className="plan-top">
@@ -103,19 +91,11 @@ export default function PlanCards() {
               </div>
               <p className="plan-tag">{p.tagline}</p>
               <ul className="plan-feats">
-                {featureRows.map((f) => {
-                  const on = owned.has(f);
-                  return (
-                    <li key={f} className={on ? undefined : "no"}>
-                      {on ? (
-                        <Check size={13} strokeWidth={2} />
-                      ) : (
-                        <X size={13} strokeWidth={2} />
-                      )}{" "}
-                      {f}
-                    </li>
-                  );
-                })}
+                {p.features.map((f, i) => (
+                  <li key={i} className={isExcludedFeature(f) ? "no" : undefined}>
+                    {f}
+                  </li>
+                ))}
               </ul>
               <button
                 className={"plan-cta" + (isCurrent ? " current" : "")}

@@ -3399,22 +3399,15 @@
   gap: 11px;
 }
 .plan-feats li {
-  display: flex;
-  align-items: center;
-  gap: 9px;
   font-family: var(--sans);
-  font-weight: 300;
+  font-weight: 600;
   font-size: 14px;
+  line-height: 1.4;
   color: var(--noir);
-}
-.plan-feats li svg {
-  color: var(--stone);
-  flex: none;
+  white-space: pre-line;
 }
 .plan-feats li.no {
-  color: var(--stone);
-}
-.plan-feats li.no svg {
+  font-weight: 300;
   color: var(--stone-soft);
 }
 .plan-cta {
