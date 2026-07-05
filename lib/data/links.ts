@@ -41,6 +41,12 @@ export function brandNewArrivalsUrl(name: string, origin?: string): string {
   return `${base}${brandNewArrivalsPath(name)}`;
 }
 
+/** Absolute URL of a generated look's shareable page (/look/{id}). */
+export function lookUrl(lookId: string, origin?: string): string {
+  const base = origin || process.env.NEXT_PUBLIC_SITE_URL || "";
+  return `${base}/look/${encodeURIComponent(lookId)}`;
+}
+
 /** Curator deep-link with a brand pre-selected in the filter. */
 export function curatorBrandPath(name: string): string {
   return `/curator?brands=${encodeURIComponent(name)}`;

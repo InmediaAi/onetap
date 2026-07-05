@@ -56,6 +56,11 @@ export async function PATCH(req: Request) {
     patch.height_inches = Number.isFinite(h) && h >= 56 && h <= 76 ? Math.round(h) : null;
   }
   if (body.onboarded === true) patch.onboarded = true;
+  // Free-form display name (distinct from the strict `username` handle below).
+  if (typeof body.name === "string") {
+    const n = body.name.trim().slice(0, 80);
+    patch.display_name = n || null;
+  }
 
   // When brands are changing, read the previous set first so we can reconcile
   // Mailchimp tags (deactivate the ones the user deselected).

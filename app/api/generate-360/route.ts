@@ -6,6 +6,8 @@ import { composePrompt } from "@/lib/ai/prompts";
 import { getPrompts } from "@/lib/ai/getPrompts";
 import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
+import { sendLookReadyEmailToUser } from "@/lib/external/email";
+import { lookUrl } from "@/lib/data/links";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -84,6 +86,17 @@ export async function POST(req: Request) {
       status: "ok",
       durationMs: Date.now() - startedAt,
     });
+
+    // Video look ready → email the user its shareable URL (non-blocking; no-op
+    // when Resend/email unconfigured). Only for a real, persisted /look/[id].
+    if (userId && saved.persisted) {
+      await sendLookReadyEmailToUser(userId, {
+        lookUrl: lookUrl(saved.id),
+        posterUrl: saved.posterUrl ?? undefined,
+        kindLabel: "360° video",
+      });
+    }
+
     return NextResponse.json({
       ...result,
       videoUrl: saved.url,

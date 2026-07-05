@@ -946,3 +946,11 @@ insert into home_config (id) values ('default') on conflict (id) do nothing;
 -- (see app/auth/callback), so we don't re-call Mailchimp on every login.
 -- ═══════════════════════════════════════════════════════════════════════════
 alter table profiles add column if not exists mailchimp_registered boolean not null default false;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MIGRATION: free-form profile display name. Idempotent.
+-- The profile "Name" field is a display name (spaces/capitals allowed), distinct
+-- from the strict, unique `username` handle (set_username). Editable by the user
+-- via the "update own profile" RLS policy.
+-- ═══════════════════════════════════════════════════════════════════════════
+alter table profiles add column if not exists display_name text;

@@ -74,6 +74,8 @@ export interface UsageSnapshot {
 export interface ProfileSnapshot {
   onboarded: boolean;
   username: string | null;
+  /** Free-form display name (profiles.display_name). */
+  name: string | null;
   email: string | null;
   brands: string[];
   /** Signed URLs (or data URLs) for the identity images. */
@@ -96,6 +98,7 @@ export interface ProfileSnapshot {
 /** The editable taste/identity fields the Profile saves. */
 export interface ProfileFields {
   username: string | null;
+  name: string | null;
   heightInches: number | null;
   style: string[];
   categories: string[];
@@ -132,6 +135,7 @@ interface AtelierState {
   modelUrl: string | null;
   brands: string[];
   username: string | null;
+  name: string | null;
   email: string | null;
   heightInches: number | null;
   style: string[];
@@ -203,6 +207,7 @@ export const useAtelier = create<AtelierState>()(
       modelUrl: null,
       brands: [],
       username: null,
+      name: null,
       email: null,
       heightInches: null,
       style: [],
@@ -239,6 +244,7 @@ export const useAtelier = create<AtelierState>()(
       hydrateProfile: (p) =>
         set({
           username: p.username,
+          name: p.name,
           email: p.email,
           brands: p.brands,
           face: p.selfieUrl,
@@ -268,6 +274,7 @@ export const useAtelier = create<AtelierState>()(
           if (d.authed) {
             get().hydrateProfile({
               username: d.username,
+              name: d.name ?? null,
               email: d.email,
               brands: d.brands ?? [],
               selfieUrl: d.selfieUrl ?? null,
@@ -303,6 +310,7 @@ export const useAtelier = create<AtelierState>()(
           modelUrl: null,
           brands: [],
           username: null,
+          name: null,
           email: null,
           heightInches: null,
           style: [],

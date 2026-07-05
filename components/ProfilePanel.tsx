@@ -44,7 +44,7 @@ export default function ProfilePanel() {
   const hydrated = useHydrated();
   const email = useAtelier((s) => s.email);
   const profileLoaded = useAtelier((s) => s.profileLoaded);
-  const username = useAtelier((s) => s.username);
+  const displayName = useAtelier((s) => s.name);
   const brands = useAtelier((s) => s.brands);
   const usage = useAtelier((s) => s.usage);
   const store = useAtelier();
@@ -55,7 +55,7 @@ export default function ProfilePanel() {
   const modelUrl = useAtelier((s) => s.modelUrl);
   const setModelUrl = useAtelier((s) => s.setModelUrl);
 
-  const [name, setName] = useState(username ?? "");
+  const [name, setName] = useState(displayName ?? "");
   const [picked, setPicked] = useState<string[]>(brands);
   const [height, setHeight] = useState<number | null>(store.heightInches);
   const [style, setStyle] = useState<string[]>(store.style);
@@ -196,7 +196,7 @@ export default function ProfilePanel() {
     setStatus(null);
     setBrands(picked);
     applyProfile({
-      username: name || null,
+      name: name || null,
       heightInches: height,
       style,
       categories,
@@ -209,7 +209,7 @@ export default function ProfilePanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         brands: picked,
-        username: name || undefined,
+        name: name || undefined,
         heightInches: height,
         style,
         categories,
