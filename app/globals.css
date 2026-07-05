@@ -918,53 +918,138 @@
 }
 
 /* ———————————————————————————— FOOTER ———————————————————————————— */
+/* Footer ground palette (dark, self-contained). */
 .foot {
-  background: var(--noir);
-  color: var(--ivory);
-  padding: 60px 36px 54px;
+  --foot-ground: #0a0a0a;
+  --foot-primary: #f5f4f2;
+  --foot-secondary: #8c8c8c;
+  --foot-hairline: #232323;
+  --foot-watermark: #151515;
+  position: relative;
+  background: var(--foot-ground);
+  color: var(--foot-primary);
+  border-top: 1px solid var(--foot-hairline);
+  overflow: hidden;
+}
+/* Faint full-wordmark watermark behind the content. */
+.foot-watermark {
+  position: absolute;
+  bottom: -0.3em;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(90px, 13.5vw, 210px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--foot-watermark);
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  z-index: 0;
 }
 .foot-inner {
-  max-width: 1440px;
+  position: relative;
+  z-index: 1;
+  max-width: 1360px;
   margin: 0 auto;
+  padding: 96px 48px 56px;
+}
+/* Top: wordmark left, link columns right. */
+.foot-top {
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
+  align-items: flex-start;
+  gap: 64px;
+  padding-bottom: 88px;
 }
-.foot .wordmark {
-  font-size: 26px;
-  color: var(--ivory);
-}
-.foot .fmeta {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.foot .fmeta .label {
-  color: var(--taupe);
-}
-.foot .fmeta a.flink {
+.foot-wordmark {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--foot-primary);
   text-decoration: none;
-  transition: color 0.2s var(--ease);
 }
-.foot .fmeta a.flink:hover {
-  color: var(--ivory);
-}
-.foot .fsocial {
+.foot-columns {
   display: flex;
-  gap: 16px;
-  align-self: flex-end;
-  margin-bottom: 6px;
+  gap: 96px;
+  flex-wrap: wrap;
 }
-.foot .fsocial-ic {
+.foot-col h3 {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--foot-primary);
+  margin-bottom: 24px;
+}
+.foot-col ul {
+  list-style: none;
+}
+.foot-col li + li {
+  margin-top: 16px;
+}
+.foot-col a {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--foot-secondary);
+  text-decoration: none;
+  transition: color 0.25s var(--ease);
+}
+.foot-col a:hover,
+.foot-col a:focus-visible {
+  color: var(--foot-primary);
+}
+.foot-col a:focus-visible {
+  outline: 1px solid var(--foot-primary);
+  outline-offset: 4px;
+}
+/* Bottom: legal + socials. */
+.foot-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+  padding-top: 40px;
+  border-top: 1px solid var(--foot-hairline);
+}
+.foot-legal {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--foot-secondary);
+  max-width: 520px;
+}
+.foot-legal .foot-maison {
+  color: var(--foot-primary);
+}
+.foot-social {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.foot-social a {
+  color: var(--foot-secondary);
   display: inline-flex;
-  color: var(--taupe);
-  transition: color 0.2s var(--ease), transform 0.2s var(--ease);
+  transition: color 0.25s var(--ease);
 }
-.foot .fsocial-ic:hover {
-  color: var(--ivory);
-  transform: translateY(-1px);
+.foot-social a:hover,
+.foot-social a:focus-visible {
+  color: var(--foot-primary);
+}
+.foot-social a:focus-visible {
+  outline: 1px solid var(--foot-primary);
+  outline-offset: 4px;
+}
+.foot-social svg {
+  width: 17px;
+  height: 17px;
+  display: block;
 }
 
 /* ———————————————————————————— TRY-ON MODAL ———————————————————————————— */
@@ -3763,19 +3848,27 @@
   }
 
   /* footer stacks */
-  .foot {
-    padding: 40px 18px 36px;
-  }
   .foot-inner {
+    padding: 72px 28px 44px;
+  }
+  .foot-top {
     flex-direction: column;
+    gap: 56px;
+    padding-bottom: 64px;
+  }
+  .foot-columns {
+    gap: 56px;
+  }
+  .foot-bottom {
+    flex-direction: column-reverse;
     align-items: flex-start;
-    gap: 16px;
+    gap: 28px;
   }
-  .foot .fmeta {
-    text-align: left;
-  }
-  .foot .fsocial {
-    align-self: flex-start;
+  .foot-watermark {
+    font-size: clamp(64px, 17vw, 130px);
+    bottom: -0.26em;
+    left: 0;
+    transform: none;
   }
 
   /* ——— try-on modal ——— */

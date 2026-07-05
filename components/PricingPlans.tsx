@@ -17,10 +17,10 @@ export default function PricingPlans() {
     <div className="pricing-page">
       <section className="sec-hero">
         <p className="eyebrow">Pricing</p>
-        <h1>A plan for every creator.</h1>
+        <h1>A membership for every luxury shopper</h1>
         <p className="sec-sub">
-          Subscribe to generate cinema-grade reels. A try-on is a 360° spin or a
-          film, composed on your likeness.
+          Find the membership that&rsquo;s right for you. See every piece on
+          yourself before adding it to your wardrobe.
         </p>
         {profileLoaded ? (
           <p className="plan-save">
