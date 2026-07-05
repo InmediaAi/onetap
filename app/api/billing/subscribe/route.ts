@@ -61,8 +61,18 @@ export async function POST(req: Request) {
     } catch (err) {
       const e = err as { statusCode?: number; error?: { description?: string } };
       const desc = e?.error?.description?.toLowerCase() ?? "";
-      const alreadyCancelled = e?.statusCode === 400 && desc.includes("cancel");
-      if (!alreadyCancelled) {
+      // The prior subscription is already gone from Razorpay's side - either
+      // already cancelled/completed, or the stored id is stale/invalid (e.g. a
+      // test-mode id left over after switching to live keys). In every case
+      // there is no live mandate to double-charge, so it's safe to proceed with
+      // the new subscription (which overwrites the stale id on upsert below).
+      const alreadyGone =
+        e?.statusCode === 400 &&
+        (desc.includes("cancel") ||
+          desc.includes("could not be found") ||
+          desc.includes("does not exist") ||
+          desc.includes("invalid"));
+      if (!alreadyGone) {
         console.error("[billing/subscribe] could not cancel previous subscription:", err);
         if (billable) {
           return NextResponse.json(

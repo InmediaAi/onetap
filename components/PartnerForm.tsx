@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiJson } from "@/lib/api/client";
 
 const CONTACT_EMAIL = "info@onetapatelier.com";
 
@@ -20,7 +21,7 @@ export default function PartnerForm() {
     setErr(null);
     setBusy(true);
     try {
-      const res = await fetch("/api/partners", {
+      await apiJson("/api/partners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -31,11 +32,11 @@ export default function PartnerForm() {
           website,
           sourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
         }),
+        errorMessage: "Something went wrong - please try again.",
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Something went wrong - please try again.");
       setSent(true);
     } catch (e2) {
+      // apiJson already showed a toast; keep the inline message for context.
       setErr(e2 instanceof Error ? e2.message : "Something went wrong - please try again.");
     } finally {
       setBusy(false);

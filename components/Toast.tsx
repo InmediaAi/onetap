@@ -4,16 +4,19 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { registerToastListener } from "@/lib/toast/bus";
 
 /**
  * Tiny dependency-free toast system. Green success / red error toasts, top-right,
- * auto-dismiss, click to close. Mounted once via <ToastProvider> (admin route +
- * the /fifa route); any descendant can `useToast()`. Styles are the global
- * `.admin-toast*` classes (theme-independent).
+ * auto-dismiss, click to close. Mounted globally in the root layout; any
+ * descendant can `useToast()`, and any code (lib helpers, global error handlers)
+ * can raise one imperatively via `toast` from `@/lib/toast/bus` — the provider
+ * subscribes to that bus below. Styles are the global `.admin-toast*` classes.
  */
 
 type ToastKind = "success" | "error";
@@ -71,6 +74,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }),
     [push],
   );
+
+  // Bridge the imperative bus (lib helpers, global error handlers) into this
+  // provider so those toasts render too. Registers as a stack — see bus.ts.
+  useEffect(() => {
+    return registerToastListener((e) => push(e.kind, e.message, e.opts));
+  }, [push]);
 
   return (
     <ToastCtx.Provider value={api}>

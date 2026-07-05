@@ -10,6 +10,7 @@ import { useAtelier } from "@/lib/store";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 import { getAttribution } from "@/lib/analytics/utm";
+import { toast } from "@/lib/toast/bus";
 import ResultStage from "@/components/ResultStage";
 import TryOnIsland from "@/components/TryOnIsland";
 
@@ -132,7 +133,9 @@ export default function TryOnProvider() {
       } catch (e) {
         if (curId.current !== jid) return;
         track(EVENTS.GENERATION_FAILED, { kind: "tryon", productId: pid, error: e instanceof Error ? e.message : "unknown" });
-        setError(e instanceof Error ? e.message : "Generation failed");
+        const msg = e instanceof Error && e.message ? e.message : "We couldn't create your try-on. Please try again.";
+        setError(msg);
+        toast.error(msg);
         setTryonLoading(false);
         return;
       }
@@ -179,7 +182,9 @@ export default function TryOnProvider() {
       } catch (e) {
         if (curId.current !== jid) return;
         track(EVENTS.GENERATION_FAILED, { kind, productId: pid, error: e instanceof Error ? e.message : "unknown" });
-        setError(e instanceof Error ? e.message : "Generation failed");
+        const msg = e instanceof Error && e.message ? e.message : "We couldn't finish your video. Please try again.";
+        setError(msg);
+        toast.error(msg);
       } finally {
         if (curId.current === jid) setTurnLoading(false);
       }

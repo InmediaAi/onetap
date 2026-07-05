@@ -8,6 +8,7 @@ import GoogleTags from "@/components/GoogleTags";
 import TryOnProvider from "@/components/TryOnProvider";
 import JsonLd from "@/components/seo/JsonLd";
 import { ToastProvider } from "@/components/Toast";
+import GlobalErrorToaster from "@/components/GlobalErrorToaster";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -85,6 +86,7 @@ export default function RootLayout({
         <AnalyticsProvider />
         <SessionLoader />
         <ToastProvider>
+          <GlobalErrorToaster />
           {children}
           <TryOnProvider />
         </ToastProvider>

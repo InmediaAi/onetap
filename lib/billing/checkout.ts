@@ -4,6 +4,8 @@ import { track, metaTrack } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 import { getPlan, type PlanId } from "@/lib/pricing/plans";
 import { useAtelier } from "@/lib/store";
+import { apiJson, ApiError } from "@/lib/api/client";
+import { toast } from "@/lib/toast/bus";
 
 /**
  * Client-side subscription start: ask the server to create a Razorpay
@@ -46,22 +48,30 @@ async function settleAfterPayment(isDone: () => boolean): Promise<void> {
 export async function startSubscription(planId: PlanId): Promise<void> {
   track(EVENTS.SUBSCRIBE_CLICKED, { planId });
 
-  const res = await fetch("/api/billing/subscribe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ planId }),
-  });
-  if (res.status === 401) {
-    window.location.href = "/onboarding"; // sign in first
-    return;
+  let data: { subscriptionId: string; keyId: string };
+  try {
+    data = await apiJson("/api/billing/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId }),
+      handled: [401], // 401 → send to sign-in, no toast
+      errorMessage: "Could not start checkout. Please try again.",
+    });
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) {
+      window.location.href = "/onboarding"; // sign in first
+      return;
+    }
+    throw e; // already toasted by apiJson
   }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Could not start checkout");
 
   const ok = await loadScript();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const RZP = (window as any).Razorpay;
-  if (!ok || !RZP) throw new Error("Razorpay failed to load");
+  if (!ok || !RZP) {
+    toast.error("Payment couldn't start. Please try again.");
+    throw new Error("Razorpay failed to load");
+  }
 
   const rzp = new RZP({
     key: data.keyId,
@@ -95,22 +105,36 @@ export async function startSubscription(planId: PlanId): Promise<void> {
 export async function startTopup(quantity: number): Promise<void> {
   track(EVENTS.TOPUP_CLICKED, { quantity });
 
-  const res = await fetch("/api/billing/topup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ quantity }),
-  });
-  if (res.status === 401) {
-    window.location.href = "/onboarding"; // sign in first
-    return;
+  let data: {
+    keyId: string;
+    orderId: string;
+    amount: number;
+    currency: string;
+    quantity: number;
+  };
+  try {
+    data = await apiJson("/api/billing/topup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quantity }),
+      handled: [401], // 401 → send to sign-in, no toast
+      errorMessage: "Could not start checkout. Please try again.",
+    });
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) {
+      window.location.href = "/onboarding"; // sign in first
+      return;
+    }
+    throw e; // already toasted by apiJson
   }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Could not start checkout");
 
   const ok = await loadScript();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const RZP = (window as any).Razorpay;
-  if (!ok || !RZP) throw new Error("Razorpay failed to load");
+  if (!ok || !RZP) {
+    toast.error("Payment couldn't start. Please try again.");
+    throw new Error("Razorpay failed to load");
+  }
 
   // Balance before payment — poll until the webhook credits the top-up.
   const startBalance = useAtelier.getState().usage.topupBalance;
