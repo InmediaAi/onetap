@@ -69,6 +69,9 @@ export async function startSubscription(planId: PlanId): Promise<void> {
     name: "OneTap Atelier",
     description: `${planId} plan`,
     theme: { color: "#1a1814" },
+    // US-targeted: default the phone-field country flag to +1 (US) instead of the
+    // India-registered account's +91 default. The number itself stays empty for the buyer.
+    prefill: { contact: "+1" },
     // Closing the sheet without paying → re-sync (no-op if nothing changed).
     modal: { ondismiss: () => void useAtelier.getState().refreshProfile() },
     handler: () => {
@@ -120,6 +123,9 @@ export async function startTopup(quantity: number): Promise<void> {
     name: "OneTap Atelier",
     description: `${data.quantity} extra try-on${data.quantity === 1 ? "" : "s"}`,
     theme: { color: "#1a1814" },
+    // US-targeted: default the phone-field country flag to +1 (US) instead of the
+    // India-registered account's +91 default. The number itself stays empty for the buyer.
+    prefill: { contact: "+1" },
     modal: { ondismiss: () => void useAtelier.getState().refreshProfile() },
     handler: () => {
       // Payment captured; webhook credits the balance. Fire the Meta Purchase
