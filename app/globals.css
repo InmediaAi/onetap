@@ -5399,7 +5399,10 @@
   min-height: clamp(520px, 82vh, 800px);
   padding: clamp(2rem, 6vh, 4rem) 0;
   /* Dark scrim (stronger on the left where the copy sits) over the photo so text
-     stays legible across the responsive crop. Drop the image at /public/hero.png. */
+     stays legible across the responsive crop. Two art-directed images are picked
+     by viewport: the landscape/web shot at /public/hero.png (default, below) and
+     a portrait/mobile shot at /public/hero-mobile.png (swapped in the mobile
+     media query further down). Browsers only fetch the matching one. */
   background-image:
     linear-gradient(
       90deg,
@@ -5440,6 +5443,25 @@
 @media (min-width: 1024px) {
   .lp-hero {
     background-position: right top;
+  }
+}
+/* Mobile / portrait: swap to the vertically-composed hero so the crop isn't a
+   sliver of the wide landscape shot. Drop the image at /public/hero-mobile.png.
+   The scrim here is VERTICAL (bottom-weighted) — the copy sits low on a tall
+   screen, so the dark must reach all the way to the last frame for legibility,
+   unlike the desktop left-to-right scrim above. */
+@media (max-width: 767px) {
+  .lp-hero {
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(15, 17, 14, 0.3) 0%,
+        rgba(15, 17, 14, 0.45) 34%,
+        rgba(15, 17, 14, 0.72) 68%,
+        rgba(15, 17, 14, 0.92) 100%
+      ),
+      url("/hero-mobile.png");
+    background-position: center center;
   }
 }
 .lp-sub {
