@@ -18,8 +18,12 @@ const PUBLIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/fifa", priority: 0.8 },
   { path: "/partners", priority: 0.6 },
   { path: "/pricing", priority: 0.6 },
+  { path: "/about", priority: 0.4 },
+  { path: "/contact", priority: 0.4 },
   { path: "/privacy", priority: 0.3 },
   { path: "/terms", priority: 0.3 },
+  { path: "/refunds", priority: 0.3 },
+  { path: "/shipping", priority: 0.3 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

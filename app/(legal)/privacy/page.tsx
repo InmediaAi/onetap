@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <p>This Privacy Policy explains how <strong>Inmedia AI Inc</strong> (“Inmedia AI,” “we,” “us,” or “our”), the operator of the <strong>OneTap Atelier</strong> platform, websites, and applications (collectively, the “Service”), collects, uses, discloses, and protects personal information. OneTap Atelier is a product of Inmedia AI Inc, and all rights in the Service are reserved by Inmedia AI Inc. By using the Service, you acknowledge the practices described here.</p>
 
       <h2>1. What OneTap Atelier is - and is not</h2>
-      <p>OneTap Atelier is a technology platform that helps you see how apparel and accessories may look on you before you decide to buy them. <strong>Inmedia AI Inc does not design, manufacture, own, hold inventory of, or sell any clothing, footwear, accessories, or other merchandise.</strong> We are an independent technology intermediary - a curator and middleware layer - that surfaces pieces offered by third-party brands and retailers and generates illustrative visualizations (“Try-On Films”) for your personal review. All product names, trademarks, and brand imagery belong to their respective owners. Your purchases, if any, are made directly with third parties under their own terms and privacy policies. See our Terms of Service for the full statement of this relationship.</p>
+      <p>OneTap Atelier is a technology platform that helps you see how apparel and accessories may look on you before you decide to buy them. <strong>Inmedia AI Inc does not design, manufacture, own, hold inventory of, or sell any clothing, footwear, accessories, or other merchandise.</strong> We are an independent technology intermediary - a curator and middleware layer - that surfaces pieces offered by third-party brands and retailers and generates illustrative visualizations (“Try-On Films”) for your personal review. All product names, trademarks, and brand imagery belong to their respective owners. Your purchases, if any, are made directly with third parties under their own terms and privacy policies. See our <Link href="/terms">Terms of Service</Link> for the full statement of this relationship.</p>
 
       <h2>2. Information we collect</h2>
       <h3>Information you provide</h3>
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
         <li><strong>Likeness Content</strong> - photographs, images, and video of yourself that you upload or capture so that we can generate your Try-On Films. This is treated as sensitive information (see Section 3).</li>
         <li><strong>Item inputs</strong> - product images, screenshots, or photographs of garments you wish to try on, and associated metadata.</li>
         <li><strong>Prompt and selection data</strong> - the scenes, settings, and choices you make within the Service.</li>
-        <li><strong>Payment data</strong> - processed by our third-party payment processor (for example, <span className="ph">[Stripe]</span>) and not stored by us. We receive only limited transaction confirmation details.</li>
+        <li><strong>Payment data</strong> - processed by our third-party payment processor, <strong>Razorpay</strong>, and not stored by us. We receive only limited transaction confirmation details.</li>
         <li><strong>Communications and feedback</strong> - messages you send us and support requests.</li>
       </ul>
       <h3>Information collected automatically</h3>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
         <li>To personalize what we show you based on the brands and preferences on your account.</li>
         <li>To process your subscription and communicate with you about your account and the Service.</li>
         <li>To respond to support requests and improve the reliability and quality of the Service.</li>
-        <li>To comply with law, enforce our Terms, and protect the rights, safety, and property of you, us, and others.</li>
+        <li>To comply with law, enforce our <Link href="/terms">Terms</Link>, and protect the rights, safety, and property of you, us, and others.</li>
       </ul>
       <p>We do <strong>not</strong> sell your personal information, and we do not use your content for advertising or marketing of the Service without your consent.</p>
 
@@ -89,27 +89,30 @@ export default function PrivacyPage() {
       <p>Depending on where you live, you may have rights under laws such as the California Consumer Privacy Act as amended by the CPRA, and the privacy laws of Virginia, Colorado, Connecticut, Utah, Texas, and other states. These may include the right to know or access, to correct, to delete, to obtain a portable copy, to opt out of sale or targeted advertising, and to limit the use of sensitive personal information.</p>
       <ul>
         <li><strong>We do not sell or share your personal information,</strong> and we do not use sensitive personal information beyond the purposes described here.</li>
-        <li>To exercise a right, contact us at mitul@inmediaai.com. We will verify your identity before responding and will not discriminate against you for exercising a right.</li>
+        <li>To exercise a right, contact us at <a href="mailto:mitul@inmediaai.com">mitul@inmediaai.com</a>. We will verify your identity before responding and will not discriminate against you for exercising a right.</li>
         <li>You may use an authorized agent to submit requests where permitted by law.</li>
         <li>If you are unsatisfied with our response, you may have the right to appeal or to contact your state regulator.</li>
       </ul>
 
       <h2>10. Children</h2>
-      <p>The Service is intended only for adults <strong>18 years of age or older</strong>. We do not knowingly collect personal information from anyone under 18. If you believe a minor has provided us information, contact us at mitul@inmediaai.com and we will delete it as required by law.</p>
+      <p>The Service is intended only for adults <strong>18 years of age or older</strong>. We do not knowingly collect personal information from anyone under 18. If you believe a minor has provided us information, contact us at <a href="mailto:mitul@inmediaai.com">mitul@inmediaai.com</a> and we will delete it as required by law.</p>
 
       <h2>11. International users</h2>
-      <p>Inmedia AI Inc is based in the United States, and your information will be processed in the United States and other locations where we or our service providers operate, which may have different data-protection laws than your jurisdiction.</p>
+      <p>Inmedia AI Inc is based in India, and the Service is offered to users worldwide, including in the United States. If you access the Service from outside India, your information will be transferred to, stored, and processed in India — and in other countries where we or our service providers operate — which may have data-protection laws different from those in your country or state. By using the Service, you consent to this transfer and processing. Where required, we rely on appropriate safeguards for such cross-border transfers.</p>
 
       <h2>12. Changes to this Policy</h2>
       <p>We may update this Policy from time to time. Material changes will be indicated by updating the effective date and posting the revised Policy. Your continued use of the Service after changes take effect constitutes acceptance.</p>
 
       <h2>13. Contact us</h2>
       <p>Inmedia AI Inc - OneTap Atelier<br />
-      mitul@inmediaai.com</p>
+      <a href="mailto:mitul@inmediaai.com">mitul@inmediaai.com</a></p>
 
       <footer className="legal-foot">
         <div className="legal-nav">
           <Link href="/terms">Terms of Service</Link>
+          <Link href="/refunds">Cancellation &amp; Refunds</Link>
+          <Link href="/shipping">Shipping &amp; Delivery</Link>
+          <Link href="/contact">Contact</Link>
           <Link href="/">Return to OneTap Atelier</Link>
         </div>
         © 2026 Inmedia AI Inc. All rights reserved. OneTap Atelier is a product of Inmedia AI Inc. All trademarks and product imagery referenced on the Service are the property of their respective owners.

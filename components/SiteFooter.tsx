@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-const CONTACT_EMAIL = "info@onetapatelier.com";
-
 /** Social links keep the real profile URLs; icons follow the footer reference. */
 const SOCIALS: { label: string; href: string; svg: React.ReactNode }[] = [
   {
@@ -61,6 +59,9 @@ export default function SiteFooter() {
                 <li>
                   <Link href="/partners">Partner With Us</Link>
                 </li>
+                <li>
+                  <Link href="/about">About Us</Link>
+                </li>
               </ul>
             </div>
             <div className="foot-col">
@@ -73,7 +74,13 @@ export default function SiteFooter() {
                   <Link href="/terms">Terms</Link>
                 </li>
                 <li>
-                  <a href={`mailto:${CONTACT_EMAIL}`}>Contact</a>
+                  <Link href="/refunds">Cancellation &amp; Refunds</Link>
+                </li>
+                <li>
+                  <Link href="/shipping">Shipping &amp; Delivery</Link>
+                </li>
+                <li>
+                  <Link href="/contact">Contact</Link>
                 </li>
               </ul>
             </div>
