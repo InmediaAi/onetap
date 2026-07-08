@@ -31,12 +31,20 @@ const signCache = new Map<string, { url: string; exp: number }>();
  */
 export async function GET() {
   const sb = await createServerSupabase();
-  if (!sb) return json({ authed: false });
+  if (!sb) {
+    // Anonymous: still surface the standing free-trial allowance (configurable
+    // free tier) so new visitors see what they'd get, not "0".
+    const { plans } = await getPlans();
+    return json({ authed: false, freeTrialAllowance: freeTrialLimit(plans) });
+  }
 
   const {
     data: { user },
   } = await sb.auth.getUser();
-  if (!user) return json({ authed: false });
+  if (!user) {
+    const { plans } = await getPlans();
+    return json({ authed: false, freeTrialAllowance: freeTrialLimit(plans) });
+  }
   const uid = user.id; // stable id for the signed-URL cache key (closure-safe)
 
   const { data: profile } = await sb

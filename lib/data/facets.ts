@@ -1,5 +1,11 @@
 import { PRODUCT_STYLES, OCCASIONS, COLOURS } from "@/lib/data/vocab";
-import { priceBracketId, PRICE_BRACKETS, isNewIn, type Product } from "@/lib/data/products";
+import {
+  priceBracketId,
+  PRICE_BRACKETS,
+  isNewIn,
+  newInThreshold,
+  type Product,
+} from "@/lib/data/products";
 
 /**
  * Shared Curator filter + facet logic, lifted out of ProductGrid so it can run
@@ -51,8 +57,26 @@ export const EMPTY_FILTERS: FilterState = {
   newIn: false,
 };
 
-/** A product passes every selected facet EXCEPT `exclude` (+ the New-in toggle). */
-export function passes(p: FacetRow, f: FilterState, exclude: Facet | null): boolean {
+/** Latest drop across a row set — the anchor for the "New In" window. */
+export function latestDrop(rows: FacetRow[]): string | null {
+  let max: string | null = null;
+  for (const r of rows) {
+    if (r.droppedAt && (max === null || r.droppedAt > max)) max = r.droppedAt;
+  }
+  return max;
+}
+
+/**
+ * A product passes every selected facet EXCEPT `exclude` (+ the New-in toggle).
+ * `newInTh` is the anchored "new in" cutoff (ms) from newInThreshold(latestDrop);
+ * pass it so New In stays consistent with the grid. Omitted → anchored to now.
+ */
+export function passes(
+  p: FacetRow,
+  f: FilterState,
+  exclude: Facet | null,
+  newInTh?: number,
+): boolean {
   if (exclude !== "brand" && f.brands.length && !f.brands.includes(p.brand)) return false;
   if (
     exclude !== "category" &&
@@ -76,20 +100,22 @@ export function passes(p: FacetRow, f: FilterState, exclude: Facet | null): bool
     !f.brackets.includes(priceBracketId(p.priceAmount) ?? "")
   )
     return false;
-  if (f.newIn && !isNewIn(p.droppedAt ?? undefined)) return false;
+  if (f.newIn && !isNewIn(p.droppedAt ?? undefined, newInTh)) return false;
   return true;
 }
 
 /** Cross-filtered facet options: for each facet, values present under the OTHER
  *  selected filters (plus the already-selected ones, so they stay deselectable). */
 export function computeFacets(rows: FacetRow[], f: FilterState): FacetOptions {
+  // Anchor the "New In" cutoff to the catalog's latest drop (only when active).
+  const newInTh = f.newIn ? newInThreshold(latestDrop(rows)) : undefined;
   const present = (
     exclude: Facet,
     get: (p: FacetRow) => string | string[] | null | undefined,
   ) => {
     const set = new Set<string>();
     for (const p of rows) {
-      if (!passes(p, f, exclude)) continue;
+      if (!passes(p, f, exclude, newInTh)) continue;
       const v = get(p);
       if (Array.isArray(v)) v.forEach((x) => x && set.add(x));
       else if (v) set.add(v);

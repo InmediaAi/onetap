@@ -66,13 +66,29 @@ export function priceValue(price: Price) {
   return price?.amount || 0;
 }
 
-/** "New in" — dropped within the last 7 days (computed, never stored). */
-export function isNewIn(droppedAt?: string): boolean {
+/**
+ * "New in" window size (days). The window is anchored to the catalog's most
+ * recent drop, NOT "today" — so New In always surfaces the freshest arrivals and
+ * never goes empty just because nothing was added in the last calendar week.
+ */
+export const NEW_IN_WINDOW_DAYS = 7;
+
+/**
+ * Cutoff (ms) for "new in": `NEW_IN_WINDOW_DAYS` before the anchor. Pass the
+ * catalog's latest `dropped_at` as the anchor; falls back to now when unknown.
+ */
+export function newInThreshold(latestDroppedAt?: string | null): number {
+  const parsed = latestDroppedAt ? Date.parse(latestDroppedAt) : NaN;
+  const anchor = Number.isNaN(parsed) ? Date.now() : parsed;
+  return anchor - NEW_IN_WINDOW_DAYS * 86_400_000;
+}
+
+/** "New in" — dropped on/after the anchored cutoff (computed, never stored). */
+export function isNewIn(droppedAt?: string, threshold?: number): boolean {
   if (!droppedAt) return false;
   const t = Date.parse(droppedAt);
   if (Number.isNaN(t)) return false;
-  const now = Date.now();
-  return t <= now + 86_400_000 && now - t <= 7 * 86_400_000;
+  return t >= (threshold ?? newInThreshold());
 }
 
 const daysAgo = (n: number) =>

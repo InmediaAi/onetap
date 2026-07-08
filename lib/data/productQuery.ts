@@ -1,9 +1,13 @@
 import "server-only";
 import { createReadClient } from "@/lib/supabase/server";
 import { rowToProduct, type ProductRow } from "@/lib/supabase/util";
-import { products as mockProducts, type Product } from "@/lib/data/products";
+import {
+  products as mockProducts,
+  newInThreshold,
+  type Product,
+} from "@/lib/data/products";
 import { PRICE_BRACKETS } from "@/lib/data/vocab";
-import { passes, productToFacetRow, type FilterState } from "@/lib/data/facets";
+import { passes, productToFacetRow, latestDrop, type FilterState } from "@/lib/data/facets";
 
 /**
  * Server-side product query: applies the Curator filters in SQL and returns one
@@ -17,9 +21,6 @@ export interface ProductPage {
   total: number;
 }
 
-const isoDay = (offsetDays: number) =>
-  new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
-
 export async function queryProducts(
   f: FilterState,
   page: number,
@@ -29,8 +30,12 @@ export async function queryProducts(
 
   // ── Mock fallback (no Supabase) — filter + sort + slice in memory ──
   if (!db) {
-    const filtered = mockProducts
-      .filter((p) => !p.campaignOnly && passes(productToFacetRow(p), f, null))
+    const rows = mockProducts.filter((p) => !p.campaignOnly);
+    const newInTh = f.newIn
+      ? newInThreshold(latestDrop(rows.map(productToFacetRow)))
+      : undefined;
+    const filtered = rows
+      .filter((p) => passes(productToFacetRow(p), f, null, newInTh))
       .sort((a, b) => (b.oneTapScore ?? 0) - (a.oneTapScore ?? 0));
     const from = (page - 1) * pageSize;
     return { products: filtered.slice(from, from + pageSize), total: filtered.length };
@@ -59,7 +64,21 @@ export async function queryProducts(
       );
     if (clauses.length) q = q.or(clauses.join(","));
   }
-  if (f.newIn) q = q.gte("dropped_at", isoDay(-7)).lte("dropped_at", isoDay(1));
+  if (f.newIn) {
+    // "New In" = dropped within NEW_IN_WINDOW_DAYS of the catalog's MOST RECENT
+    // drop (anchored to the latest drop, not "today") so it never goes empty as
+    // the catalog ages, and snaps to fresh pieces the moment they're added.
+    const { data: latest } = await db
+      .from("products")
+      .select("dropped_at")
+      .or("campaign_only.is.null,campaign_only.eq.false")
+      .not("dropped_at", "is", null)
+      .order("dropped_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const since = new Date(newInThreshold(latest?.dropped_at)).toISOString().slice(0, 10);
+    q = q.gte("dropped_at", since);
+  }
 
   const from = (page - 1) * pageSize;
   q = q

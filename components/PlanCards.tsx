@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { useAtelier } from "@/lib/store";
-import {
-  SEED_PLANS,
-  type BillingPlan,
-  type PlanId,
-} from "@/lib/pricing/plans";
+import { type BillingPlan, type PlanId } from "@/lib/pricing/plans";
 import { startSubscription, startTopup } from "@/lib/billing/checkout";
 
 /**
@@ -24,31 +20,27 @@ function isExcludedFeature(f: string): boolean {
 export default function PlanCards() {
   const usage = useAtelier((s) => s.usage);
   const profileLoaded = useAtelier((s) => s.profileLoaded);
-  // Only public paid tiers. Hidden ones (the campaign `fan` membership) are
-  // reachable by direct link; the `free` tier is intentionally not shown here
-  // (it lives in the data model / free-trial logic, just no card).
-  const [plans, setPlans] = useState<BillingPlan[]>(
-    SEED_PLANS.filter((p) => p.active && p.id !== "free"),
-  );
-  // Gate the real cards until BOTH the live plans AND the user's subscription
-  // are loaded - otherwise seed prices / an empty "Subscribe" state flash first
-  // and jump when the fetches resolve. Show shimmer cards until then.
+  // Plans are rendered STRICTLY from the admin-configured source (/api/plans →
+  // the billing_plans table). No hardcoded/seed cards in the client — we show a
+  // shimmer until the live plans load, then exactly what's configured. Only the
+  // public paid tiers are shown here (the `free` tier and any inactive/hidden
+  // tiers like the campaign `fan` membership are excluded).
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
+  // Gate the cards until BOTH the live plans AND the user's subscription are
+  // loaded — avoids an empty/jumpy state flashing before the fetches resolve.
   const [plansLoaded, setPlansLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  // Live plans (admin may have changed prices/limits/features).
+  // Live, admin-configured plans (prices/limits/features/descriptions).
   useEffect(() => {
     let active = true;
     fetch("/api/plans")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!active) return;
-        if (d?.plans?.length) {
-          setPlans(
-            (d.plans as BillingPlan[]).filter((p) => p.active && p.id !== "free"),
-          );
-        }
+        const live = Array.isArray(d?.plans) ? (d.plans as BillingPlan[]) : [];
+        setPlans(live.filter((p) => p.active && p.id !== "free"));
       })
       .catch(() => {})
       .finally(() => active && setPlansLoaded(true));
@@ -74,8 +66,28 @@ export default function PlanCards() {
 
   if (!ready) return <PlanCardsSkeleton />;
 
+  // No configured plans came back (e.g. a transient fetch failure). Show a
+  // neutral note rather than fabricating hardcoded cards.
+  if (plans.length === 0) {
+    return (
+      <p className="pricing-note" style={{ padding: "1.5rem 0" }}>
+        Membership plans are being updated — please refresh in a moment.
+      </p>
+    );
+  }
+
   return (
     <>
+      {/* While the server creates the Razorpay subscription + the checkout script
+          loads (a few seconds), reassure the user something is happening. `busy`
+          clears the moment Razorpay's own sheet opens, so this hands off cleanly. */}
+      {busy !== null && (
+        <div className="checkout-veil" role="status" aria-live="polite">
+          <span className="checkout-veil-spin" aria-hidden="true" />
+          <span className="checkout-veil-msg">Opening secure checkout…</span>
+        </div>
+      )}
+
       <div className="plan-cards">
         {plans.map((p) => {
           const isCurrent = activePlan === p.id;
@@ -102,11 +114,16 @@ export default function PlanCards() {
                 disabled={isCurrent || busy !== null}
                 onClick={() => subscribe(p.id as PlanId)}
               >
-                {isCurrent
-                  ? "Current plan"
-                  : busy === p.id
-                    ? "Opening…"
-                    : `Subscribe · $${p.monthlyPrice}/mo`}
+                {isCurrent ? (
+                  "Current plan"
+                ) : busy === p.id ? (
+                  <span className="cta-loading">
+                    <span className="cta-spin" aria-hidden="true" />
+                    Opening…
+                  </span>
+                ) : (
+                  `Subscribe · $${p.monthlyPrice}/mo`
+                )}
               </button>
             </div>
           );
@@ -191,7 +208,14 @@ function TopupBlock({
           </button>
         </div>
         <button className="plan-cta" disabled={busy} onClick={() => onBuy(qty)}>
-          {busy ? "Opening…" : `Buy ${qty} · $${total}`}
+          {busy ? (
+            <span className="cta-loading">
+              <span className="cta-spin" aria-hidden="true" />
+              Opening…
+            </span>
+          ) : (
+            `Buy ${qty} · $${total}`
+          )}
         </button>
       </div>
     </div>

@@ -294,6 +294,13 @@ export const useAtelier = create<AtelierState>()(
             });
           } else {
             get().resetSession();
+            // Anonymous visitors still see the standing free-trial allowance
+            // (from the configurable free tier) — e.g. "1 free try-on left" —
+            // instead of a discouraging "0".
+            const allowance = Number(d?.freeTrialAllowance);
+            if (Number.isFinite(allowance) && allowance > 0) {
+              set((s) => ({ usage: { ...s.usage, freeTrialRemaining: allowance } }));
+            }
           }
         } catch {
           /* offline / unconfigured — leave state as-is */

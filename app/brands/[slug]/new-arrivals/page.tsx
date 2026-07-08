@@ -39,7 +39,7 @@ export async function generateMetadata({
   const brand = await fetchBrand(slug);
   if (!brand) return { title: "New Arrivals · OneTap Atelier" };
 
-  const title = `${brand.name} New Arrivals - New In · OneTap Atelier`;
+  const title = `${brand.name} New Arrivals · OneTap Atelier`;
   const description = `The latest ${brand.name} arrivals on OneTap Atelier - new-season pieces you can see on you before you buy. ${brand.count} ${
     brand.count === 1 ? "piece" : "pieces"
   } in the edit.`;

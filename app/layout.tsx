@@ -42,22 +42,22 @@ const display = Archivo({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "OneTap Atelier - New In",
+  title: "OneTap Atelier | Try On Luxury Fashion Before You Buy",
   description:
-    "A private edit of the season's most considered pieces - each seen on you before it is yours.",
+    "A curated luxury fashion membership. See pieces from 100+ designer brands on yourself before you buy. Curated edits, video try-ons, one membership.",
   openGraph: {
-    title: "OneTap Atelier - New In",
+    title: "OneTap Atelier | Try On Luxury Fashion Before You Buy",
     description:
-      "A private edit of the season's most considered pieces - each seen on you before it is yours.",
+      "A curated luxury fashion membership. See pieces from 100+ designer brands on yourself before you buy. Curated edits, video try-ons, one membership.",
     siteName: "OneTap Atelier",
     url: SITE_URL,
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "OneTap Atelier - New In",
+    title: "OneTap Atelier | Try On Luxury Fashion Before You Buy",
     description:
-      "A private edit of the season's most considered pieces - each seen on you before it is yours.",
+      "A curated luxury fashion membership. See pieces from 100+ designer brands on yourself before you buy. Curated edits, video try-ons, one membership.",
   },
   // Renders the Google Search Console <meta google-site-verification> only when set.
   verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION

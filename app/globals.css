@@ -1881,6 +1881,113 @@
   fill: currentColor;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   TRY-ON MODAL — LIGHT THEME
+   The generation/result modal (TryOnProvider → .tryon-portal) is re-themed from
+   dark to the app's light palette (ivory surfaces, noir ink, stone hairlines).
+   Scoped to .tryon-portal so the shared /look page + ResultModal stay dark.
+   Most of it flows from the --rs-* token overrides below; the rest flips the
+   handful of hardcoded white/black overlays. Controls that sit over the
+   generated video keep a near-opaque frosted-white background for legibility.
+   ───────────────────────────────────────────────────────────────────────────── */
+.tryon-portal {
+  --rs-surface: var(--ivory-panel);
+  --rs-ink: var(--noir);
+  --rs-muted: var(--taupe);
+  --rs-accent: var(--noir);
+  --rs-line: var(--stone-hair);
+  --rs-scrim: rgba(255, 255, 255, 0.9);
+  --rs-scrim-strong: rgba(245, 245, 245, 0.82);
+}
+
+/* Header chrome over the light backdrop */
+.tryon-portal .modal-top .mt-info .n,
+.tryon-portal .modal-top .price { color: var(--noir); }
+.tryon-portal .mclose { border-color: var(--stone-hair); color: var(--noir); }
+.tryon-portal .mclose:hover { background: var(--noir); color: var(--ivory); }
+
+/* Thumbnail rail */
+.tryon-portal .trthumb { background: var(--ivory-panel); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
+.tryon-portal .trthumb:hover { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4); }
+.tryon-portal .trthumb.on { box-shadow: inset 0 0 0 2px var(--noir); }
+.tryon-portal .trthumb .ph { color: rgba(0, 0, 0, 0.4); }
+
+/* Media placeholder monogram */
+.tryon-portal .media .ph .mono { color: rgba(0, 0, 0, 0.12); }
+
+/* Compose overlay (free try-on image) + its shimmering dot-field → dark dots */
+.tryon-portal .mproc { background: rgba(255, 255, 255, 0.82); }
+.tryon-portal .mproc .pl { color: var(--noir); text-shadow: none; }
+.tryon-portal .dotfield {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.4) 1.1px, transparent 1.7px);
+}
+.tryon-portal .dotfield::after {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.62) 1.3px, transparent 1.9px);
+}
+
+/* Generation progress — darken the "weave" threads so they read on light */
+.tryon-portal .genprog-weave span { background: linear-gradient(var(--noir), var(--taupe)); opacity: 0.7; }
+.tryon-portal .genprog-weave span:nth-child(3n) { background: linear-gradient(var(--stone), var(--noir)); }
+.tryon-portal .genprog.compact {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0));
+}
+
+/* 360° + film controls over the video → frosted white, noir ink */
+.tryon-portal .turn-ctl,
+.tryon-portal .film-ctl { background: rgba(255, 255, 255, 0.9); }
+.tryon-portal .turn-ctl .deg .d { color: var(--taupe); }
+.tryon-portal .play { border-color: var(--noir); color: var(--noir); }
+.tryon-portal .play:hover { background: var(--noir); color: var(--ivory); }
+.tryon-portal .film-bar { background: rgba(0, 0, 0, 0.15); }
+.tryon-portal .film-bar i,
+.tryon-portal .film-bar .dot { background: var(--noir); }
+
+/* Unmute pill */
+.tryon-portal .unmute {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--stone-hair);
+  color: var(--noir);
+}
+.tryon-portal .unmute:hover { background: #fff; }
+
+/* Action rail */
+.tryon-portal .act { border-color: var(--stone-hair); color: var(--noir); }
+.tryon-portal .act:hover { background: rgba(0, 0, 0, 0.06); border-color: var(--stone); }
+.tryon-portal .act.on { background: var(--noir); color: var(--ivory); border-color: var(--noir); }
+
+/* Campaign footer actions — primary becomes a solid dark button on light */
+.tryon-portal .mf-btn { background: var(--noir); color: var(--ivory); border-color: var(--noir); }
+.tryon-portal .mf-btn.alt { background: transparent; color: var(--noir); border-color: var(--stone-hair); }
+.tryon-portal .mf-btn.alt:hover { background: rgba(0, 0, 0, 0.05); border-color: var(--stone); }
+.tryon-portal .mf-share { color: var(--taupe); }
+.tryon-portal .mf-share:hover { color: var(--noir); }
+
+/* Collapsed "island" pill → light, palette-consistent (drops the purple ring) */
+.tryon-portal .tryon-island {
+  background: var(--ivory);
+  border: 1px solid var(--stone-hair);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.tryon-portal .ti-ring {
+  background: conic-gradient(from 0deg, var(--stone), var(--noir), var(--stone));
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+}
+.tryon-portal .ti-thumb { background: var(--ivory-panel); border-color: var(--ivory); }
+.tryon-portal .ti-text {
+  color: var(--noir);
+  background: linear-gradient(90deg, var(--noir) 30%, var(--stone) 50%, var(--noir) 70%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.tryon-portal .ti-sub { color: var(--taupe); }
+.tryon-portal .ti-x { background: rgba(0, 0, 0, 0.06); color: var(--taupe); }
+.tryon-portal .ti-x:hover { background: rgba(0, 0, 0, 0.12); color: var(--noir); }
+@media (prefers-reduced-motion: reduce) {
+  .tryon-portal .ti-text { -webkit-text-fill-color: var(--noir); background: none; }
+}
+
 /* ———————————————————————————— CLOSET / HISTORY ———————————————————————————— */
 /* sticky-footer page shell — keeps the dark footer at the very bottom and never
    crowding the last row of looks, whatever the item count */
@@ -2599,7 +2706,10 @@
 
 /* pricing modal */
 .pricing-scrim {
-  z-index: 120; /* above the try-on modal so credit-gating shows on top */
+  /* Strictly above the try-on modal/island (.tryon-portal, z-index 120) so the
+     paywall + sign-in gates always paint on top — incl. the 402-mid-generation
+     path where the try-on modal is still open and portalled last to <body>. */
+  z-index: 130;
   align-items: center;
   justify-content: center;
   padding: 24px;
@@ -2626,6 +2736,15 @@
 .pricing-head .label {
   color: var(--stone);
 }
+.pricing-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 5.2vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--noir);
+  margin: 0 0 12px;
+}
 .pricing-balance {
   font-family: var(--serif);
   font-weight: 400;
@@ -2644,10 +2763,10 @@
 .pricing-note {
   font-family: var(--sans);
   font-weight: 300;
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.55;
   color: var(--taupe);
-  max-width: 32ch;
+  max-width: 42ch;
   margin: 0 auto;
 }
 .pkgs {
@@ -6669,4 +6788,167 @@
 @media (max-width: 680px) {
   .hc-track { --vis: 2; }
   .hc-next { display: none; }
+}
+
+/* Profile save bar — sticky bottom action that slides up only when there are
+   unsaved changes, so edits aren't silently lost on the long profile page.
+   Full-width fixed bar; inner content aligns to the same 720px column as the
+   cards above. Hidden (translated off-screen) until `.show`. */
+.profile-savebar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  background: var(--ivory);
+  border-top: 1px solid var(--stone-hair);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translateY(100%);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.32s var(--ease),
+    opacity 0.32s var(--ease),
+    visibility 0s linear 0.32s;
+}
+.profile-savebar.show {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.32s var(--ease),
+    opacity 0.32s var(--ease);
+}
+.profile-savebar-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.profile-savebar-msg {
+  min-width: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--stone);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-savebar-msg.is-error { color: #b3261e; }
+
+/* Filled primary Save button — stands out against the ivory bar. */
+.profile-savebar-save {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--noir);
+  border-radius: 999px;
+  background: var(--noir);
+  color: var(--ivory);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.7rem;
+  cursor: pointer;
+  transition:
+    background 0.2s var(--ease),
+    transform 0.2s var(--ease),
+    box-shadow 0.2s var(--ease),
+    opacity 0.2s var(--ease);
+}
+.profile-savebar-save:hover:not(:disabled) {
+  background: #000;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+}
+.profile-savebar-save:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+.profile-savebar-save:disabled { opacity: 0.45; cursor: default; }
+.profile-savebar-save svg { flex: 0 0 auto; }
+.profile-savebar-spin {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--ivory);
+  animation: profile-savebar-spin 0.7s linear infinite;
+}
+@keyframes profile-savebar-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .profile-savebar-inner { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .profile-savebar-save { padding: 0.75rem 1.35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-savebar { transform: none; transition: opacity 0.2s linear, visibility 0s linear 0.2s; }
+  .profile-savebar.show { transform: none; transition: opacity 0.2s linear; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Checkout "preparing" loader — shown from the moment a plan/top-up is chosen
+   until Razorpay's own sheet opens (the server creates the subscription + the
+   checkout script loads). Used by PlanCards, so it covers BOTH the subscription
+   modal and the /pricing page. z-index sits above the pricing modal (130) and
+   below Razorpay's max-z sheet, so it hands off seamlessly.
+   ───────────────────────────────────────────────────────────────────────────── */
+@keyframes otp-spin { to { transform: rotate(360deg); } }
+@keyframes otp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.checkout-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(5px);
+  animation: otp-fade 0.2s var(--ease);
+}
+.checkout-veil-spin {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--stone-soft);
+  border-top-color: var(--noir);
+  animation: otp-spin 0.7s linear infinite;
+}
+.checkout-veil-msg {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--taupe);
+}
+
+/* In-button spinner on the clicked CTA (button ink is light on the dark cta). */
+.cta-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.cta-spin {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: currentColor;
+  animation: otp-spin 0.7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .checkout-veil-spin, .cta-spin { animation-duration: 1.4s; }
 }

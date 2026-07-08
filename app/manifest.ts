@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "OneTap Atelier",
     short_name: "OneTap Atelier",
     description:
-      "A private edit of the season's most considered pieces - each seen on you before it is yours.",
+      "A curated luxury fashion membership. See pieces from 100+ designer brands on yourself before you buy. Curated edits, video try-ons, one membership.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAtelier } from "@/lib/store";
+import { useToast } from "@/components/Toast";
 import { useHydrated } from "@/lib/useHydrated";
 import { BRANDS } from "@/lib/data/brands";
 import {
@@ -30,6 +31,13 @@ function readAsDataURL(file: File): Promise<string> {
   });
 }
 
+/** Order-insensitive equality for the multi-select arrays (Brands, Style, …). */
+function sameSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((x) => set.has(x));
+}
+
 const PHOTOS: { kind: IdentityKind; label: string; hint?: string }[] = [
   { kind: "body", label: "Full length", hint: "Head to toe · powers try-on" },
   { kind: "selfie", label: "Face selfie", hint: "Head & shoulders" },
@@ -40,6 +48,7 @@ const PHOTOS: { kind: IdentityKind; label: string; hint?: string }[] = [
 
 export default function ProfilePanel() {
   const router = useRouter();
+  const toast = useToast();
   const redirecting = useRef(false);
   const hydrated = useHydrated();
   const email = useAtelier((s) => s.email);
@@ -83,6 +92,9 @@ export default function ProfilePanel() {
     Partial<Record<IdentityKind, { type: "error" | "ok" | "checking"; text: string }>>
   >({});
   const [busy, setBusy] = useState(false);
+  // Save-error message shown inline in the save bar, separate from the shared
+  // `status` used by the subscription actions (success is confirmed via a toast).
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [modelBusy, setModelBusy] = useState(false);
   const [modelMsg, setModelMsg] = useState<string | null>(null);
   const [topupBusy, setTopupBusy] = useState(false);
@@ -193,7 +205,7 @@ export default function ProfilePanel() {
 
   async function save() {
     setBusy(true);
-    setStatus(null);
+    setSaveMsg(null);
     setBrands(picked);
     applyProfile({
       name: name || null,
@@ -220,7 +232,16 @@ export default function ProfilePanel() {
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
-    setStatus(res.ok ? "Saved." : data?.error || "Could not save.");
+    if (res.ok) {
+      // Store is already updated above → dirty clears and the bar slides away;
+      // the toast confirms the save.
+      setSaveMsg(null);
+      toast.success("Profile saved");
+    } else {
+      const msg = data?.error || "Could not save.";
+      setSaveMsg(msg);
+      toast.error(msg);
+    }
   }
 
   async function cancelSubscription() {
@@ -252,6 +273,30 @@ export default function ProfilePanel() {
   // not surfaced. Flip to true to bring it back.
   const SHOW_MODEL = false;
 
+  // Simplified profile: hide height, the side/back photo slots (keep full-length
+  // + face only), and the Atelier Scenes prefs. State/handlers stay intact, so
+  // flipping any of these back to true fully restores the field/section.
+  const SHOW_HEIGHT = false;
+  const SHOW_SIDE_PHOTOS = false; // left / right / back capture slots
+  const SHOW_SCENES = false; // Atelier Scenes (mood + setting) preferences
+
+  // Unsaved-changes detection: compare the editable form values against the
+  // store baseline (save() writes the store, so this clears itself after saving).
+  const saveError = Boolean(saveMsg);
+  const dirty =
+    (name || "") !== (displayName || "") ||
+    height !== store.heightInches ||
+    !sameSet(picked, brands) ||
+    !sameSet(style, store.style) ||
+    !sameSet(categories, store.categories) ||
+    !sameSet(goals, store.goals) ||
+    !sameSet(mood, store.sceneMood) ||
+    !sameSet(setting, store.sceneSetting);
+  // Show the sticky bar while there are unsaved changes, a save is in flight, or
+  // the last save errored (so it can be retried). On success the bar slides away
+  // and a toast confirms the save.
+  const showSaveBar = dirty || busy || saveError;
+
   async function buyTopups() {
     setTopupBusy(true);
     try {
@@ -280,19 +325,23 @@ export default function ProfilePanel() {
         </label>
         <input className="admin-input" value={email ?? ""} disabled />
 
-        <label className="admin-label" style={{ marginTop: "1rem" }}>
-          Height
-        </label>
-        <select
-          className="admin-input"
-          value={height ?? ""}
-          onChange={(e) => setHeight(e.target.value ? Number(e.target.value) : null)}
-        >
-          <option value="">Prefer not to say</option>
-          {HEIGHTS.map((h) => (
-            <option key={h.inches} value={h.inches}>{h.label}</option>
-          ))}
-        </select>
+        {SHOW_HEIGHT && (
+          <>
+            <label className="admin-label" style={{ marginTop: "1rem" }}>
+              Height
+            </label>
+            <select
+              className="admin-input"
+              value={height ?? ""}
+              onChange={(e) => setHeight(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">Prefer not to say</option>
+              {HEIGHTS.map((h) => (
+                <option key={h.inches} value={h.inches}>{h.label}</option>
+              ))}
+            </select>
+          </>
+        )}
       </section>
 
       {/* Photographs */}
@@ -304,7 +353,9 @@ export default function ProfilePanel() {
         </p>
         <p className="admin-hint">{IMAGE_GUIDELINE}</p>
         <div className="profile-imgs">
-          {PHOTOS.map(({ kind, label, hint }) => (
+          {PHOTOS.filter(
+            ({ kind }) => SHOW_SIDE_PHOTOS || kind === "body" || kind === "selfie",
+          ).map(({ kind, label, hint }) => (
             <div key={kind} className="profile-img">
               <span className="admin-label">
                 {label}
@@ -387,16 +438,14 @@ export default function ProfilePanel() {
         <Multi label="What brings you here" options={GOALS} value={goals} onChange={setGoals} />
       </section>
 
-      {/* Atelier Scenes preferences */}
-      <section className="admin-card">
-        <h2 className="admin-subtitle">Atelier Scenes</h2>
-        <Multi label="Mood" options={MOODS} value={mood} onChange={setMood} />
-        <Multi label="Setting" options={SETTINGS} value={setting} onChange={setSetting} />
-        <button className="btn-line admin-btn" onClick={save} disabled={busy}>
-          {busy ? "Saving…" : "Save profile"}
-        </button>
-        {status && <p className="admin-status">{status}</p>}
-      </section>
+      {/* Atelier Scenes preferences - hidden for now (SHOW_SCENES). */}
+      {SHOW_SCENES && (
+        <section className="admin-card">
+          <h2 className="admin-subtitle">Atelier Scenes</h2>
+          <Multi label="Mood" options={MOODS} value={mood} onChange={setMood} />
+          <Multi label="Setting" options={SETTINGS} value={setting} onChange={setSetting} />
+        </section>
+      )}
 
       {/* Subscription */}
       <section className="admin-card">
@@ -476,11 +525,48 @@ export default function ProfilePanel() {
             </Link>
           </>
         )}
+        {status && <p className="admin-status">{status}</p>}
       </section>
 
       <button className="profile-signout" onClick={doSignOut}>
         Sign out
       </button>
+
+      {/* Sticky save bar - appears whenever there are unsaved changes (or a save
+          is in flight / errored), so edits aren't silently lost. On success it
+          slides away and a toast confirms. */}
+      <div
+        className={"profile-savebar" + (showSaveBar ? " show" : "")}
+        role="region"
+        aria-label="Save profile"
+        aria-hidden={!showSaveBar}
+      >
+        <div className="profile-savebar-inner">
+          <span className={"profile-savebar-msg" + (saveError ? " is-error" : "")}>
+            {busy ? "Saving…" : saveError ? saveMsg : "You have unsaved changes"}
+          </span>
+          <button
+            className="profile-savebar-save"
+            onClick={save}
+            disabled={busy || (!dirty && !saveError)}
+          >
+            {busy ? (
+              <>
+                <span className="profile-savebar-spin" aria-hidden="true" />
+                Saving…
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+                  <path d="M17 21v-8H7v8M7 3v5h8" />
+                </svg>
+                Save profile
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

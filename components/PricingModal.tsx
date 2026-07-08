@@ -44,13 +44,13 @@ export default function PricingModal() {
         </button>
 
         <div className="pricing-head">
-          <span className="label">{active ? "Your plan" : "Choose a plan"}</span>
+          <h2 className="pricing-title">
+            {active ? "Your Membership" : "Choose Your Membership"}
+          </h2>
           <p className="pricing-note">
-            {hydrated
-              ? active
-                ? `${remaining} try-on${remaining === 1 ? "" : "s"} left${usage.topupBalance > 0 ? ` (incl. ${usage.topupBalance} top-up)` : ""}. A try-on is a 360° spin or a film.`
-                : `${remaining} free try-on${remaining === 1 ? "" : "s"} left. Subscribe to keep creating - a try-on is a 360° spin or a film.`
-              : "Each plan includes a monthly allowance of try-ons (360° spins or films)."}
+            {hydrated && active
+              ? `${remaining} try-on${remaining === 1 ? "" : "s"} left${usage.topupBalance > 0 ? ` (incl. ${usage.topupBalance} top-up)` : ""}. A try-on is a 360° spin or a film.`
+              : "Join an exclusive curator-led luxury fashion membership. Try on pieces from 100+ designer brands before you buy."}
           </p>
         </div>
 

@@ -5,6 +5,7 @@ import { Heart, Download, Share2, ShoppingBag } from "lucide-react";
 import ResultMedia from "@/components/result/ResultMedia";
 import { useToast } from "@/components/Toast";
 import { downloadAsset } from "@/lib/download";
+import { lookUrl } from "@/lib/data/links";
 import { track } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 
@@ -96,12 +97,31 @@ export default function ResultStage({
   async function share() {
     if (canKeep === false) { onLocked?.(); return; }
     if (!shownLookId) return;
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/look/${shownLookId}`);
-    } catch {
-      /* clipboard unavailable */
-    }
+    const url = lookUrl(shownLookId, window.location.origin);
+    const title = caption?.name
+      ? `${caption.brand} — ${caption.name} · OneTap Atelier`
+      : "My OneTap Atelier try-on";
     track(EVENTS.RESULT_SHARED, { kind: showingTurn ? kind : "tryon", productId, lookId: shownLookId });
+
+    // Native share sheet where available (mostly mobile) — the expected "share".
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, text: title, url });
+        return;
+      } catch (e) {
+        // User dismissed the sheet → nothing more to do; any other error falls
+        // through to the copy-link fallback below.
+        if (e instanceof DOMException && e.name === "AbortError") return;
+      }
+    }
+
+    // Fallback: copy the shareable link and confirm it (matches Download's toast).
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied — share it anywhere");
+    } catch {
+      toast.error("Couldn’t open share. Copy the link from your browser.");
+    }
   }
   function shop() {
     if (!buyUrl) return;

@@ -12,9 +12,19 @@ import { createServiceClient } from "@/lib/supabase/server";
 
 const API_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.RESEND_FROM_EMAIL;
+const FROM_NAME = "OneTap Atelier";
 
 export function isEmailConfigured(): boolean {
   return Boolean(API_KEY && FROM);
+}
+
+/**
+ * From header WITH a display name so the inbox shows "OneTap Atelier" (not the
+ * bare address / account name). Honors an env value that already includes a name.
+ */
+function fromHeader(): string {
+  if (!FROM) return "";
+  return FROM.includes("<") ? FROM : `${FROM_NAME} <${FROM}>`;
 }
 
 interface LookEmailOpts {
@@ -27,8 +37,8 @@ interface LookEmailOpts {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-/** Minimal, email-client-safe HTML: a line, the poster (optional), a CTA button. */
-function lookEmailHtml({ lookUrl, posterUrl, kindLabel }: LookEmailOpts): string {
+/** Minimal, email-client-safe HTML: eyebrow, headline, line, poster (optional), CTA. */
+function lookEmailHtml({ lookUrl, posterUrl }: LookEmailOpts): string {
   const url = esc(lookUrl);
   const poster = posterUrl
     ? `<a href="${url}" style="text-decoration:none"><img src="${esc(posterUrl)}" alt="Your look" width="280" style="display:block;border:0;border-radius:14px;max-width:100%;margin:0 auto 26px" /></a>`
@@ -38,11 +48,11 @@ function lookEmailHtml({ lookUrl, posterUrl, kindLabel }: LookEmailOpts): string
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;background:#ffffff;border-radius:16px;padding:36px 32px;text-align:center">
       <tr><td>
         <div style="font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#8a8a8a;margin-bottom:18px">OneTap Atelier</div>
-        <div style="font-size:22px;line-height:1.25;font-weight:600;margin-bottom:8px">Your ${esc(kindLabel)} is ready</div>
-        <div style="font-size:15px;line-height:1.55;color:#6b6b6b;margin-bottom:26px">See yourself wearing the piece — tap below to watch and share your look.</div>
+        <div style="font-size:22px;line-height:1.25;font-weight:600;margin-bottom:8px">The piece, on you.</div>
+        <div style="font-size:15px;line-height:1.55;color:#6b6b6b;margin-bottom:26px">See yourself wearing the piece. It is waiting in your closet.</div>
         ${poster}
-        <a href="${url}" style="display:inline-block;background:#111111;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:14px 30px;border-radius:999px">Watch your look</a>
-        <div style="font-size:12px;color:#8a8a8a;margin-top:24px;word-break:break-all"><a href="${url}" style="color:#8a8a8a">${url}</a></div>
+        <a href="${url}" style="display:inline-block;background:#111111;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:14px 30px;border-radius:999px">See it on yourself</a>
+        <div style="font-size:12px;color:#b0b0b0;margin-top:22px"><a href="${url}" style="color:#b0b0b0;text-decoration:underline">Copy link to share</a></div>
       </td></tr>
     </table>
   </td></tr></table>
@@ -60,9 +70,9 @@ export async function sendLookReadyEmail(
       method: "POST",
       headers: { Authorization: `Bearer ${API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: FROM,
+        from: fromHeader(),
         to: [email],
-        subject: `Your ${opts.kindLabel} is ready — OneTap Atelier`,
+        subject: "Your video try-on is ready",
         html: lookEmailHtml(opts),
       }),
     });
