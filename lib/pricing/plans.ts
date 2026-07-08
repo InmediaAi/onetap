@@ -11,7 +11,7 @@
  */
 
 /** Paid subscription tiers (Razorpay). The `free` tier is not a subscription. */
-export type PlanId = "starter" | "pro" | "maison" | "gold" | "fan";
+export type PlanId = "starter" | "pro" | "maison" | "gold" | "client" | "fan";
 
 /** All billing tiers, including the display-only free tier. */
 export type BillingTierId = "free" | PlanId;
@@ -113,6 +113,21 @@ export const SEED_PLANS: BillingPlan[] = [
     sortOrder: 4,
   },
   {
+    // Final $1 LIVE test tier, for the international client's payment test.
+    // Price + Razorpay plan id are set in /admin (billing_plans). Flip active
+    // to false in /admin to hide it once testing is done.
+    id: "client",
+    name: "Client Test",
+    tagline: "Final live payment test.",
+    monthlyPrice: 1,
+    currency: "USD",
+    videoLimit: 5,
+    features: ["Live payment test tier", "5 try-ons / month"],
+    mostPopular: false,
+    active: true,
+    sortOrder: 6,
+  },
+  {
     // Campaign membership (FIFA "Viral Fan"). active:false → hidden from the
     // public /pricing page, but reachable via /fifa (subscribe doesn't filter
     // on active). Kept here so a missing/empty DB still resolves the tier +
@@ -147,6 +162,7 @@ export const RAZORPAY_PLAN_ENV: Partial<Record<PlanId, string>> = {
   pro: "RAZORPAY_PLAN_PRO",
   maison: "RAZORPAY_PLAN_MAISON",
   gold: "RAZORPAY_PLAN_GOLD",
+  client: "RAZORPAY_PLAN_CLIENT",
   fan: "RAZORPAY_PLAN_FAN",
 };
 
@@ -159,6 +175,7 @@ export const VIDEO_LIMIT: Partial<Record<PlanId, number>> = {
   pro: SEED_PLANS.find((p) => p.id === "pro")!.videoLimit,
   maison: SEED_PLANS.find((p) => p.id === "maison")!.videoLimit,
   gold: SEED_PLANS.find((p) => p.id === "gold")!.videoLimit,
+  client: SEED_PLANS.find((p) => p.id === "client")!.videoLimit,
   fan: SEED_PLANS.find((p) => p.id === "fan")!.videoLimit,
 };
 

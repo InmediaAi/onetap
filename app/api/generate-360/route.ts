@@ -8,6 +8,7 @@ import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { sendLookReadyEmailToUser } from "@/lib/external/email";
 import { lookUrl } from "@/lib/data/links";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -39,6 +40,11 @@ export async function POST(req: Request) {
     if (!image) {
       return NextResponse.json({ error: "image is required" }, { status: 400 });
     }
+
+    // Rate limit before reserving quota / calling the paid provider.
+    const uidForLimit = await currentUserId();
+    const limited = await enforceRateLimit(req, { ...LIMITS.generateVideo, id: uidForLimit });
+    if (limited) return limited;
 
     // Reserve one video against the user's quota before the paid call.
     const r = await reserveVideo();

@@ -3,6 +3,7 @@ import { getIdentityProvider } from "@/lib/ai";
 import { logGeneration, imageRefOf } from "@/lib/ai/logGeneration";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -40,7 +41,7 @@ async function toBytes(
  * role at {uid}/model (avatars RLS blocks users from writing that name), then
  * recorded in profiles.model_url. Free (image), no quota.
  */
-export async function POST() {
+export async function POST(req: Request) {
   const startedAt = Date.now();
   const sb = await createServerSupabase();
   if (!sb) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
@@ -49,6 +50,9 @@ export async function POST() {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+  const limited = await enforceRateLimit(req, { ...LIMITS.composite, id: user.id });
+  if (limited) return limited;
 
   const svc = createServiceClient();
   if (!svc) {

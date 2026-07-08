@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,10 @@ export async function POST(req: Request) {
   if (typeof body.website === "string" && body.website.trim() !== "") {
     return NextResponse.json({ ok: true });
   }
+
+  // Per-IP throttle on top of the honeypot to blunt spam floods.
+  const limited = await enforceRateLimit(req, LIMITS.partners);
+  if (limited) return limited;
 
   const name = str(body.name, 200);
   const email = str(body.email, 200);

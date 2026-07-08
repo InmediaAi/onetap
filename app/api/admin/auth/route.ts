@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkAdmin, isAdminEnabled } from "@/lib/admin/auth";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,9 @@ export async function POST(req: Request) {
       { status: 503 },
     );
   }
+  // Throttle password attempts per IP to blunt brute-force.
+  const limited = await enforceRateLimit(req, LIMITS.adminAuth);
+  if (limited) return limited;
   try {
     const { password } = await req.json();
     if (!checkAdmin(password)) {

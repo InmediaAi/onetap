@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { syncRegisteredBrands } from "@/lib/external/mailchimp";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 import {
   STYLES,
   CATEGORIES,
@@ -34,6 +35,9 @@ export async function PATCH(req: Request) {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+  const limited = await enforceRateLimit(req, { ...LIMITS.profile, id: user.id });
+  if (limited) return limited;
 
   const body = (await req.json()) as Record<string, unknown>;
 

@@ -5,6 +5,7 @@ import { composePrompt } from "@/lib/ai/prompts";
 import { logGeneration, imageRefOf } from "@/lib/ai/logGeneration";
 import { persistLook } from "@/lib/storage/looks";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 // 300s to match the video/360 routes - prompt-capable providers (GPT-Image) can
@@ -43,6 +44,11 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+
+    // Rate limit this (otherwise unmetered) AI call — by user when signed in, else IP.
+    const uidForLimit = await currentUserId();
+    const limited = await enforceRateLimit(req, { ...LIMITS.generateImage, id: uidForLimit });
+    if (limited) return limited;
 
     // All views of the same garment (primary first), deduped + capped - extra
     // reference images give the prompt-capable providers a more faithful render.

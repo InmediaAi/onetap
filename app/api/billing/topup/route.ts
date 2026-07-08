@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { getRazorpay, isRazorpayConfigured } from "@/lib/billing/razorpay";
 import { getPlans } from "@/lib/pricing/getPlans";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,9 @@ export async function POST(req: Request) {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+  const limited = await enforceRateLimit(req, { ...LIMITS.billing, id: user.id });
+  if (limited) return limited;
 
   if (!isRazorpayConfigured()) {
     return NextResponse.json({ error: "Billing not configured" }, { status: 503 });

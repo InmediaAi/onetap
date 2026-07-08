@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/ssr-server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getRazorpay, isRazorpayConfigured } from "@/lib/billing/razorpay";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,7 @@ export const runtime = "nodejs";
  * won't renew" right away, access is preserved until the period end, and the
  * plan never auto-renews (see consume_video()).
  */
-export async function POST() {
+export async function POST(req: Request) {
   const sb = await createServerSupabase();
   if (!sb) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
 
@@ -21,6 +22,9 @@ export async function POST() {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+  const limited = await enforceRateLimit(req, { ...LIMITS.billing, id: user.id });
+  if (limited) return limited;
 
   const { data: sub } = await sb
     .from("subscriptions")

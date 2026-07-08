@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/admin/auth";
 import { fetchPage } from "@/lib/admin/fetchPage";
 import { extractProduct } from "@/lib/admin/extract";
+import { enforceRateLimit, LIMITS } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -21,6 +22,11 @@ export async function POST(req: Request) {
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
     }
+
+    // Throttle outbound scrapes per IP (defends against the admin key being used
+    // to fan out fetches to arbitrary external URLs).
+    const limited = await enforceRateLimit(req, LIMITS.scrape);
+    if (limited) return limited;
 
     const page = await fetchPage(url);
     if (!page.ok) {

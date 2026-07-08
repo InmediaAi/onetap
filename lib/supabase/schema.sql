@@ -530,7 +530,9 @@ insert into billing_plans (id, name, tagline, monthly_price, video_limit, featur
   ('maison',  'Maison',  'For studios and brands producing at scale.',    129, 100,
      array['100 try-ons (360° or film) / month', 'Priority generation queue', 'Early access to new formats', 'Commercial usage rights', 'Concierge onboarding'], false, true, 3),
   ('gold',    'Gold Test', 'Small-amount live payment test.',             1,   5,
-     array['Live payment test tier', '5 try-ons / month'], false, true, 4)
+     array['Live payment test tier', '5 try-ons / month'], false, true, 4),
+  ('client',  'Client Test', 'Final live payment test.',                  1,   5,
+     array['Live payment test tier', '5 try-ons / month'], false, true, 6)
 on conflict (id) do nothing;
 
 -- Global billing settings (singleton row).
@@ -684,7 +686,7 @@ end; $$;
 -- the canonical constraint below). Kept in sync with the final constraint.
 alter table subscriptions drop constraint if exists subscriptions_plan_check;
 alter table subscriptions
-  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'maison', 'gold', 'fan'));
+  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'maison', 'gold', 'client', 'fan'));
 
 -- Seed a free subscription on signup (profile + free sub). Lifetime: end = NULL.
 create or replace function handle_new_user()
@@ -776,7 +778,7 @@ create policy "public read campaign_moments" on campaign_moments for select usin
 -- Additive 'fan' membership tier ($25 / 10 videos) — leaves free/starter/pro intact.
 alter table subscriptions drop constraint if exists subscriptions_plan_check;
 alter table subscriptions
-  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'maison', 'gold', 'fan'));
+  add constraint subscriptions_plan_check check (plan in ('free', 'starter', 'pro', 'maison', 'gold', 'client', 'fan'));
 
 insert into billing_plans (id, name, tagline, monthly_price, video_limit, features, most_popular, active, sort_order) values
   ('fan', 'Fan Membership', 'Keep every fan video you make.', 25, 10,
@@ -959,3 +961,56 @@ alter table profiles add column if not exists mailchimp_registered boolean not n
 -- via the "update own profile" RLS policy.
 -- ═══════════════════════════════════════════════════════════════════════════
 alter table profiles add column if not exists display_name text;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Rate limiting. A fixed-window counter, one row per key (e.g. "partners:1.2.3.4"
+-- or "generate-video:<user_id>"). The whole check+increment is a single atomic
+-- UPSERT — the ON CONFLICT DO UPDATE locks the row, so there is no race. Called
+-- ONLY via the service role / this SECURITY DEFINER fn (lib/security/rateLimit.ts).
+-- ═══════════════════════════════════════════════════════════════════════════
+create table if not exists rate_limits (
+  key          text primary key,
+  count        integer not null default 0,
+  window_start timestamptz not null default now()
+);
+-- No policies → anon/authenticated cannot read or write; only the service role
+-- (which bypasses RLS) and the SECURITY DEFINER function below touch it.
+alter table rate_limits enable row level security;
+
+-- Register a hit against `p_key`. Resets the window when it has elapsed.
+-- Returns { allowed:bool, count:int, reset_at:timestamptz }.
+create or replace function hit_rate_limit(p_key text, p_limit int, p_window_seconds int)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r      rate_limits%rowtype;
+  now_ts timestamptz := now();
+begin
+  insert into rate_limits (key, count, window_start)
+    values (p_key, 1, now_ts)
+  on conflict (key) do update set
+    count = case
+              when rate_limits.window_start < now_ts - make_interval(secs => p_window_seconds)
+              then 1
+              else rate_limits.count + 1
+            end,
+    window_start = case
+              when rate_limits.window_start < now_ts - make_interval(secs => p_window_seconds)
+              then now_ts
+              else rate_limits.window_start
+            end
+  returning * into r;
+
+  return jsonb_build_object(
+    'allowed', r.count <= p_limit,
+    'count', r.count,
+    'reset_at', r.window_start + make_interval(secs => p_window_seconds)
+  );
+end;
+$$;
+
+-- End users must never call this directly (service role only).
+revoke all on function hit_rate_limit(text, int, int) from anon, authenticated;
