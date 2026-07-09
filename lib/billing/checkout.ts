@@ -27,22 +27,42 @@ function loadScript(): Promise<boolean> {
 }
 
 /**
- * After a captured payment, poll the (no-store) profile until the expected change
- * lands — the webhook is async and `/api/me` self-heals a stuck `created` sub via
- * Razorpay. Each refresh hydrates the store, so the UI unlocks reactively with no
- * page reload. Falls back to a hard reload if the webhook is unusually slow.
+ * After a captured payment, drive the post-payment overlay (store `paymentFlow`)
+ * while polling the (no-store) profile until the expected change lands — the
+ * webhook is async and `/api/me` self-heals a stuck `created` sub via Razorpay.
+ * Each refresh hydrates the store, so the UI unlocks reactively. On confirmation
+ * we show the celebration; if it never confirms within the budget we surface a
+ * calm error (NO hard reload, so the overlay is never wiped).
  */
-async function settleAfterPayment(isDone: () => boolean): Promise<void> {
-  const refresh = useAtelier.getState().refreshProfile;
-  for (let i = 0; i < 8; i++) {
-    await refresh(); // no-store /api/me → hydrate usage/profile
-    if (isDone()) {
-      useAtelier.getState().closePricing();
+async function settleAfterPayment(opts: {
+  kind: "subscription" | "topup";
+  isDone: () => boolean;
+  /** Try-ons unlocked/added, read AFTER confirmation (reflects the new plan). */
+  unlockedOf: () => number;
+  planName?: string | null;
+}): Promise<void> {
+  const store = useAtelier;
+  store.getState().beginPaymentSettle(opts.kind);
+
+  // ~12 attempts with a gentle backoff ≈ 25–30s of polling.
+  for (let i = 0; i < 12; i++) {
+    try {
+      await store.getState().refreshProfile(); // no-store /api/me → hydrate usage
+    } catch {
+      /* transient network — keep polling */
+    }
+    if (opts.isDone()) {
+      store.getState().paymentSettled(opts.unlockedOf(), opts.planName ?? null);
+      store.getState().closePricing(); // drop the pricing modal behind the celebration
       return;
     }
-    await new Promise((r) => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, i < 5 ? 1500 : 2500));
   }
-  window.location.reload(); // fallback — webhook still not reflected
+  store
+    .getState()
+    .paymentFailed(
+      "If you were charged, your membership will update shortly and we'll email you.",
+    );
 }
 
 export async function startSubscription(planId: PlanId): Promise<void> {
@@ -92,7 +112,17 @@ export async function startSubscription(planId: PlanId): Promise<void> {
       const currency = plan?.currency || "USD";
       metaTrack("Subscribe", { value, currency, predicted_ltv: value, content_name: `${planId} plan` });
       metaTrack("Purchase", { value, currency, content_name: `${planId} plan`, content_type: "subscription" });
-      void settleAfterPayment(() => useAtelier.getState().usage.status === "active");
+      void settleAfterPayment({
+        kind: "subscription",
+        // Match the PLAN too, so a plan-switch (old plan already `active`)
+        // doesn't read as done before the new plan activates.
+        isDone: () => {
+          const u = useAtelier.getState().usage;
+          return u.status === "active" && u.planId === planId;
+        },
+        unlockedOf: () => useAtelier.getState().usage.videoLimit,
+        planName: plan?.name ?? null,
+      });
     },
   });
   rzp.open();
@@ -159,9 +189,11 @@ export async function startTopup(quantity: number): Promise<void> {
         currency: data.currency || "USD",
         content_name: "video top-up",
       });
-      void settleAfterPayment(
-        () => useAtelier.getState().usage.topupBalance > startBalance,
-      );
+      void settleAfterPayment({
+        kind: "topup",
+        isDone: () => useAtelier.getState().usage.topupBalance > startBalance,
+        unlockedOf: () => data.quantity,
+      });
     },
   });
   rzp.open();

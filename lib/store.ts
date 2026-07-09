@@ -70,6 +70,26 @@ export interface UsageSnapshot {
   freeTrialRemaining: number;
 }
 
+/** Post-payment "settling → celebration" overlay (transient; not persisted). */
+export type PaymentPhase = "idle" | "settling" | "success" | "error";
+export interface PaymentFlow {
+  phase: PaymentPhase;
+  kind: "subscription" | "topup" | null;
+  /** Try-ons unlocked (plan allowance) / added (top-up qty), shown on success. */
+  unlocked: number | null;
+  planName: string | null;
+  /** Copy for the error phase. */
+  message: string | null;
+}
+
+const EMPTY_PAYMENT_FLOW: PaymentFlow = {
+  phase: "idle",
+  kind: null,
+  unlocked: null,
+  planName: null,
+  message: null,
+};
+
 /** Shape pushed by SessionLoader from GET /api/me. */
 export interface ProfileSnapshot {
   onboarded: boolean;
@@ -162,6 +182,8 @@ interface AtelierState {
   signInOpen: boolean;
   /** The generation the global island is currently running (Curator/360/Creator). */
   activeTryOn: TryOnJob | null;
+  /** Post-payment settling/celebration overlay state. */
+  paymentFlow: PaymentFlow;
 
   // ── Setters ──
   setPortrait: (url: string) => void;
@@ -189,6 +211,14 @@ interface AtelierState {
   closePricing: () => void;
   openSignIn: () => void;
   closeSignIn: () => void;
+  /** Enter the post-payment settling overlay (no-op if already settling). */
+  beginPaymentSettle: (kind: "subscription" | "topup") => void;
+  /** Payment confirmed → celebration with the unlocked/added try-on count. */
+  paymentSettled: (unlocked: number, planName: string | null) => void;
+  /** Payment couldn't be confirmed → calm error state with the given copy. */
+  paymentFailed: (message: string) => void;
+  /** Dismiss the post-payment overlay. */
+  closePaymentFlow: () => void;
   /** Start a generation on the global island. Returns false if one is already in
    *  progress (single-session — the island enforces one try-on at a time). */
   startTryOn: (job: TryOnJob) => boolean;
@@ -225,6 +255,7 @@ export const useAtelier = create<AtelierState>()(
       pricingOpen: false,
       signInOpen: false,
       activeTryOn: null,
+      paymentFlow: EMPTY_PAYMENT_FLOW,
 
       setPortrait: (url) => set({ portrait: url }),
       clearPortrait: () => set({ portrait: null }),
@@ -369,6 +400,19 @@ export const useAtelier = create<AtelierState>()(
         track(EVENTS.SIGN_IN_REQUIRED);
       },
       closeSignIn: () => set({ signInOpen: false }),
+      beginPaymentSettle: (kind) => {
+        if (get().paymentFlow.phase === "settling") return; // re-entrancy guard
+        set({
+          paymentFlow: { ...EMPTY_PAYMENT_FLOW, phase: "settling", kind },
+        });
+      },
+      paymentSettled: (unlocked, planName) =>
+        set((s) => ({
+          paymentFlow: { ...s.paymentFlow, phase: "success", unlocked, planName },
+        })),
+      paymentFailed: (message) =>
+        set((s) => ({ paymentFlow: { ...s.paymentFlow, phase: "error", message } })),
+      closePaymentFlow: () => set({ paymentFlow: EMPTY_PAYMENT_FLOW }),
       startTryOn: (job) => {
         if (get().activeTryOn) return false; // one try-on at a time
         set({ activeTryOn: job });

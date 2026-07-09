@@ -70,7 +70,10 @@
       "Bash(python3 -)",
       "Bash(curl -s \"http://localhost:3000/api/products?newIn=1&page=1&pageSize=20\")",
       "Bash(curl -s \"http://localhost:3000/api/products?page=1&pageSize=20\")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('total=',d.get\\('total'\\),'returned=',len\\(d.get\\('products',[]\\)\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('total=',d.get\\('total'\\),'returned=',len\\(d.get\\('products',[]\\)\\)\\)\")",
+      "Bash(awk '/^\\\\.plan-card \\\\{/{f=1} f{print} /^\\\\}/{if\\(f\\)exit}' app/globals.css)",
+      "Bash(read -r line)",
+      "Bash(:)"
     ],
     "additionalDirectories": [
       "/Users/ashish/Documents/AMJ26/onetapai/app/try/[productId]",

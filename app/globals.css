@@ -2718,7 +2718,7 @@
   position: relative;
   width: 100%;
   max-width: 420px;
-  background: var(--noir-raise);
+  background: var(--ivory);
   border: 1px solid var(--stone-soft);
   border-radius: 18px;
   padding: 32px 28px 22px;
@@ -2728,6 +2728,12 @@
   position: absolute;
   top: 16px;
   right: 16px;
+  color: var(--noir);
+  border-color: var(--stone-soft);
+}
+.pricing-close:hover {
+  background: var(--noir);
+  color: var(--ivory);
 }
 .pricing-head {
   text-align: center;
@@ -2768,6 +2774,15 @@
   color: var(--taupe);
   max-width: 42ch;
   margin: 0 auto;
+}
+.pricing-subnote {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--stone);
+  max-width: 42ch;
+  margin: 10px auto 0;
 }
 .pkgs {
   display: flex;
@@ -3602,17 +3617,21 @@
   flex-direction: column;
   gap: 11px;
 }
+/* Included features = primary (dark, regular weight). Excluded = secondary
+   (muted grey, still legible). Distinguished by COLOUR, not heavy weight —
+   the editorial house style favours light, even type. */
 .plan-feats li {
   font-family: var(--sans);
-  font-weight: 600;
+  font-weight: 400;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
+  letter-spacing: 0.005em;
   color: var(--noir);
   white-space: pre-line;
 }
 .plan-feats li.no {
-  font-weight: 300;
-  color: var(--stone-soft);
+  font-weight: 400;
+  color: var(--stone);
 }
 .plan-cta {
   margin-top: auto;
@@ -3714,7 +3733,7 @@
   font-family: var(--serif);
   font-weight: 400;
   font-size: 34px;
-  color: var(--ivory);
+  color: var(--noir);
   margin: 12px 0 8px;
 }
 .pricing-card .plan-price span {
@@ -3726,22 +3745,13 @@
   margin-bottom: 18px;
   gap: 9px;
 }
+/* Inherit the light-theme feature styling (bold noir ✓ lines / gray – lines);
+   only the modal's tighter type size differs. */
 .pricing-card .plan-feats li {
-  color: var(--ivory);
   font-size: 13px;
 }
-.pricing-card .plan-feats li svg {
-  color: var(--stone);
-}
 .pricing-card .plan-cta {
-  background: var(--stone);
-  color: var(--noir);
   padding: 13px;
-}
-.pricing-card .plan-cta.current {
-  background: transparent;
-  color: var(--stone);
-  border-color: var(--stone-soft);
 }
 .topup {
   max-width: 1000px;
@@ -6951,4 +6961,183 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .checkout-veil-spin, .cta-spin { animation-duration: 1.4s; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Post-payment "settling → celebration" overlay (MembershipCelebration). Light,
+   on-brand popup. Sits above the pricing modal (130) + checkout veil (200).
+   ───────────────────────────────────────────────────────────────────────────── */
+.mship-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 17, 17, 0.42);
+  backdrop-filter: blur(4px);
+}
+.mship-card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 400px;
+  background: var(--ivory);
+  border: 1px solid var(--stone-soft);
+  border-radius: 20px;
+  padding: 40px 34px 32px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+}
+.mship-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.45rem, 4.6vw, 1.9rem);
+  line-height: 1.15;
+  color: var(--noir);
+  margin: 20px 0 0;
+}
+.mship-line {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 1.05rem;
+  color: var(--noir);
+  margin: 10px 0 0;
+}
+.mship-sub {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--taupe);
+  max-width: 34ch;
+  margin: 8px auto 0;
+}
+
+/* Settling loader — thin ring + three pulsing dots. */
+.mship-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.mship-ring {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--stone-soft);
+  border-top-color: var(--noir);
+  animation: otp-spin 0.8s linear infinite;
+}
+.mship-dots {
+  display: inline-flex;
+  gap: 7px;
+}
+.mship-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--stone);
+  animation: mship-dot 1.1s ease-in-out infinite;
+}
+.mship-dots i:nth-child(2) { animation-delay: 0.16s; }
+.mship-dots i:nth-child(3) { animation-delay: 0.32s; }
+@keyframes mship-dot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Success / error badge — SVG stroke-draw. */
+.mship-badge {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+}
+.mship-badge svg { width: 72px; height: 72px; display: block; }
+.mship-badge-circle {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: mship-draw-circle 0.55s var(--ease) forwards;
+}
+.mship-badge-mark {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 64;
+  stroke-dashoffset: 64;
+  animation: mship-draw-mark 0.4s 0.4s var(--ease) forwards;
+}
+.mship-badge.success .mship-badge-circle,
+.mship-badge.success .mship-badge-mark { stroke: #1e8e5a; }
+.mship-badge.success { filter: drop-shadow(0 4px 14px rgba(30, 142, 90, 0.25)); }
+.mship-badge.error .mship-badge-circle,
+.mship-badge.error .mship-badge-mark { stroke: #c0564e; }
+@keyframes mship-draw-circle { to { stroke-dashoffset: 0; } }
+@keyframes mship-draw-mark { to { stroke-dashoffset: 0; } }
+
+/* Buttons. */
+.mship-btn {
+  margin-top: 24px;
+  min-width: 150px;
+  background: var(--noir);
+  color: var(--ivory);
+  border: 1px solid var(--noir);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 13px 26px;
+  border-radius: 999px;
+  transition: opacity 0.2s var(--ease);
+}
+.mship-btn:hover:not(:disabled) { opacity: 0.85; }
+.mship-btn:disabled { opacity: 0.5; cursor: default; }
+.mship-btn.ghost {
+  background: transparent;
+  color: var(--noir);
+  border-color: var(--stone-soft);
+}
+.mship-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.mship-actions .mship-btn { min-width: 120px; }
+
+/* Confetti burst (success only; suppressed under reduced motion). */
+.mship-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mship-confetti-piece {
+  position: absolute;
+  top: -12%;
+  width: 7px;
+  height: 12px;
+  opacity: 0;
+  animation-name: mship-fall;
+  animation-timing-function: cubic-bezier(0.3, 0.6, 0.5, 1);
+  animation-fill-mode: forwards;
+}
+.mship-confetti-piece.round { width: 8px; height: 8px; border-radius: 50%; }
+@keyframes mship-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(360px) rotate(var(--r, 180deg)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mship-ring { animation-duration: 1.4s; }
+  .mship-badge-circle, .mship-badge-mark { animation: none; stroke-dashoffset: 0; }
+  .mship-dots i { animation: none; opacity: 0.7; }
 }
