@@ -80,28 +80,28 @@ export default function ResultStage({
   const kind = turnLabel === "Film" ? "video" : "spin";
   const showingTurn = view === "turn" && Boolean(video);
   const videoPhase = phase === "spin" || phase === "video";
-  const hasResult = Boolean(image || video);
   const shownLookId = showingTurn ? videoLookId : imageLookId;
 
+  // Download/Share are only offered once the video clip exists and target THAT
+  // clip — the still-image had no shareable purpose and could fail to download.
   async function download() {
     if (canKeep === false) { onLocked?.(); return; }
-    const url = showingTurn ? video : image;
-    if (!url) return;
-    const filename = `onetap-${productId ?? "look"}-${showingTurn ? "result" : "tryon"}`;
-    const viewUrl = await downloadAsset(url, filename);
+    if (!video) return;
+    const filename = `onetap-${productId ?? "look"}-result`;
+    const viewUrl = await downloadAsset(video, filename);
     toast.success("Download complete", {
       action: { label: "View", onClick: () => window.open(viewUrl, "_blank", "noopener") },
     });
-    track(EVENTS.RESULT_DOWNLOADED, { kind: showingTurn ? kind : "tryon", productId, lookId: shownLookId });
+    track(EVENTS.RESULT_DOWNLOADED, { kind, productId, lookId: videoLookId });
   }
   async function share() {
     if (canKeep === false) { onLocked?.(); return; }
-    if (!shownLookId) return;
-    const url = lookUrl(shownLookId, window.location.origin);
+    if (!videoLookId) return;
+    const url = lookUrl(videoLookId, window.location.origin);
     const title = caption?.name
       ? `${caption.brand} — ${caption.name} · OneTap Atelier`
       : "My OneTap Atelier try-on";
-    track(EVENTS.RESULT_SHARED, { kind: showingTurn ? kind : "tryon", productId, lookId: shownLookId });
+    track(EVENTS.RESULT_SHARED, { kind, productId, lookId: videoLookId });
 
     // Native share sheet where available (mostly mobile) — the expected "share".
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -131,27 +131,36 @@ export default function ResultStage({
 
   return (
     <div className="modal-stage">
-      {/* left thumbnail rail - try-on still (middleware) + the moving result */}
-      {(image || video || videoPhase) && (
+      {/* left thumbnail rail — status-labelled reference frames: the try-on still
+          (image) + the moving result (video). Each frame reports its own state so
+          the wait is informative. */}
+      {(image || video || videoPhase || phase === "tryon") && (
         <div className="thumbrail">
-          {image && (
+          {/* Image try-on */}
+          {image ? (
             <div
               className={"trthumb" + (!showingTurn ? " on" : "")}
               onClick={() => setView("tryon")}
               role="button"
-              aria-label="View try-on image"
+              aria-label="View image try-on"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={image} alt="" />
-              <span className="tl">Try-On</span>
+              <span className="tl">✓ Image Try-On</span>
             </div>
-          )}
+          ) : phase === "tryon" ? (
+            <div className="trthumb" aria-label="Image try-on generating">
+              <span className="ph">Creating Image Try-On…</span>
+            </div>
+          ) : null}
+
+          {/* Video try-on (360° / film) */}
           {video ? (
             <div
               className={"trthumb" + (showingTurn ? " on" : "")}
               onClick={() => setView("turn")}
               role="button"
-              aria-label={`View ${turnLabel}`}
+              aria-label="View video try-on"
             >
               {poster ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -159,11 +168,11 @@ export default function ResultStage({
               ) : (
                 <video src={video} muted playsInline />
               )}
-              <span className="tl">{turnLabel}</span>
+              <span className="tl">✓ Video Try-On</span>
             </div>
           ) : videoPhase ? (
-            <div className="trthumb" aria-label={`${turnLabel} generating`}>
-              <span className="ph">{turnLabel}…</span>
+            <div className="trthumb" aria-label="Video try-on generating">
+              <span className="ph">Creating Video Try-On…</span>
             </div>
           ) : null}
         </div>
@@ -204,12 +213,17 @@ export default function ResultStage({
               <Heart className="fillable" size={18} strokeWidth={1.4} />
             </button>
           )}
-          <button className="act" onClick={download} disabled={!hasResult} title="Download">
-            <Download size={18} strokeWidth={1.4} />
-          </button>
-          <button className="act" onClick={share} disabled={!shownLookId} title="Share">
-            <Share2 size={18} strokeWidth={1.4} />
-          </button>
+          {/* Download + Share appear only once the video clip is ready. */}
+          {video && (
+            <>
+              <button className="act" onClick={download} title="Download">
+                <Download size={18} strokeWidth={1.4} />
+              </button>
+              <button className="act" onClick={share} disabled={!videoLookId} title="Share">
+                <Share2 size={18} strokeWidth={1.4} />
+              </button>
+            </>
+          )}
           {buyUrl && (
             <button className="act" onClick={shop} title="Shop this piece">
               <ShoppingBag size={18} strokeWidth={1.4} />

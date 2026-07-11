@@ -1355,12 +1355,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 4px 0;
+  padding: 4px 3px;
   text-align: center;
+  line-height: 1.3;
   background: rgba(0, 0, 0, 0.7);
   font-family: var(--sans);
   font-size: 8px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ivory);
 }
@@ -1370,10 +1371,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 7px;
+  text-align: center;
+  line-height: 1.35;
   font-family: var(--serif);
   font-style: italic;
   color: rgba(255, 255, 255, 0.5);
-  font-size: 13px;
+  font-size: 10.5px;
 }
 
 /* media frame */
