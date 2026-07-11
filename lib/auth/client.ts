@@ -1,7 +1,13 @@
 "use client";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
-import { metaTrack } from "@/lib/analytics";
+import { metaTrack, gaTrack } from "@/lib/analytics";
+
+/** Sign-in intent → Meta "Lead" + GA4 "generate_lead" (a key-event KPI). */
+function trackLead(method: string, next: string): void {
+  metaTrack("Lead", { method, next });
+  gaTrack("generate_lead", { method });
+}
 
 /** Client auth + identity-image helpers (browser Supabase client). */
 
@@ -11,7 +17,7 @@ export async function signInWithProvider(
 ): Promise<void> {
   const sb = createBrowserSupabase();
   if (!sb) throw new Error("Auth is not configured");
-  metaTrack("Lead", { method: provider, next }); // sign-in intent (Meta Pixel)
+  trackLead(provider, next); // sign-in intent
   await sb.auth.signInWithOAuth({
     provider,
     options: {
@@ -36,7 +42,7 @@ export function openAuthPopup(provider: "google" | "apple", next = "/fifa"): Win
     "width=480,height=720,menubar=no,toolbar=no,location=no,status=no",
   );
   if (!popup) return null; // blocked
-  metaTrack("Lead", { method: provider, next });
+  trackLead(provider, next);
   const sb = createBrowserSupabase();
   if (!sb) {
     popup.close();
@@ -67,7 +73,7 @@ export function openAuthPopup(provider: "google" | "apple", next = "/fifa"): Win
 export async function signInWithEmail(email: string, next = "/onboarding"): Promise<void> {
   const sb = createBrowserSupabase();
   if (!sb) throw new Error("Auth is not configured");
-  metaTrack("Lead", { method: "email", next });
+  trackLead("email", next);
   const { error } = await sb.auth.signInWithOtp({
     email,
     options: {

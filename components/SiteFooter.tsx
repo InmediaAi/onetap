@@ -77,9 +77,6 @@ export default function SiteFooter() {
                   <Link href="/refunds">Cancellation &amp; Refunds</Link>
                 </li>
                 <li>
-                  <Link href="/shipping">Shipping &amp; Delivery</Link>
-                </li>
-                <li>
                   <Link href="/contact">Contact</Link>
                 </li>
               </ul>

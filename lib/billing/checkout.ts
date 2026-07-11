@@ -1,6 +1,6 @@
 "use client";
 
-import { track, metaTrack } from "@/lib/analytics";
+import { track, metaTrack, gaTrack } from "@/lib/analytics";
 import { EVENTS } from "@/lib/analytics/events";
 import { getPlan, type PlanId } from "@/lib/pricing/plans";
 import { useAtelier } from "@/lib/store";
@@ -40,6 +40,8 @@ async function settleAfterPayment(opts: {
   /** Try-ons unlocked/added, read AFTER confirmation (reflects the new plan). */
   unlockedOf: () => number;
   planName?: string | null;
+  /** Fired once on confirmed activation (e.g. the GA4 subscription_activated KPI). */
+  onConfirmed?: () => void;
 }): Promise<void> {
   const store = useAtelier;
   store.getState().beginPaymentSettle(opts.kind);
@@ -54,6 +56,7 @@ async function settleAfterPayment(opts: {
     if (opts.isDone()) {
       store.getState().paymentSettled(opts.unlockedOf(), opts.planName ?? null);
       store.getState().closePricing(); // drop the pricing modal behind the celebration
+      opts.onConfirmed?.();
       return;
     }
     await new Promise((r) => setTimeout(r, i < 5 ? 1500 : 2500));
@@ -67,6 +70,23 @@ async function settleAfterPayment(opts: {
 
 export async function startSubscription(planId: PlanId): Promise<void> {
   track(EVENTS.SUBSCRIBE_CLICKED, { planId });
+  // GA4 ecommerce: begin_checkout with the plan's value/currency.
+  {
+    const plan = getPlan(planId);
+    gaTrack("begin_checkout", {
+      currency: plan?.currency || "USD",
+      value: plan?.monthlyPrice,
+      items: [
+        {
+          item_id: planId,
+          item_name: plan?.name ?? planId,
+          item_category: "subscription",
+          price: plan?.monthlyPrice,
+          quantity: 1,
+        },
+      ],
+    });
+  }
 
   let data: { subscriptionId: string; keyId: string };
   try {
@@ -112,6 +132,21 @@ export async function startSubscription(planId: PlanId): Promise<void> {
       const currency = plan?.currency || "USD";
       metaTrack("Subscribe", { value, currency, predicted_ltv: value, content_name: `${planId} plan` });
       metaTrack("Purchase", { value, currency, content_name: `${planId} plan`, content_type: "subscription" });
+      // GA4 revenue: purchase (transaction_id dedupes if fired more than once).
+      gaTrack("purchase", {
+        transaction_id: data.subscriptionId,
+        currency,
+        value,
+        items: [
+          {
+            item_id: planId,
+            item_name: plan?.name ?? planId,
+            item_category: "subscription",
+            price: value,
+            quantity: 1,
+          },
+        ],
+      });
       void settleAfterPayment({
         kind: "subscription",
         // Match the PLAN too, so a plan-switch (old plan already `active`)
@@ -122,6 +157,8 @@ export async function startSubscription(planId: PlanId): Promise<void> {
         },
         unlockedOf: () => useAtelier.getState().usage.videoLimit,
         planName: plan?.name ?? null,
+        // Confirmed activation → the subscription_activated KPI (GA4 + Mixpanel).
+        onConfirmed: () => track(EVENTS.SUBSCRIPTION_ACTIVATED, { planId }),
       });
     },
   });
@@ -169,6 +206,22 @@ export async function startTopup(quantity: number): Promise<void> {
   // Balance before payment — poll until the webhook credits the top-up.
   const startBalance = useAtelier.getState().usage.topupBalance;
 
+  const topupValue = typeof data.amount === "number" ? data.amount / 100 : undefined;
+  // GA4 ecommerce: begin_checkout for the top-up order.
+  gaTrack("begin_checkout", {
+    currency: data.currency || "USD",
+    value: topupValue,
+    items: [
+      {
+        item_id: "topup",
+        item_name: "Video top-up",
+        item_category: "topup",
+        price: topupValue,
+        quantity: data.quantity,
+      },
+    ],
+  });
+
   const rzp = new RZP({
     key: data.keyId,
     order_id: data.orderId,
@@ -185,9 +238,24 @@ export async function startTopup(quantity: number): Promise<void> {
       // Payment captured; webhook credits the balance. Fire the Meta Purchase
       // (Razorpay amount is in the smallest unit), then poll for the new balance.
       metaTrack("Purchase", {
-        value: typeof data.amount === "number" ? data.amount / 100 : undefined,
+        value: topupValue,
         currency: data.currency || "USD",
         content_name: "video top-up",
+      });
+      // GA4 revenue: purchase for the top-up.
+      gaTrack("purchase", {
+        transaction_id: data.orderId,
+        currency: data.currency || "USD",
+        value: topupValue,
+        items: [
+          {
+            item_id: "topup",
+            item_name: "Video top-up",
+            item_category: "topup",
+            price: topupValue,
+            quantity: data.quantity,
+          },
+        ],
       });
       void settleAfterPayment({
         kind: "topup",
