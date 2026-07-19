@@ -3,7 +3,12 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import SiteFooter from "@/components/SiteFooter";
 import ProductLanding from "@/components/campaign/ProductLanding";
+import JsonLd from "@/components/seo/JsonLd";
 import { fetchProduct } from "@/lib/data/getProducts";
+import { campaignPath, campaignUrl } from "@/lib/data/links";
+import { productSchema } from "@/lib/seo/schema";
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 /**
  * Per-product campaign landing page (PDP) - /try/{brand}/{slug}/{id}. The id is
@@ -26,6 +31,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: { canonical: campaignPath(product) },
     openGraph: { title, description, type: "website", images: image ? [image] : undefined },
     twitter: { card: "summary_large_image", title, description, images: image ? [image] : undefined },
   };
@@ -43,7 +49,10 @@ export default async function CampaignProductPage({
     <main className="page-shell">
       <Header />
       {product ? (
-        <ProductLanding product={product} />
+        <>
+          <JsonLd data={productSchema(product, campaignUrl(product, SITE))} />
+          <ProductLanding product={product} />
+        </>
       ) : (
         <div className="pdp-missing">
           <p className="eyebrow">OneTap Atelier</p>

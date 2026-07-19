@@ -68,11 +68,9 @@ export default function SignInModal() {
         </button>
 
         <div className="pricing-head">
-          <span className="label">Sign in to continue</span>
-          <p className="pricing-note">
-            Create an account to see yourself in the piece. Your likeness stays
-            private to you.
-          </p>
+          <h2 className="pricing-title">
+            Just a step away to try any piece on you, and see the magic.
+          </h2>
         </div>
 
         <div className="signin-actions">
@@ -84,6 +82,8 @@ export default function SignInModal() {
           </button>
           {err && <p className="studio-err">{err}</p>}
         </div>
+
+        <p className="signin-trust">Free to start · your likeness stays private</p>
       </div>
     </div>
   );

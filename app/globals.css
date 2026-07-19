@@ -5491,7 +5491,21 @@
 
 /* ── Sign-in modal (generation gate) — reuses pricing-card/oauth-btn ── */
 .signin-card { max-width: 380px; }
+/* A single convincing headline (no small print) — sized down from the big
+   pricing title so the longer sentence sits comfortably in the compact card. */
+.signin-card .pricing-title {
+  font-size: clamp(1.2rem, 4.6vw, 1.55rem);
+  line-height: 1.28;
+}
 .signin-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.25rem; }
+.signin-trust {
+  margin-top: 0.9rem;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--taupe);
+}
 
 /* ════════════════════════════════════════════════════════════════════
    LANDING — root marketing page. Editorial template re-skinned into the
@@ -7144,4 +7158,195 @@
   .mship-ring { animation-duration: 1.4s; }
   .mship-badge-circle, .mship-badge-mark { animation: none; stroke-dashoffset: 0; }
   .mship-dots i { animation: none; opacity: 0.7; }
+}
+
+/* Curator hero — sized down so the actual pieces are visible on landing. The
+   global .sec-hero h1 (40–64px) is too large for this page/hook; here it's one
+   restrained line on desktop and two compact lines on phones. Curator-only. */
+.sec-hero.curator-hero h1 {
+  font-size: clamp(24px, 3.8vw, 36px);
+  line-height: 1.14;
+}
+@media (max-width: 640px) {
+  .curator-hero {
+    padding-top: 22px;
+    padding-bottom: 14px;
+  }
+  .curator-hero .eyebrow {
+    margin-bottom: 9px;
+  }
+  .curator-hero .sec-sub {
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin-top: 9px;
+    max-width: 42ch;
+  }
+}
+
+/* ── Programmatic SEO landing pages (occasion / category / brand×category) ── */
+.seo-styling {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--taupe);
+  max-width: 60ch;
+  margin: 1rem 0 0;
+}
+.seo-faq {
+  margin: clamp(3rem, 7vw, 5rem) 0 0;
+  padding-top: 2.4rem;
+  border-top: 1px solid var(--stone-soft);
+}
+.seo-faq-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  color: var(--noir);
+  margin: 0 0 1.6rem;
+}
+.seo-faq-item {
+  max-width: 68ch;
+  margin: 0 0 1.5rem;
+}
+.seo-faq-item h3 {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1.02rem;
+  color: var(--noir);
+  margin: 0 0 0.4rem;
+}
+.seo-faq-item p {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--taupe);
+  margin: 0;
+}
+.seo-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: clamp(2.5rem, 6vw, 4rem) 0 0;
+}
+.seo-related-link {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--noir);
+  text-decoration: none;
+  border: 1px solid var(--stone-soft);
+  border-radius: 999px;
+  padding: 8px 16px;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.seo-related-link:hover {
+  border-color: var(--noir);
+}
+/* Hub pages (/occasions, /shop) — a tile grid of the sub-pages. */
+.seo-hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+  margin: clamp(1.5rem, 5vw, 2.6rem) 0 clamp(3rem, 8vw, 5rem);
+}
+.seo-hub-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  border: 1px solid var(--stone-soft);
+  border-radius: 6px;
+  padding: 20px 18px;
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.seo-hub-tile:hover {
+  border-color: var(--noir);
+  transform: translateY(-2px);
+}
+.seo-hub-name {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.15rem;
+  color: var(--noir);
+}
+.seo-hub-sub {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--taupe);
+}
+/* Journal / guide article typography. */
+.guide {
+  display: block;
+  max-width: 720px;
+}
+.guide-body {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--noir);
+  margin-top: 1.5rem;
+}
+.guide-body h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.4rem, 3.2vw, 1.8rem);
+  line-height: 1.2;
+  color: var(--noir);
+  margin: 2.4rem 0 0.8rem;
+}
+.guide-body h3 {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1.1rem;
+  color: var(--noir);
+  margin: 1.8rem 0 0.6rem;
+}
+.guide-body h4 {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--noir);
+  margin: 1.4rem 0 0.5rem;
+}
+.guide-body p {
+  margin: 0 0 1.1rem;
+}
+.guide-body ul,
+.guide-body ol {
+  margin: 0 0 1.1rem 1.2rem;
+  padding: 0;
+}
+.guide-body li {
+  margin: 0 0 0.45rem;
+}
+.guide-body a {
+  color: var(--noir);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.guide-body code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--ivory-panel);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+/* Admin guides list. */
+.admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.admin-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--stone-soft);
 }

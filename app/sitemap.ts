@@ -1,7 +1,20 @@
 import type { MetadataRoute } from "next";
 import { fetchBrands } from "@/lib/data/getBrands";
 import { fetchProducts } from "@/lib/data/getProducts";
-import { brandPath, brandNewArrivalsPath, campaignPath } from "@/lib/data/links";
+import {
+  brandPath,
+  brandNewArrivalsPath,
+  campaignPath,
+  occasionPath,
+  categoryPath,
+  brandCategoryPath,
+} from "@/lib/data/links";
+import {
+  presentOccasions,
+  presentCategories,
+  presentCategoriesForBrand,
+} from "@/lib/seo/dimensions";
+import { fetchGuides } from "@/lib/data/guides";
 
 // Regenerate daily so newly-added pieces appear without a redeploy.
 export const revalidate = 86400;
@@ -14,6 +27,9 @@ const PUBLIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/", priority: 1 },
   { path: "/curator", priority: 0.9 },
   { path: "/brands", priority: 0.8 },
+  { path: "/occasions", priority: 0.7 },
+  { path: "/shop", priority: 0.7 },
+  { path: "/journal", priority: 0.6 },
   { path: "/tryon", priority: 0.8 },
   { path: "/fifa", priority: 0.8 },
   { path: "/partners", priority: 0.6 },
@@ -65,5 +81,53 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...brandEntries, ...productEntries];
+  // Programmatic SEO landing pages — only combinations that HAVE products.
+  const [occasions, categories] = await Promise.all([
+    presentOccasions(),
+    presentCategories(),
+  ]);
+  const occasionEntries: MetadataRoute.Sitemap = occasions.map((o) => ({
+    url: `${SITE_URL}${occasionPath(o)}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+  const categoryEntries: MetadataRoute.Sitemap = categories.map((c) => ({
+    url: `${SITE_URL}${categoryPath(c)}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  // Brand × category (long-tail) — only the combinations that exist per brand.
+  const brandCategoryLists = await Promise.all(
+    brands.map(async (b) => ({ brand: b.name, cats: await presentCategoriesForBrand(b.name) })),
+  );
+  const brandCategoryEntries: MetadataRoute.Sitemap = brandCategoryLists.flatMap(({ brand, cats }) =>
+    cats.map((c) => ({
+      url: `${SITE_URL}${brandCategoryPath(brand, c)}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    })),
+  );
+
+  // Published editorial guides (the Journal).
+  const guides = await fetchGuides();
+  const guideEntries: MetadataRoute.Sitemap = guides.map((g) => ({
+    url: `${SITE_URL}/journal/${g.slug}`,
+    lastModified: g.updatedAt ? new Date(g.updatedAt) : now,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  return [
+    ...staticEntries,
+    ...brandEntries,
+    ...productEntries,
+    ...occasionEntries,
+    ...categoryEntries,
+    ...brandCategoryEntries,
+    ...guideEntries,
+  ];
 }

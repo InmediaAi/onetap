@@ -1,5 +1,9 @@
 import { fetchBrands } from "@/lib/data/getBrands";
 import { brandDisplayName } from "@/lib/data/brandDisplay";
+import { presentOccasions, presentCategories } from "@/lib/seo/dimensions";
+import { occasionCopy, categoryCopy } from "@/lib/seo/copy";
+import { occasionPath, categoryPath } from "@/lib/data/links";
+import { fetchGuides } from "@/lib/data/guides";
 
 export const revalidate = 86400; // regenerate daily
 
@@ -12,13 +16,32 @@ const BASE = "https://www.onetapatelier.com";
  * from /brands. Static copy is final brand copy - do not edit.
  */
 export async function GET() {
-  const brands = await fetchBrands(); // { name, slug } from the live catalog
+  const [brands, occasions, categories, guides] = await Promise.all([
+    fetchBrands(), // { name, slug } from the live catalog
+    presentOccasions(),
+    presentCategories(),
+    fetchGuides(),
+  ]);
+
+  const guideBlock = guides.length
+    ? `\n## Journal\n\n${guides
+        .map((g) => `- [${g.title}](${BASE}/journal/${g.slug})${g.metaDescription ? `: ${g.metaDescription}` : ""}`)
+        .join("\n")}\n`
+    : "";
 
   const brandLines = brands
     .map((b) => {
       const name = brandDisplayName(b.name);
       return `- [${name}](${BASE}/brands/${b.slug}): Curated edit and new arrivals from ${name}`;
     })
+    .join("\n");
+
+  const occasionLines = occasions
+    .map((o) => `- [${o}](${BASE}${occasionPath(o)}): ${occasionCopy(o).answer.split(".")[0]}.`)
+    .join("\n");
+
+  const categoryLines = categories
+    .map((c) => `- [${c}](${BASE}${categoryPath(c)}): ${categoryCopy(c).answer.split(".")[0]}.`)
     .join("\n");
 
   const body = `# OneTap Atelier
@@ -41,6 +64,14 @@ Member images are protected: explicit consent, no training use without opt-in, d
 
 ${brandLines}
 
+## Shop by occasion
+
+${occasionLines}
+
+## Shop by category
+
+${categoryLines}
+${guideBlock}
 ## Company
 
 - [Partners](${BASE}/partners): For luxury houses and retailers

@@ -317,6 +317,7 @@ export default function OnboardingPage() {
                 <AppleMark /> Sign in with Apple
               </button>
               {authErr && <p className="studio-err">{authErr}</p>}
+              <p className="signin-trust">Free to start · your likeness stays private</p>
             </div>
           ) : step === "upload" ? (
             <div className="ob-step">

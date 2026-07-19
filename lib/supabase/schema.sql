@@ -535,6 +535,58 @@ insert into billing_plans (id, name, tagline, monthly_price, video_limit, featur
      array['Live payment test tier', '5 try-ons / month'], false, true, 6)
 on conflict (id) do nothing;
 
+-- ───────────────────────────────────────────────────────────────────────────
+-- SEO / GEO editorial "guides" (the Journal). Long-form, question-style content
+-- that ranks + gets cited by AI answer engines. Admin-authored (or AI-drafted +
+-- admin-approved, see the Phase-3 pipeline). Public read only where published.
+-- ───────────────────────────────────────────────────────────────────────────
+create table if not exists guides (
+  id               uuid primary key default gen_random_uuid(),
+  slug             text unique not null,
+  title            text not null,
+  meta_description text,
+  answer           text,                      -- direct-answer intro (GEO lead paragraph)
+  body_md          text not null default '',  -- markdown body
+  faq              jsonb not null default '[]'::jsonb,   -- [{ q, a }]
+  hero_image       text,
+  related_brands   text[] not null default '{}',
+  related_occasions text[] not null default '{}',
+  related_product_ids text[] not null default '{}',
+  status           text not null default 'draft' check (status in ('draft','published')),
+  source           text not null default 'manual',       -- manual | ai | gsc
+  published_at     timestamptz,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+create index if not exists guides_status_idx on guides (status, published_at desc);
+
+alter table guides enable row level security;
+drop policy if exists "public read published guides" on guides;
+create policy "public read published guides"
+  on guides for select
+  using (status = 'published');
+-- Writes (drafts, publishing) go through the service role (admin) only.
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- SEO keyword queue — topics to turn into guides. Seeded from catalog dimensions
+-- + Google Search Console "opportunity" queries; drained by the draft pipeline
+-- (generate → draft guide → admin review). Service-role only (no public policy).
+-- ───────────────────────────────────────────────────────────────────────────
+create table if not exists keyword_queue (
+  id          uuid primary key default gen_random_uuid(),
+  term        text unique not null,       -- the target query / topic
+  intent      text,                        -- optional note (e.g. "occasion guide")
+  source      text not null default 'seed' check (source in ('seed','gsc','manual')),
+  status      text not null default 'queued' check (status in ('queued','drafted','published','skipped')),
+  metrics     jsonb not null default '{}'::jsonb,   -- GSC impressions/clicks/position/ctr
+  guide_slug  text,                        -- set once a draft is generated
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists keyword_queue_status_idx on keyword_queue (status, updated_at desc);
+alter table keyword_queue enable row level security;
+-- No policies → only the service role (admin/cron) can read or write.
+
 -- Global billing settings (singleton row).
 create table if not exists billing_config (
   id               text primary key default 'default',

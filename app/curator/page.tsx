@@ -43,13 +43,13 @@ export default async function CuratorPage({
     <main>
       <Header />
 
-      <section className="sec-hero">
-        <p className="eyebrow">OneTap Curator</p>
-        <h1>The World&rsquo;s First Video Try-On Curator</h1>
-        <p className="sec-sub">
-          Curated edits from 100+ luxury houses, transformed into realistic videos
-          of you wearing each look before you buy.
-        </p>
+      <section className="sec-hero curator-hero">
+        <h1>
+          Tap Any Piece · See It On You
+          <br />
+          limited free edition
+        </h1>
+        <p className="sec-sub">Curated edits from 100+ luxury houses.</p>
       </section>
 
       <CatalogClient

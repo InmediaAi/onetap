@@ -10,6 +10,7 @@ import PartnerLeadsAdmin from "@/components/admin/PartnerLeadsAdmin";
 import PartnerShowcaseAdmin from "@/components/admin/PartnerShowcaseAdmin";
 import HomeModulesAdmin from "@/components/admin/HomeModulesAdmin";
 import OccasionTilesAdmin from "@/components/admin/OccasionTilesAdmin";
+import GuidesAdmin from "@/components/admin/GuidesAdmin";
 import HouseTilesAdmin from "@/components/admin/HouseTilesAdmin";
 import CampaignManager from "@/components/admin/CampaignManager";
 import { useToast } from "@/components/admin/Toast";
@@ -81,7 +82,7 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
   const [tab, setTab] = useState<
-    "pieces" | "packages" | "campaigns" | "prompts" | "partners" | "home"
+    "pieces" | "packages" | "campaigns" | "prompts" | "partners" | "home" | "guides"
   >("pieces");
 
   const [url, setUrl] = useState("");
@@ -439,9 +440,11 @@ export default function AdminPage() {
                 ? "Campaigns"
                 : tab === "partners"
                   ? "Partners"
-                  : editingId
-                    ? "Edit a Piece"
-                    : "Add a Piece"}
+                  : tab === "guides"
+                    ? "Journal"
+                    : editingId
+                      ? "Edit a Piece"
+                      : "Add a Piece"}
           </h1>
         </div>
         <Link href="/" className="admin-link">View catalogue →</Link>
@@ -484,6 +487,12 @@ export default function AdminPage() {
         >
           Home
         </button>
+        <button
+          className={"admin-tab" + (tab === "guides" ? " on" : "")}
+          onClick={() => setTab("guides")}
+        >
+          Journal
+        </button>
       </div>
 
       {tab === "packages" ? (
@@ -499,6 +508,8 @@ export default function AdminPage() {
           <OccasionTilesAdmin password={password} />
           <HouseTilesAdmin password={password} />
         </>
+      ) : tab === "guides" ? (
+        <GuidesAdmin password={password} />
       ) : tab === "prompts" ? (
         <PromptsAdmin password={password} />
       ) : tab === "campaigns" ? (

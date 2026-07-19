@@ -54,6 +54,12 @@ export default function SiteFooter() {
                   <Link href="/brands">Brands</Link>
                 </li>
                 <li>
+                  <Link href="/shop">Shop by Category</Link>
+                </li>
+                <li>
+                  <Link href="/occasions">Shop by Occasion</Link>
+                </li>
+                <li>
                   <Link href="/pricing">Membership</Link>
                 </li>
                 <li>

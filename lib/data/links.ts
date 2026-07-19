@@ -56,3 +56,33 @@ export function curatorBrandPath(name: string): string {
 export function curatorOccasionPath(occasions: string[]): string {
   return `/curator?occasions=${encodeURIComponent(occasions.join(","))}`;
 }
+
+/** Curator deep-link with a category pre-selected in the filter. */
+export function curatorCategoryPath(category: string): string {
+  return `/curator?categories=${encodeURIComponent(category)}`;
+}
+
+/** Occasion SEO landing page: /occasions/{occasion-slug}. */
+export function occasionPath(occasion: string): string {
+  return `/occasions/${kebab(occasion)}`;
+}
+
+/** Category SEO landing page: /shop/{category-slug}. */
+export function categoryPath(category: string): string {
+  return `/shop/${kebab(category)}`;
+}
+
+/** Brand × category SEO landing page: /brands/{brand-slug}/{category-slug}. */
+export function brandCategoryPath(brand: string, category: string): string {
+  return `/brands/${kebab(brand)}/${kebab(category)}`;
+}
+
+/** Absolute helpers (sitemap / OG). `origin` defaults to NEXT_PUBLIC_SITE_URL. */
+function abs(path: string, origin?: string): string {
+  const base = origin || process.env.NEXT_PUBLIC_SITE_URL || "";
+  return `${base}${path}`;
+}
+export const occasionUrl = (o: string, origin?: string) => abs(occasionPath(o), origin);
+export const categoryUrl = (c: string, origin?: string) => abs(categoryPath(c), origin);
+export const brandCategoryUrl = (b: string, c: string, origin?: string) =>
+  abs(brandCategoryPath(b, c), origin);
